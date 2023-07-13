@@ -1,8 +1,10 @@
 [package]
-name = "microgpu-common"
+name = "microgpu_common"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+display-interface = "0.4.1"
+ili9341 = "0.5"
