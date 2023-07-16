@@ -27,10 +27,12 @@ experimental = ["embedded-svc?/experimental", "esp-idf-svc?/experimental"]
 embassy = ["esp-idf-hal?/embassy-sync", "esp-idf-hal?/critical-section", "esp-idf-hal?/edge-executor", "esp-idf-svc?/embassy-time-driver", "esp-idf-svc?/embassy-time-isr-queue"]
 
 [dependencies]
+anyhow = "1.0"
 log = { version = "0.4.17", default-features = false }
 esp-idf-sys = { version = "0.33", default-features = false }
 esp-idf-hal = { version = "0.41", optional = true, default-features = false }
 esp-idf-svc = { version = "0.46", optional = true, default-features = false }
+embedded-hal = "=1.0.0-alpha.10"
 embedded-svc = { version = "0.25", optional = true, default-features = false }
 microgpu_common = { path = "../microgpu_common" }
 

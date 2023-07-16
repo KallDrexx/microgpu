@@ -1,4 +1,6 @@
-use esp_idf_hal::spi::config;
+use embedded_hal::spi::MODE_3;
+use esp_idf_hal::spi::*;
+use esp_idf_hal::units::FromValueType;
 use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use log::*;
 
@@ -17,10 +19,8 @@ fn main() {
     let cs = peripherals.pins.gpio11;
 
     let spi_config = config::Config::new()
-        .data_mode(MODE_3)
-        .baudrate(80.Mhz().into())
-        .build();
-
+        .baudrate(26.MHz().into())
+        .data_mode(MODE_3);
 
     info!("Hello, world!");
 }
