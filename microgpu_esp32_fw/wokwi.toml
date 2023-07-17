@@ -1,5 +1,5 @@
 [wokwi]
 version = 1
 gdbServerPort = 3333
-elf = "target/xtensa-esp32s3-espidf/debug/microgpu-esp32-fw"
-firmware = "target/xtensa-esp32s3-espidf/debug/microgpu-esp32-fw"
+elf = "target/xtensa-esp32s3-espidf/debug/microgpu_esp32_fw"
+firmware = "target/xtensa-esp32s3-espidf/debug/microgpu_esp32_fw"

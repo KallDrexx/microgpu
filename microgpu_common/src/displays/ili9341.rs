@@ -16,9 +16,9 @@ impl<IFACE: WriteOnlyDataCommand, RESET> EmbeddedDisplay for Ili9341<IFACE, RESE
         let x1 = u16::try_from(self.width()).unwrap();
         let y1 = u16::try_from(self.height()).unwrap();
 
-        let iterator = frame.bytes()
-            .chunks_exact(2)
-            .map(|x| x[0] as u16 | ((x[1] as u16) << 8));
+        let iterator = frame.pixels()
+            .iter()
+            .map(|pixel| *pixel);
 
         self.draw_raw_iter(0, 0, x1, y1, iterator).unwrap();
 

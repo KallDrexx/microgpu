@@ -3,7 +3,7 @@ pub mod displays;
 /// An RGB565 encoded buffer containing a frame that can be sent
 /// to a display.
 pub struct FrameBuffer {
-    raw_bytes: Vec<u8>,
+    pixels: Vec<u16>,
     width: usize,
     height: usize,
 }
@@ -12,7 +12,7 @@ impl FrameBuffer {
     /// Creates a new frame buffer with the given dimensions.
     pub fn new(width: usize, height: usize) -> Self {
         Self {
-            raw_bytes: vec![0; width * height * 2],
+            pixels: vec![0; width * height],
             width,
             height,
         }
@@ -26,11 +26,11 @@ impl FrameBuffer {
         self.height
     }
 
-    pub fn bytes(&self) -> &[u8] {
-        &self.raw_bytes
+    pub fn pixels(&self) -> &[u16] {
+        &self.pixels
     }
 
-    pub fn bytes_mut(&mut self) -> &mut [u8] {
-        &mut self.raw_bytes
+    pub fn mut_pixels(&mut self) -> &mut [u16] {
+        &mut self.pixels
     }
 }
