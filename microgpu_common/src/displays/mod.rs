@@ -1,7 +1,3 @@
-use crate::FrameBuffer;
-
-pub mod ili9341;
-
 /// A device that can be drawn to
 pub trait EmbeddedDisplay {
     fn width(&self) -> usize;

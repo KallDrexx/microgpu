@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 display-interface = "0.4.1"
-ili9341 = "0.5"
+embedded-graphics-core = "0.4.0"
