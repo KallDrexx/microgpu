@@ -10,11 +10,16 @@
 #![no_std]
 #![no_main]
 
+use display_interface_spi::SPIInterface;
+use embedded_graphics::pixelcolor::Rgb565;
+use embedded_graphics::prelude::*;
 // The macro for our start-up function
 use rp_pico::entry;
 
 // GPIO traits
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::{OutputPin, PinState};
+use fugit::RateExtU32;
+use mipidsi::Builder;
 
 // Ensure we halt the program on panic (if we don't mention this crate it won't
 // be linked)
@@ -25,7 +30,7 @@ use rp_pico::hal::prelude::*;
 
 // A shorter alias for the Peripheral Access Crate, which provides low-level
 // register access
-use rp_pico::hal::pac;
+use rp_pico::hal::{gpio, pac, spi};
 
 // A shorter alias for the Hardware Abstraction Layer, which provides
 // higher-level drivers.
@@ -59,11 +64,9 @@ fn main() -> ! {
         &mut pac.RESETS,
         &mut watchdog,
     )
-        .ok()
-        .unwrap();
+    .ok()
+    .unwrap();
 
-    // The delay object lets us wait for specified amounts of time (in
-    // milliseconds)
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
     // The single-cycle I/O block controls our GPIO pins
@@ -77,14 +80,31 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    // Set the LED to be an output
-    let mut led_pin = pins.led.into_push_pull_output();
+    let mut pico_led = pins.led.into_push_pull_output();
+    let cs = pins.gpio17.into_push_pull_output();
+    let reset = pins.gpio10.into_push_pull_output();
+    let dc = pins.gpio11.into_push_pull_output();
+    let _copi = pins.gpio15.into_mode::<gpio::FunctionSpi>();
+    let _sclk = pins.gpio14.into_mode::<gpio::FunctionSpi>();
+    let _display_led = pins.gpio12.into_push_pull_output_in_state(PinState::High);
 
-    // Blink the LED at 1 Hz
-    loop {
-        led_pin.set_high().unwrap();
-        delay.delay_ms(500);
-        led_pin.set_low().unwrap();
-        delay.delay_ms(500);
-    }
+    let spi = spi::Spi::<_, _, 8>::new(pac.SPI1);
+    let spi = spi.init(
+        &mut pac.RESETS,
+        clocks.peripheral_clock.freq(),
+        62.MHz(),
+        &embedded_hal::spi::MODE_3,
+    );
+
+    let di = SPIInterface::new(spi, dc, cs);
+    let mut display = Builder::ili9341_rgb565(di)
+        .init(&mut delay, Some(reset))
+        .unwrap();
+
+    display.clear(Rgb565::RED).unwrap();
+
+    pico_led.set_high().unwrap();
+
+
+    loop {}
 }
