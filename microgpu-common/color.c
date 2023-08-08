@@ -1,7 +1,7 @@
 #include "color.h"
 
 #ifdef MGPU_COLOR_MODE_USE_RGB565
-Mgpu_Color mgpu_color_from_rgb24(uint8_t red, uint8_t green, uint8_t blue) {
+Mgpu_Color mgpu_color_from_rgb888(uint8_t red, uint8_t green, uint8_t blue) {
     // Convert values from 24bit space values to 16bit space values, before
     // packing them into a 16bit rgb565 number
     red = red / 8;
@@ -11,7 +11,7 @@ Mgpu_Color mgpu_color_from_rgb24(uint8_t red, uint8_t green, uint8_t blue) {
     return ((uint16_t)red << 11) | ((uint16_t)green << 5) | blue;
 }
 
-void mgpu_color_get_rgb24(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8_t *blue) {
+void mgpu_color_get_rgb888(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8_t *blue) {
     uint16_t tempRed = (color >> 11) * 8;
     uint16_t tempGreen = ((color & 0x0730) >> 5) * 4;
     uint16_t tempBlue = (color & 0x1F) * 8;

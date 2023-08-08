@@ -1,9 +1,9 @@
 #include <SDL.h>
 #include "input.h"
 
-void handle_keyup_event(MGPU_SDL_InputState *state, SDL_Event *event);
+void handle_keyup_event(Mgpu_Sdl_Input *state, SDL_Event *event);
 
-void mgpu_sdl_input_update(MGPU_SDL_InputState *state) {
+void mgpu_sdl_input_update(Mgpu_Sdl_Input *state) {
     state->quit_requested = false;
 
     SDL_Event event;
@@ -20,7 +20,7 @@ void mgpu_sdl_input_update(MGPU_SDL_InputState *state) {
     }
 }
 
-void handle_keyup_event(MGPU_SDL_InputState *state, SDL_Event *event) {
+void handle_keyup_event(Mgpu_Sdl_Input *state, SDL_Event *event) {
     switch ((*event).key.keysym.sym) {
         case SDLK_ESCAPE:
             state->quit_requested = true;

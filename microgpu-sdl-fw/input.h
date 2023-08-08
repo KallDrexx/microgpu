@@ -6,8 +6,8 @@
 typedef struct {
     bool quit_requested: 1;
 
-} MGPU_SDL_InputState;
+} Mgpu_Sdl_Input;
 
-void mgpu_sdl_input_update(MGPU_SDL_InputState *state);
+void mgpu_sdl_input_update(Mgpu_Sdl_Input *state);
 
 #endif //MICROGPU_SDL_FW_INPUT_H

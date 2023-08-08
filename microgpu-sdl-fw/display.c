@@ -11,7 +11,7 @@ struct MGPU_SDL_Display_Internal {
     SDL_Renderer *renderer;
 };
 
-bool mgpu_sdl_display_init(MGPU_SDL_Display *display) {
+bool mgpu_sdl_display_init(Mgpu_Sdl_Display *display) {
     assert(display != NULL);
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -73,7 +73,7 @@ bool mgpu_sdl_display_init(MGPU_SDL_Display *display) {
     return display;
 }
 
-void mgpu_sdl_display_uninit(MGPU_SDL_Display *display) {
+void mgpu_sdl_display_uninit(Mgpu_Sdl_Display *display) {
     if (display != NULL) {
         if (display->internal != NULL) {
             // SDL_DestroyRenderer destroys associated textures, so we shouldn't do that ourselves
@@ -88,7 +88,7 @@ void mgpu_sdl_display_uninit(MGPU_SDL_Display *display) {
     }
 }
 
-void mgpu_sdl_push_to_screen(MGPU_SDL_Display *display) {
+void mgpu_sdl_push_to_screen(Mgpu_Sdl_Display *display) {
     assert(display != NULL);
     assert(display->internal != NULL);
 
@@ -100,4 +100,17 @@ void mgpu_sdl_push_to_screen(MGPU_SDL_Display *display) {
 
     SDL_RenderCopy(display->internal->renderer, display->internal->texture, NULL, NULL);
     SDL_RenderPresent(display->internal->renderer);
+}
+
+void mgpu_sdl_apply_framebuffer(Mgpu_Sdl_Display *display, Mgpu_FrameBuffer *frameBuffer) {
+    assert(frameBuffer->width == display->windowWidth);
+    assert(frameBuffer->height == display->windowHeight);
+
+    size_t pixelCount = frameBuffer->width * frameBuffer->height;
+    for (size_t x = 0; x < pixelCount; x++) {
+        uint8_t red, green, blue;
+        mgpu_color_get_rgb888(frameBuffer->pixels[x], &red, &green, &blue);
+        uint32_t color = ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
+        display->pixelBuffer[x] = color;
+    }
 }
