@@ -23,6 +23,10 @@ Mgpu_Color mgpu_color_from_rgb565(uint8_t red, uint8_t green, uint8_t blue);
  */
 void mgpu_color_get_rgb565(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8_t *blue);
 
+#else
+
+#error "No color mode specified"
+
 #endif // MGPU_COLOR_MODE_USE_RGB565
 
 /*

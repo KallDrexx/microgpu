@@ -11,8 +11,9 @@ add_executable(microgpu_sdl_fw
         input.c
 )
 
-target_compile_definitions(microgpu_sdl_fw PRIVATE MGPU_COLOR_MODE_USE_RGB565)
-target_compile_definitions(microgpu_common PRIVATE MGPU_COLOR_MODE_USE_RGB565)
+# TODO: We need to split out 565 code into a separate target
+# in order to not force all targets to use 565.
+target_compile_definitions(microgpu_common PUBLIC MGPU_COLOR_MODE_USE_RGB565)
 
 target_link_libraries(microgpu_sdl_fw
         PRIVATE
