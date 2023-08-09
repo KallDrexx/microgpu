@@ -6,4 +6,5 @@ add_library(microgpu_common
         color.c
         framebuffer.c
         framebuffer.h
+        operations.h
 )

@@ -1,5 +1,4 @@
-#ifndef MICROGPU_SDL_FW_DISPLAY_H
-#define MICROGPU_SDL_FW_DISPLAY_H
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -40,5 +39,3 @@ void mgpu_sdl_push_to_screen(Mgpu_Sdl_Display *display);
  * pixel data from the frame buffer.
  */
 void mgpu_sdl_apply_framebuffer(Mgpu_Sdl_Display *display, Mgpu_FrameBuffer *frameBuffer);
-
-#endif //MICROGPU_SDL_FW_DISPLAY_H

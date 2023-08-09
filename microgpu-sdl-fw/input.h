@@ -1,5 +1,4 @@
-#ifndef MICROGPU_SDL_FW_INPUT_H
-#define MICROGPU_SDL_FW_INPUT_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -9,5 +8,3 @@ typedef struct {
 } Mgpu_Sdl_Input;
 
 void mgpu_sdl_input_update(Mgpu_Sdl_Input *state);
-
-#endif //MICROGPU_SDL_FW_INPUT_H
