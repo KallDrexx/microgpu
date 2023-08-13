@@ -11,6 +11,7 @@ add_executable(microgpu_sdl_fw
         input.c
         ../microgpu-common/framebuffer.c
         ../microgpu-common/color_rgb565.c
+        ../microgpu-common/operations.c
 )
 
 target_compile_definitions(microgpu_sdl_fw PUBLIC MGPU_COLOR_MODE_USE_RGB565)

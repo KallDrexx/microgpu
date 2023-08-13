@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "color.h"
+#include "framebuffer.h"
 
 /*
  * What type of operations are supported
@@ -28,3 +29,5 @@ typedef struct {
         Mgpu_Op_DrawRectangle draw_rectangle;
     };
 } Mgpu_Operation;
+
+void mgpu_execute_operation(Mgpu_Operation *operation, Mgpu_FrameBuffer *frameBuffer);

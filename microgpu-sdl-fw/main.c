@@ -5,8 +5,7 @@
 #include <SDL.h>
 #include "display.h"
 #include "input.h"
-#include "color.h"
-#include "framebuffer.h"
+#include "operations.h"
 
 #define FPS 60
 #define FRAME_TARGET_TIME (1000/FPS)
@@ -26,24 +25,48 @@ bool setup(void) {
     void *memory = malloc(frameBufferBytes);
     framebuffer = mgpu_framebuffer_new(memory, display.windowWidth, display.windowHeight);
 
-    for (size_t row = 0; row < framebuffer.height; row++) {
-        for (size_t col = 0; col < framebuffer.width; col++) {
-            size_t index = row * framebuffer.width + col;
-            switch ((col / 20) % 3) {
-                case 0:
-                    framebuffer.pixels[index] = mgpu_color_from_rgb888(255,0, 0);
-                    break;
+    Mgpu_Op_DrawRectangle rectangle = {
+            .startX = 200,
+            .startY = 100,
+            .width = 50,
+            .height = 300,
+            .color = mgpu_color_from_rgb888(255, 0, 0),
+    };
 
-                case 1:
-                    framebuffer.pixels[index] = mgpu_color_from_rgb888(0,255, 0);
-                    break;
+    Mgpu_Operation operation = {
+            .type = Mgpu_Operation_DrawRectangle,
+            .draw_rectangle = rectangle,
+    };
 
-                case 2:
-                    framebuffer.pixels[index] = mgpu_color_from_rgb888(0,0, 255);
-                    break;
-            }
-        }
-    }
+    Mgpu_Op_DrawRectangle rectangle2 = {
+            .startX = 0,
+            .startY = 0,
+            .width = 200,
+            .height = 100,
+            .color = mgpu_color_from_rgb888(0, 255, 0),
+    };
+
+    Mgpu_Operation operation2 = {
+            .type = Mgpu_Operation_DrawRectangle,
+            .draw_rectangle = rectangle2,
+    };
+
+    Mgpu_Op_DrawRectangle rectangle3 = {
+            .startX = 250,
+            .startY = 400,
+            .width = 500,
+            .height = 500,
+            .color = mgpu_color_from_rgb888(0, 0, 255),
+    };
+
+    Mgpu_Operation operation3 = {
+            .type = Mgpu_Operation_DrawRectangle,
+            .draw_rectangle = rectangle3,
+    };
+
+    mgpu_execute_operation(&operation, &framebuffer);
+    mgpu_execute_operation(&operation2, &framebuffer);
+    mgpu_execute_operation(&operation3, &framebuffer);
 
     return true;
 }
