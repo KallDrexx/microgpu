@@ -35,7 +35,7 @@ bool setup(void) {
 
     Mgpu_Operation operation = {
             .type = Mgpu_Operation_DrawRectangle,
-            .draw_rectangle = rectangle,
+            .drawRectangle = rectangle,
     };
 
     Mgpu_Op_DrawRectangle rectangle2 = {
@@ -48,7 +48,7 @@ bool setup(void) {
 
     Mgpu_Operation operation2 = {
             .type = Mgpu_Operation_DrawRectangle,
-            .draw_rectangle = rectangle2,
+            .drawRectangle = rectangle2,
     };
 
     Mgpu_Op_DrawRectangle rectangle3 = {
@@ -61,7 +61,7 @@ bool setup(void) {
 
     Mgpu_Operation operation3 = {
             .type = Mgpu_Operation_DrawRectangle,
-            .draw_rectangle = rectangle3,
+            .drawRectangle = rectangle3,
     };
 
     mgpu_execute_operation(&operation, &framebuffer);

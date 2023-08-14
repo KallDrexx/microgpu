@@ -8,7 +8,8 @@
  * What type of operations are supported
  */
 typedef enum {
-    Mgpu_Operation_DrawRectangle = 1
+    Mgpu_Operation_DrawRectangle = 1,
+    Mgpu_Operation_DrawTriangle,
 } Mgpu_OperationType;
 
 /*
@@ -19,6 +20,11 @@ typedef struct {
     Mgpu_Color color;
 } Mgpu_Op_DrawRectangle;
 
+typedef struct {
+    uint16_t x0, y0, x1, y1, x2, y2;
+    Mgpu_Color color;
+} Mgpu_Op_DrawTriangle;
+
 /*
  * Single type that can represent any type of operation that
  * the microgpu framework can support.
@@ -26,7 +32,8 @@ typedef struct {
 typedef struct {
     Mgpu_OperationType type;
     union {
-        Mgpu_Op_DrawRectangle draw_rectangle;
+        Mgpu_Op_DrawRectangle drawRectangle;
+        Mgpu_Op_DrawTriangle drawTriangle;
     };
 } Mgpu_Operation;
 
