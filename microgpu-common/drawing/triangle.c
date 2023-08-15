@@ -1,13 +1,24 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include "triangle.h"
 
-typedef struct {uint16_t x; uint16_t y;} Point;
-typedef struct {Point p0, p1, p2;} Triangle;
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+} Point;
+typedef struct {
+    Point p0, p1, p2;
+} Triangle;
+typedef struct {
+    Point p0, p1;
+    int32_t deltaX, deltaY;
+    float slope;
+} PointPair;
 
 Triangle get_sorted_points(Mgpu_Op_DrawTriangle *operation) {
-    Point p1 = {.x = operation->x0, .y = operation->y0 };
-    Point p2 = {.x = operation->x1, .y = operation->y1 };
-    Point p3 = {.x = operation->x2, .y = operation->y2 };
+    Point p1 = {.x = operation->x0, .y = operation->y0};
+    Point p2 = {.x = operation->x1, .y = operation->y1};
+    Point p3 = {.x = operation->x2, .y = operation->y2};
     Point temp;
 
     // Sort the points from top to bottom
@@ -32,42 +43,60 @@ Triangle get_sorted_points(Mgpu_Op_DrawTriangle *operation) {
     return sorted;
 }
 
-void draw_triangle(Point top, Point left, Point right, Mgpu_FrameBuffer *frameBuffer, Mgpu_Color color) {
-    // Iterate through the triangle from top to bottom, filling it in one y position at a time.
-    // Keep track of the left and right boundaries from the top. Once we hit the midpoint,
-    // swap the top vertex for the midpoint vertex.
+void make_point_pair(PointPair *pair, Point p0, Point p1) {
+    pair->p0 = p0;
+    pair->p1 = p1;
+    pair->deltaX = p1.x - p0.x;
+    pair->deltaY = p1.y - p0.y;
+    pair->slope = (float) pair->deltaX / (float) pair->deltaY;
+}
 
-    float leftSlope = (float)(left.x - top.x) / (float)(left.y - top.y);
-    float rightSlope = (float)(right.x - top.x) / (float)(right.y - top.y);
+void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBuffer, Mgpu_Color color) {
+    // Iterate through the triangle from top to bottom one y value at a time.
+    // TODO: Swap out for bresenham at some point.
 
-    float leftX = top.x;
-    float rightX = top.x;
-    for (uint16_t y = top.y; y <= left.y; y++) {
-        uint16_t startX = max(leftX, 0);
-        uint16_t endX = max(rightX, frameBuffer->width);
+    PointPair topMid, topBottom, midBottom;
+    make_point_pair(&topMid, top, mid);
+    make_point_pair(&topBottom, top, bottom);
+    make_point_pair(&midBottom, mid, bottom);
 
-        if (startX <= frameBuffer->width && endX >= 0) {
-            size_t diff = endX - startX;
-            Mgpu_Color *pixel = frameBuffer->pixels + (y * frameBuffer->width + startX);
-            for (size_t x = 0; x < diff; x++) {
+    PointPair shortPair = topMid;
+    PointPair longPair = topBottom;
+    float shortX = top.x;
+    float longX = top.x;
+
+    for (uint16_t y = top.y; y <= bottom.y; y++) {
+        if (y >= frameBuffer->height) {
+            break;
+        }
+
+        if (y == mid.y) {
+            // We reached the mid-point, so swap to the next pair
+            shortPair = midBottom;
+            shortX = shortPair.p0.x;
+        }
+
+        // Draw the row
+        int16_t startCol = min(shortX, longX);
+        if (startCol < frameBuffer->width) {
+            uint16_t diff = longX > shortX ? (int32_t)(longX - shortX) : (int32_t)(shortX - longX);
+            int16_t endCol = min(startCol + diff, frameBuffer->width - 1);
+            diff = endCol - startCol;
+
+            Mgpu_Color *pixel = frameBuffer->pixels + (y * frameBuffer->width) + startCol;
+            for (int x = 0; x <= diff; x++) {
                 *pixel = color;
                 pixel++;
             }
         }
 
-        leftX += leftSlope;
-        rightX += rightSlope;
+        // Adjust the x positions
+        shortX += shortPair.slope;
+        longX += longPair.slope;
     }
 }
 
 void mgpu_draw_triangle(Mgpu_Op_DrawTriangle *operation, Mgpu_FrameBuffer *frameBuffer) {
-    Triangle points = get_sorted_points(operation);
-
-    Point top = points.p0;
-    Point left, right;
-    if (points.p1.x < points.p2.x) {
-        left = points.p1;
-        right = points.p2;
-        right.y = points.p1.y;
-    }
+    Triangle triangle = get_sorted_points(operation);
+    draw_triangle(triangle.p0, triangle.p1, triangle.p2, frameBuffer, operation->color);
 }

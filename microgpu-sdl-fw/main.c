@@ -25,48 +25,19 @@ bool setup(void) {
     void *memory = malloc(frameBufferBytes);
     framebuffer = mgpu_framebuffer_new(memory, display.windowWidth, display.windowHeight);
 
-    Mgpu_Op_DrawRectangle rectangle = {
-            .startX = 200,
-            .startY = 100,
-            .width = 50,
-            .height = 300,
+    Mgpu_Op_DrawTriangle triangleOperation = {
             .color = mgpu_color_from_rgb888(255, 0, 0),
+            .x0 = 20, .y0 = 440,
+            .x1 = 620, .y1 = 30,
+            .x2 = 600, .y2 = 400,
     };
 
     Mgpu_Operation operation = {
-            .type = Mgpu_Operation_DrawRectangle,
-            .drawRectangle = rectangle,
-    };
-
-    Mgpu_Op_DrawRectangle rectangle2 = {
-            .startX = 0,
-            .startY = 0,
-            .width = 200,
-            .height = 100,
-            .color = mgpu_color_from_rgb888(0, 255, 0),
-    };
-
-    Mgpu_Operation operation2 = {
-            .type = Mgpu_Operation_DrawRectangle,
-            .drawRectangle = rectangle2,
-    };
-
-    Mgpu_Op_DrawRectangle rectangle3 = {
-            .startX = 250,
-            .startY = 400,
-            .width = 500,
-            .height = 500,
-            .color = mgpu_color_from_rgb888(0, 0, 255),
-    };
-
-    Mgpu_Operation operation3 = {
-            .type = Mgpu_Operation_DrawRectangle,
-            .drawRectangle = rectangle3,
+            .type = Mgpu_Operation_DrawTriangle,
+            .drawTriangle = triangleOperation,
     };
 
     mgpu_execute_operation(&operation, &framebuffer);
-    mgpu_execute_operation(&operation2, &framebuffer);
-    mgpu_execute_operation(&operation3, &framebuffer);
 
     return true;
 }
