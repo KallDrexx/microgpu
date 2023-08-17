@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "framebuffer.h"
-#include "display.h"
+#include "microgpu-common/framebuffer.h"
+#include "microgpu-common/display.h"
 
 /*
  * Creates an SDL implementation of the microgpu display interface.

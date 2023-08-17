@@ -5,7 +5,7 @@
 #include <SDL.h>
 #include "sdl_display.h"
 #include "input.h"
-#include "operations.h"
+#include "microgpu-common/operations.h"
 
 #define FPS 60
 #define FRAME_TARGET_TIME (1000/FPS)

@@ -26,4 +26,4 @@ target_link_libraries(microgpu_sdl_fw
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 )
 
-include_directories(../microgpu-common)
+include_directories(../)
