@@ -7,7 +7,7 @@ find_package(SDL2 CONFIG REQUIRED)
 
 add_executable(microgpu_sdl_fw
         main.c
-        display.c
+        sdl_display.c
         input.c
         ../microgpu-common/framebuffer.c
         ../microgpu-common/color_rgb565.c

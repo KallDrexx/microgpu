@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL.h>
-#include "display.h"
+#include "sdl_display.h"
 #include "input.h"
 #include "operations.h"
 
@@ -11,19 +11,24 @@
 #define FRAME_TARGET_TIME (1000/FPS)
 
 bool isRunning;
-Mgpu_Sdl_Display display;
+Mgpu_Display *display;
+uint16_t width, height;
 Mgpu_Sdl_Input input;
 Mgpu_FrameBuffer framebuffer;
 
 bool setup(void) {
-    if (mgpu_sdl_display_init(&display) == false) {
+    display = mgpu_sdl_display_create();
+    if (display == NULL) {
         fprintf(stderr, "Failed to initialize display\n");
         return false;
     }
 
-    size_t frameBufferBytes = mgpu_framebuffer_get_required_buffer_size(display.windowWidth, display.windowHeight);
+    width = mgpu_display_get_width(display);
+    height = mgpu_display_get_height(display);
+
+    size_t frameBufferBytes = mgpu_framebuffer_get_required_buffer_size(width, height);
     void *memory = malloc(frameBufferBytes);
-    framebuffer = mgpu_framebuffer_new(memory, display.windowWidth, display.windowHeight);
+    framebuffer = mgpu_framebuffer_new(memory, width, height);
 
     Mgpu_Op_DrawTriangle triangleOperation = {
             .color = mgpu_color_from_rgb888(255, 0, 0),
@@ -49,7 +54,7 @@ void process_input(void) {
     }
 }
 
-int main(int argc, char* args[]) {
+int main(int argc, char *args[]) {
     isRunning = setup();
 
     uint32_t previousFrameTime = 0;
@@ -60,10 +65,9 @@ int main(int argc, char* args[]) {
         }
 
         process_input();
-        mgpu_sdl_apply_framebuffer(&display, &framebuffer);
-        mgpu_sdl_push_to_screen(&display);
+        mgpu_display_render_framebuffer(display, &framebuffer);
     }
 
     free(framebuffer.pixels);
-    mgpu_sdl_display_uninit(&display);
+    mgpu_sdl_display_free(display);
 }

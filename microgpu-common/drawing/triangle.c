@@ -79,7 +79,7 @@ void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBu
         // Draw the row
         int16_t startCol = min(shortX, longX);
         if (startCol < frameBuffer->width) {
-            uint16_t diff = longX > shortX ? (int32_t)(longX - shortX) : (int32_t)(shortX - longX);
+            uint16_t diff = longX > shortX ? (int32_t) (longX - shortX) : (int32_t) (shortX - longX);
             int16_t endCol = min(startCol + diff, frameBuffer->width - 1);
             diff = endCol - startCol;
 
