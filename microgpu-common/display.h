@@ -4,72 +4,39 @@
 #include "framebuffer.h"
 
 /*
- * The definition of a microgpu display. The underlying memory location pointed
- * to by `self` must be castable to the type understood by the vtable.
+ * The definition of a microgpu display.
  */
 typedef struct Mgpu_Display Mgpu_Display;
 
 /*
- * Alias for a pointer to a type of microgpu display interface. The actual value
- * pointed to must be castable to a known display type.
+ * Gets the amount of memory that needs to be allocated to create the display
  */
-typedef const void *Mgpu_DisplayPtr;
+size_t mgpu_display_get_size();
 
 /*
- * A virtual table of function pointers that can be used to execute
- * functionality on a display.
+ * Creates a newly initialized display using the passed in memory. The memory pointer passed
+ * in must be pre-allocated to the same amount of memory returned in the
+ * `mgpu_display_get_size()` call.
+ *
+ * Will return a NULL pointer if initialization fails.
  */
-typedef struct {
-    /*
-     * Gets the width in pixelBuffer of the final output of the display
-     */
-    uint16_t (*get_width)(Mgpu_DisplayPtr);
-
-    /*
-     * Gets the height in pixelBuffer of the final output of the display
-     */
-    uint16_t (*get_height)(Mgpu_DisplayPtr);
-
-    /*
-     * Renders the supplied frame buffer to the display
-     */
-    void (*render_framebuffer)(Mgpu_DisplayPtr, Mgpu_FrameBuffer *);
-} Mgpu_DisplayVTable;
-
-struct Mgpu_Display {
-    Mgpu_DisplayPtr self;
-    const Mgpu_DisplayVTable *vTable;
-};
+Mgpu_Display *mgpu_display_init(void *memory);
 
 /*
- * Helper method to call the get_width vtable function
+ * Tears down the display.
+ *
+ * The caller is responsible for freeing the memory used by the
+ * display pointer itself (the same memory that was passed into
+ * `mgpu_display_init()`.
  */
-static inline uint16_t mgpu_display_get_width(Mgpu_Display *display) {
-    assert(display != NULL);
-    assert(display->self != NULL);
-    assert(display->vTable != NULL);
-
-    return display->vTable->get_width(display->self);
-}
+void mgpu_display_uninit(Mgpu_Display *display);
 
 /*
- * Helper method to call the get_height vtable function
+ * Gets the number of horizontal and vertical pixels on the display being used.
  */
-static inline uint16_t mgpu_display_get_height(Mgpu_Display *display) {
-    assert(display != NULL);
-    assert(display->self != NULL);
-    assert(display->vTable != NULL);
-
-    return display->vTable->get_height(display->self);
-}
+void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_t *height);
 
 /*
- * Helper method to call the render_framebuffer vtable function
+ * Renders the contents of the frame buffer to the display
  */
-static inline void mgpu_display_render_framebuffer(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
-    assert(display != NULL);
-    assert(display->self != NULL);
-    assert(display->vTable != NULL);
-
-    display->vTable->render_framebuffer(display->self, frameBuffer);
-}
+void mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer);
