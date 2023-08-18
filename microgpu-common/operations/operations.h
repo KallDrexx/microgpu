@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "color.h"
-#include "framebuffer.h"
+#include "../color.h"
+#include "../framebuffer.h"
 
 /*
  * What type of operations are supported
@@ -20,6 +20,9 @@ typedef struct {
     Mgpu_Color color;
 } Mgpu_Op_DrawRectangle;
 
+/*
+ * Operation to draw a filled in triangle between three defined points.
+ */
 typedef struct {
     uint16_t x0, y0, x1, y1, x2, y2;
     Mgpu_Color color;
