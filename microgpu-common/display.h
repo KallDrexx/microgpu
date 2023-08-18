@@ -3,6 +3,10 @@
 #include <assert.h>
 #include "framebuffer.h"
 
+/*
+ * The definition of a microgpu display. The underlying memory location pointed
+ * to by `self` must be castable to the type understood by the vtable.
+ */
 typedef struct Mgpu_Display Mgpu_Display;
 
 /*
@@ -32,10 +36,6 @@ typedef struct {
     void (*render_framebuffer)(Mgpu_DisplayPtr, Mgpu_FrameBuffer *);
 } Mgpu_DisplayVTable;
 
-/*
- * The definition of a microgpu display. The underlying memory location pointed
- * to by `self` must be castable to the type understood by the vtable.
- */
 struct Mgpu_Display {
     Mgpu_DisplayPtr self;
     const Mgpu_DisplayVTable *vTable;
