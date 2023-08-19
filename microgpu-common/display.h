@@ -11,7 +11,7 @@ typedef struct Mgpu_Display Mgpu_Display;
 /*
  * Gets the amount of memory that needs to be allocated to create the display
  */
-size_t mgpu_display_get_size();
+size_t mgpu_display_get_size(void);
 
 /*
  * Creates a newly initialized display using the passed in memory. The memory pointer passed
