@@ -1,6 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
+#include "operations/operations.h"
+#include "responses.h"
 
 /*
  * The accessible interface to the databus. The microgpu databus is
@@ -33,7 +36,7 @@ size_t mgpu_databus_get_size(void);
  * provided must be allocated to the size specified in the return value of
  * `mgpu_databus_get_size()`.
  */
-Mgpu_Databus* mgpu_databus_init(void *memory, Mgpu_DataBusOptions *options);
+Mgpu_Databus *mgpu_databus_init(void *memory, Mgpu_DataBusOptions *options);
 
 /*
  * Tears down the databus.
@@ -43,14 +46,14 @@ Mgpu_Databus* mgpu_databus_init(void *memory, Mgpu_DataBusOptions *options);
 void mgpu_databus_uninit(Mgpu_Databus *databus);
 
 /*
- * Blocks and waits for the databus to receive its next packet. Any previously
- * received packets *must* be discarded before this is called, as the packet's
- * memory may be overwritten by the next packet is received. The packet's bytes
- * will no longer be valid after a call to `mgpu_databus_uninit()`.
+ * Blocks and waits for the next operation to be received over the databus.
+ * Returns true if the passed in operation struct was populated, or false if
+ * an error occurred and the struct could not be filled in.
  */
-Mgpu_Received_Packet mgpu_databus_get_next_packet(Mgpu_Databus *databus);
+bool mgpu_databus_get_next_packet(Mgpu_Databus *databus, Mgpu_Operation *operation);
 
 /*
- * Sends byte data to the controlling device over the databus.
+ * Sends the specified response to the controller over the databus. Almost always
+ * triggered in reaction to an operation that requested a response.
  */
-void mgpu_databus_send_packet(Mgpu_Databus *databus, uint8_t* bytes, size_t size);
+void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response);
