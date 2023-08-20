@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "rectangle.h"
 
-void mgpu_draw_rectangle(Mgpu_Op_DrawRectangle *drawRectangle, Mgpu_FrameBuffer *frameBuffer) {
+void mgpu_draw_rectangle(Mgpu_DrawRectangleOperation *drawRectangle, Mgpu_FrameBuffer *frameBuffer) {
     if (drawRectangle->startX >= frameBuffer->width || drawRectangle->startY >= frameBuffer->height) {
         // It starts out of bounds, so nothing to draw.
         return;

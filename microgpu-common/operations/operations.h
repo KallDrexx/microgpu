@@ -28,7 +28,7 @@ typedef struct {
      * A scale factor of 0 is invalid
      */
     uint8_t frameBufferScale;
-} Mgpu_Op_Initialize;
+} Mgpu_InitializeOperation;
 
 /*
  * Operation to draw a filled in rectangle to the framebuffer.
@@ -36,7 +36,7 @@ typedef struct {
 typedef struct {
     uint16_t startX, startY, width, height;
     Mgpu_Color color;
-} Mgpu_Op_DrawRectangle;
+} Mgpu_DrawRectangleOperation;
 
 /*
  * Operation to draw a filled in triangle between three defined points.
@@ -44,7 +44,7 @@ typedef struct {
 typedef struct {
     uint16_t x0, y0, x1, y1, x2, y2;
     Mgpu_Color color;
-} Mgpu_Op_DrawTriangle;
+} Mgpu_DrawTriangleOperation;
 
 /*
  * Single type that can represent any type of operation that
@@ -53,9 +53,9 @@ typedef struct {
 typedef struct {
     Mgpu_OperationType type;
     union {
-        Mgpu_Op_Initialize initialize;
-        Mgpu_Op_DrawRectangle drawRectangle;
-        Mgpu_Op_DrawTriangle drawTriangle;
+        Mgpu_InitializeOperation initialize;
+        Mgpu_DrawRectangleOperation drawRectangle;
+        Mgpu_DrawTriangleOperation drawTriangle;
     };
 } Mgpu_Operation;
 

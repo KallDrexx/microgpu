@@ -35,7 +35,7 @@ bool setup(void) {
     memory = malloc(frameBufferBytes);
     framebuffer = mgpu_framebuffer_new(memory, width, height);
 
-    Mgpu_Op_DrawTriangle triangleOperation = {
+    Mgpu_DrawTriangleOperation triangleOperation = {
             .color = mgpu_color_from_rgb888(255, 0, 0),
             .x0 = 20, .y0 = 440,
             .x1 = 620, .y1 = 30,

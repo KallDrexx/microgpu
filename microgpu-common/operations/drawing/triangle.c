@@ -15,7 +15,7 @@ typedef struct {
     float slope;
 } PointPair;
 
-Triangle get_sorted_points(Mgpu_Op_DrawTriangle *operation) {
+Triangle get_sorted_points(Mgpu_DrawTriangleOperation *operation) {
     Point p1 = {.x = operation->x0, .y = operation->y0};
     Point p2 = {.x = operation->x1, .y = operation->y1};
     Point p3 = {.x = operation->x2, .y = operation->y2};
@@ -96,7 +96,7 @@ void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBu
     }
 }
 
-void mgpu_draw_triangle(Mgpu_Op_DrawTriangle *operation, Mgpu_FrameBuffer *frameBuffer) {
+void mgpu_draw_triangle(Mgpu_DrawTriangleOperation *operation, Mgpu_FrameBuffer *frameBuffer) {
     Triangle triangle = get_sorted_points(operation);
     draw_triangle(triangle.p0, triangle.p1, triangle.p2, frameBuffer, operation->color);
 }

@@ -2,4 +2,4 @@
 
 #include "../operations.h"
 
-void mgpu_draw_rectangle(Mgpu_Op_DrawRectangle *drawRectangle, Mgpu_FrameBuffer *frameBuffer);
+void mgpu_draw_rectangle(Mgpu_DrawRectangleOperation *drawRectangle, Mgpu_FrameBuffer *frameBuffer);
