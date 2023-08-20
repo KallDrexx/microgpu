@@ -11,9 +11,11 @@ add_executable(microgpu_sdl_fw
         input.c
         ../microgpu-common/framebuffer.c
         ../microgpu-common/color_rgb565.c
-        ../microgpu-common/operations/operations.c
+        ../microgpu-common/operation_execution.c
         ../microgpu-common/operations/drawing/rectangle.c
         ../microgpu-common/operations/drawing/triangle.c
+        ../microgpu-common/operations/status.c
+        null_databus.c
 )
 
 target_compile_definitions(microgpu_sdl_fw PUBLIC MGPU_COLOR_MODE_USE_RGB565)

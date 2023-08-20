@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "operations/operations.h"
+#include "operations.h"
 #include "responses.h"
 
 /*
@@ -19,17 +19,9 @@ typedef struct Mgpu_Databus Mgpu_Databus;
 typedef struct Mgpu_DatabusOptions Mgpu_DataBusOptions;
 
 /*
- * Bytes received by the databus
- */
-typedef struct {
-    int8_t *bytes;
-    size_t size;
-} Mgpu_Received_Packet;
-
-/*
  * Gets the size of memory required to be allocated in order to instantiate the databus.
  */
-size_t mgpu_databus_get_size(void);
+size_t mgpu_databus_get_size(Mgpu_DataBusOptions *options);
 
 /*
  * Initializes the databus using the passed in pre-allocated memory. The memory area

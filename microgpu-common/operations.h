@@ -1,8 +1,9 @@
 #pragma once
 
 #include <stdint.h>
-#include "../color.h"
-#include "../framebuffer.h"
+#include "color.h"
+#include "framebuffer.h"
+#include "display.h"
 
 /*
  * What type of operations are supported
@@ -11,6 +12,8 @@ typedef enum {
     Mgpu_Operation_Initialize = 1,
     Mgpu_Operation_DrawRectangle,
     Mgpu_Operation_DrawTriangle,
+    Mgpu_Operation_GetStatus,
+    Mgpu_Operation_GetLastMessage,
 } Mgpu_OperationType;
 
 /*
@@ -58,5 +61,3 @@ typedef struct {
         Mgpu_DrawTriangleOperation drawTriangle;
     };
 } Mgpu_Operation;
-
-void mgpu_execute_operation(Mgpu_Operation *operation, Mgpu_FrameBuffer *frameBuffer);

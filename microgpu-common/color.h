@@ -34,6 +34,11 @@ void mgpu_color_get_rgb565(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8
 #endif // MGPU_COLOR_MODE_USE_RGB565
 
 /*
+ * Gets the active color mode supported by the system
+ */
+Mgpu_ColorMode mgpu_color_get_mode(void);
+
+/*
  * Creates a color based on rgb values. Each value assumed to be between
  * 0 and 255, and will be converted to the proper color space as needed.
  */

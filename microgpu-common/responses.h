@@ -40,5 +40,6 @@ typedef struct {
     Mgpu_ResponseType type;
     union {
         Mgpu_StatusResponse status;
+        Mgpu_LastMessageResponse lastMessage;
     };
 } Mgpu_Response;
