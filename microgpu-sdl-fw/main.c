@@ -6,7 +6,7 @@
 #include "microgpu-common/operations.h"
 #include "microgpu-common/operation_execution.h"
 #include "input.h"
-#include "null_databus.h"
+#include "basic_databus.h"
 
 #define FPS 60
 #define FRAME_TARGET_TIME (1000/FPS)
@@ -18,36 +18,6 @@ uint16_t width, height;
 Mgpu_Sdl_Input input;
 Mgpu_FrameBuffer framebuffer;
 struct Mgpu_DataBusOptions dataBusOptions;
-
-void executeTestOps(void) {
-    Mgpu_DrawTriangleOperation triangleOperation = {
-            .color = mgpu_color_from_rgb888(255, 0, 0),
-            .x0 = 20, .y0 = 440,
-            .x1 = 620, .y1 = 30,
-            .x2 = 600, .y2 = 400,
-    };
-
-    Mgpu_Operation operation = {
-            .type = Mgpu_Operation_DrawTriangle,
-            .drawTriangle = triangleOperation,
-    };
-
-    mgpu_execute_operation(&operation, &framebuffer, display, databus);
-
-    Mgpu_Operation statusOp = {.type = Mgpu_Operation_GetStatus};
-    mgpu_execute_operation(&statusOp, &framebuffer, display, databus);
-
-    Mgpu_Response response;
-    mgpu_null_databus_get_last_response(databus, &response);
-
-    assert(response.type == Mgpu_Response_Status);
-
-    SDL_Log("Status received\n");
-    SDL_Log("Display: %ux%u\n", response.status.displayWidth, response.status.displayHeight);
-    SDL_Log("Framebuffer: %ux%u\n", response.status.frameBufferWidth, response.status.frameBufferHeight);
-    SDL_Log("Color mode: %u\n", response.status.colorMode);
-    SDL_Log("Is Initialized: %u\n", response.status.isInitialized);
-}
 
 bool setup(void) {
     size_t databusSize = mgpu_databus_get_size((Mgpu_DataBusOptions *) &dataBusOptions);
@@ -72,11 +42,6 @@ bool setup(void) {
         return false;
     }
 
-    mgpu_display_get_dimensions(display, &width, &height);
-    size_t frameBufferBytes = mgpu_framebuffer_get_required_buffer_size(width, height);
-    memory = malloc(frameBufferBytes);
-    framebuffer = mgpu_framebuffer_new(memory, width, height);
-
     return true;
 }
 
@@ -87,10 +52,76 @@ void process_input(void) {
     }
 }
 
+void handleResponse(Mgpu_Response *response) {
+    switch (response->type) {
+        case Mgpu_Response_Status:
+            SDL_Log("Status received\n");
+            SDL_Log("Display: %ux%u\n", response->status.displayWidth, response->status.displayHeight);
+            SDL_Log("Framebuffer: %ux%u\n", response->status.frameBufferWidth, response->status.frameBufferHeight);
+            SDL_Log("Color mode: %u\n", response->status.colorMode);
+            SDL_Log("Is Initialized: %u\n\n", response->status.isInitialized);
+            break;
+
+        default:
+            break;
+    }
+}
+
+int databus_loop() {
+    Mgpu_Operation operation;
+    Mgpu_Response response;
+    while (isRunning) {
+        if (mgpu_databus_get_next_operation(databus, &operation)) {
+            mgpu_execute_operation(&operation, &framebuffer, display, databus);
+            if (mgpu_basic_databus_get_last_response(databus, &response)) {
+                handleResponse(&response);
+            }
+        }
+    }
+
+    mgpu_databus_uninit(databus);
+    free(databus);
+
+    return 0;
+}
+
+void wait_for_init_op() {
+    SDL_Log("Waiting for initialization operation\n");
+    Mgpu_Operation operation;
+    Mgpu_Response response;
+    while (isRunning) {
+        bool hasOperation = mgpu_databus_get_next_operation(databus, &operation);
+        if (hasOperation) {
+            if (operation.type == Mgpu_Operation_Initialize) {
+                break;
+            }
+
+            if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
+                // Can't respond to other operations before initialization
+                mgpu_execute_operation(&operation, &framebuffer, display, databus);
+                if (mgpu_basic_databus_get_last_response(databus, &response)) {
+                    handleResponse(&response);
+                }
+            }
+        }
+    }
+
+    mgpu_display_get_dimensions(display, &width, &height);
+    width /= operation.initialize.frameBufferScale;
+    height /= operation.initialize.frameBufferScale;
+
+    size_t frameBufferBytes = mgpu_framebuffer_get_required_buffer_size(width, height);
+    void *memory = malloc(frameBufferBytes);
+    framebuffer = mgpu_framebuffer_new(memory, width, height);
+
+    SDL_Log("Initialization operation applied\n");
+}
+
 int main(int argc, char *args[]) {
     isRunning = setup();
     if (isRunning) {
-        executeTestOps();
+        wait_for_init_op();
+        SDL_CreateThread(databus_loop, "Databus Loop", NULL);
     }
 
     uint32_t previousFrameTime = 0;

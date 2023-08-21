@@ -42,7 +42,7 @@ void mgpu_databus_uninit(Mgpu_Databus *databus);
  * Returns true if the passed in operation struct was populated, or false if
  * an error occurred and the struct could not be filled in.
  */
-bool mgpu_databus_get_next_packet(Mgpu_Databus *databus, Mgpu_Operation *operation);
+bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *operation);
 
 /*
  * Sends the specified response to the controller over the databus. Almost always

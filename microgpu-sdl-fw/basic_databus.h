@@ -10,4 +10,4 @@ struct Mgpu_DataBusOptions {
     void *nothing;
 };
 
-bool mgpu_null_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *response);
+bool mgpu_basic_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *response);

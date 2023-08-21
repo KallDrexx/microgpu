@@ -95,10 +95,11 @@ void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_
 void mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
     assert(display != NULL);
     assert(frameBuffer != NULL);
-    assert(frameBuffer->width == display->width);
-    assert(frameBuffer->height == display->height);
+    assert(frameBuffer->width > 0);
+    assert(frameBuffer->height > 0);
 
     // Apply the frame buffer to the pixel buffer
+    // TODO: Add scaling
     size_t pixelCount = frameBuffer->width * frameBuffer->height;
     for (size_t x = 0; x < pixelCount; x++) {
         uint8_t red, green, blue;
