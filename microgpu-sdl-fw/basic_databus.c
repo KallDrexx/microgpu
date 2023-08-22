@@ -48,12 +48,12 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
         case 4:
             operation->type = Mgpu_Operation_DrawTriangle;
-            operation->drawTriangle.x0 = 500;
-            operation->drawTriangle.y0 = 300;
-            operation->drawTriangle.x1 = 450;
-            operation->drawTriangle.y1 = 400;
-            operation->drawTriangle.x2 = 550;
-            operation->drawTriangle.y2 = 400;
+            operation->drawTriangle.x0 = 60;
+            operation->drawTriangle.y0 = 10;
+            operation->drawTriangle.x1 = 30;
+            operation->drawTriangle.y1 = 100;
+            operation->drawTriangle.x2 = 90;
+            operation->drawTriangle.y2 = 100;
             operation->drawTriangle.color = mgpu_color_from_rgb888(0, 255, 0);
             operationCount++;
             return true;

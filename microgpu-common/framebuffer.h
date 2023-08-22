@@ -6,6 +6,7 @@ typedef struct {
     Mgpu_Color *pixels;
     uint16_t width;
     uint16_t height;
+    uint8_t scale;
 } Mgpu_FrameBuffer;
 
 /*
@@ -27,4 +28,4 @@ size_t mgpu_framebuffer_get_required_buffer_size(uint16_t width, uint16_t height
  * The caller assumes responsibility of freeing the buffer once they discard the
  * framebuffer.
  */
-Mgpu_FrameBuffer mgpu_framebuffer_new(void *memory, uint16_t width, uint16_t height);
+Mgpu_FrameBuffer mgpu_framebuffer_init(void *memory, uint16_t width, uint16_t height, uint8_t scale);

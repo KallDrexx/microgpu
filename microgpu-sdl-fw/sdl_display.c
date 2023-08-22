@@ -6,6 +6,49 @@
 #define WINDOW_HEIGHT 480
 #define WINDOW_WIDTH 640
 
+void transfer_framebuffer(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
+    Mgpu_Color *source = frameBuffer->pixels;
+    uint32_t *target = display->pixelBuffer;
+    uint16_t colPadding = display->width - (frameBuffer->width * frameBuffer->scale);
+    uint16_t rowPadding = display->height - (frameBuffer->height * frameBuffer->scale);
+
+    for (int row = 0; row < frameBuffer->height; row++) {
+        for (int rowScale = 0; rowScale < frameBuffer->scale; rowScale++) {
+            if (rowScale > 0) {
+                // Reset back to the start of the line to duplicate the previous line.
+                // A memcopy() is probably faster, but the point of sdl implementation isn't speed.
+                source -= frameBuffer->width;
+            }
+
+            for (int col = 0; col < frameBuffer->width; col++) {
+                for (int colScale = 0; colScale < frameBuffer->scale; colScale++) {
+                    uint8_t red, green, blue;
+                    mgpu_color_get_rgb888(*source, &red, &green, &blue);
+                    uint32_t color = ((uint32_t) red << 16) | ((uint32_t) green << 8) | blue;
+                    *target = color;
+                    target++;
+                }
+                source++;
+            }
+
+            // Add any padding to make sure non-exact scaling doesn't cause
+            // pixel shifting / starts next pixel on the correct row.
+            for (int col = 0; col < colPadding; col++) {
+                *target = 0; // black
+                target++;
+            }
+        }
+    }
+
+    // Add row padding
+    for (int row = 0; row < rowPadding; row++) {
+        for (int col = 0; col < display->width; col++) {
+            *target = 0; // black
+            target++;
+        }
+    }
+}
+
 size_t mgpu_display_get_size() {
     // Since using SDL guarantees we are running on pc, and thus have more
     // malloc freedom, we'll malloc all the internal elements ourselves,
@@ -98,15 +141,7 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
     assert(frameBuffer->width > 0);
     assert(frameBuffer->height > 0);
 
-    // Apply the frame buffer to the pixel buffer
-    // TODO: Add scaling
-    size_t pixelCount = frameBuffer->width * frameBuffer->height;
-    for (size_t x = 0; x < pixelCount; x++) {
-        uint8_t red, green, blue;
-        mgpu_color_get_rgb888(frameBuffer->pixels[x], &red, &green, &blue);
-        uint32_t color = ((uint32_t) red << 16) | ((uint32_t) green << 8) | blue;
-        display->pixelBuffer[x] = color;
-    }
+    transfer_framebuffer(display, frameBuffer);
 
     // Push the pixel buffer to the screen
     SDL_UpdateTexture(

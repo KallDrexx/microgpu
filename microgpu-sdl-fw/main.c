@@ -112,7 +112,7 @@ void wait_for_init_op() {
 
     size_t frameBufferBytes = mgpu_framebuffer_get_required_buffer_size(width, height);
     void *memory = malloc(frameBufferBytes);
-    framebuffer = mgpu_framebuffer_new(memory, width, height);
+    framebuffer = mgpu_framebuffer_init(memory, width, height, operation.initialize.frameBufferScale);
 
     SDL_Log("Initialization operation applied\n");
 }
