@@ -61,12 +61,12 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         case 5:
             operation->type = 999;
             operationCount++;
-            break;
+            return true;
 
         case 6:
             operation->type = Mgpu_Operation_GetLastMessage;
             operationCount++;
-            break;
+            return true;
 
         default:
             SDL_Delay(1000);

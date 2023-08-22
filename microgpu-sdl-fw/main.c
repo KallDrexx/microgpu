@@ -71,7 +71,7 @@ void handleResponse(Mgpu_Response *response) {
     }
 }
 
-int databus_loop() {
+int databus_loop(void *data) {
     Mgpu_Operation operation;
     Mgpu_Response response;
     while (isRunning) {
