@@ -62,6 +62,10 @@ void handleResponse(Mgpu_Response *response) {
             SDL_Log("Is Initialized: %u\n\n", response->status.isInitialized);
             break;
 
+        case Mgpu_Response_LastMessage:
+            SDL_Log("GetLastMessage response received: %s", response->lastMessage.message);
+            break;
+
         default:
             break;
     }

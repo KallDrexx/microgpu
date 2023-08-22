@@ -23,13 +23,12 @@ typedef struct {
 } Mgpu_StatusResponse;
 
 /*
- * Sends the last message raised by the microgpu system, usually in response
+ * Sends the last lastMessage raised by the microgpu system, usually in response
  * to the latest operation that was requested.
  *
- * The message is a null terminated string.
+ * The lastMessage is a null terminated string.
  */
 typedef struct {
-    bool isError;
     char *message;
 } Mgpu_LastMessageResponse;
 
