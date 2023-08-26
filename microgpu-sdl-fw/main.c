@@ -122,6 +122,8 @@ void wait_for_init_op() {
 }
 
 int main(int argc, char *args[]) {
+    SDL_Log("Color size: %u\n", sizeof(Mgpu_Color));
+
     isRunning = setup();
     if (isRunning) {
         wait_for_init_op();
