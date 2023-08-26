@@ -2,6 +2,8 @@
 #include <SDL.h>
 #include "basic_databus.h"
 
+#define RESET_OPERATION_ID 250
+
 bool hasResponse;
 Mgpu_Response lastSeenResponse;
 uint16_t operationCount;
@@ -11,6 +13,8 @@ size_t mgpu_databus_get_size(Mgpu_DataBusOptions *options) {
 }
 
 Mgpu_Databus *mgpu_databus_init(void *memory, Mgpu_DataBusOptions *options) {
+    hasResponse = false;
+    operationCount = 0;
     return memory;
 }
 
@@ -73,6 +77,11 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operationCount++;
             return true;
 
+        case RESET_OPERATION_ID:
+            operation->type = Mgpu_Operation_Reset;
+            operationCount++;
+            return true;
+
         default:
             SDL_Delay(1000);
             return false;
@@ -104,4 +113,8 @@ bool mgpu_basic_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *
     }
 
     return false;
+}
+
+void mgpu_basic_databus_trigger_reset(Mgpu_Databus *databus) {
+    operationCount = RESET_OPERATION_ID;
 }

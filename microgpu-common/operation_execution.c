@@ -6,12 +6,14 @@
 #include "microgpu-common/operations/drawing/triangle.h"
 #include "microgpu-common/operations/get_last_message.h"
 #include "microgpu-common/operations/present_framebuffer.h"
+#include "microgpu-common/operations/reset.h"
 #include "microgpu-common/operations/status.h"
 
 void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_FrameBuffer *frameBuffer,
                             Mgpu_Display *display,
-                            Mgpu_Databus *databus) {
+                            Mgpu_Databus *databus,
+                            bool *resetFlag) {
     // Don't clear the last operation's message if the next operation
     // being requested is to get the latest message
     if (operation->type != Mgpu_Operation_GetLastMessage) {
@@ -37,6 +39,10 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
 
         case Mgpu_Operation_PresentFramebuffer:
             mgpu_exec_present_framebuffer(display, frameBuffer);
+            break;
+
+        case Mgpu_Operation_Reset:
+            mgpu_exec_reset(resetFlag);
             break;
 
         default:

@@ -11,4 +11,5 @@
 void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_FrameBuffer *frameBuffer,
                             Mgpu_Display *display,
-                            Mgpu_Databus *databus);
+                            Mgpu_Databus *databus,
+                            bool *resetFlag);

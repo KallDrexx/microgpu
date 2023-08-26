@@ -11,3 +11,5 @@ struct Mgpu_DataBusOptions {
 };
 
 bool mgpu_basic_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *response);
+
+void mgpu_basic_databus_trigger_reset(Mgpu_Databus *databus);

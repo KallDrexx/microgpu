@@ -76,6 +76,11 @@ bool deserialize_present_framebuffer(Mgpu_Operation *operation) {
     return true;
 }
 
+bool deserialize_reset(Mgpu_Operation *operation) {
+    operation->type = Mgpu_Operation_Reset;
+    return true;
+}
+
 bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     assert(bytes != NULL);
     assert(operation != NULL);
@@ -103,6 +108,9 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
 
         case Mgpu_Operation_PresentFramebuffer:
             return deserialize_present_framebuffer(operation);
+
+        case Mgpu_Operation_Reset:
+            return deserialize_reset(operation);
 
         default:
             return false;

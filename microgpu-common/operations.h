@@ -43,6 +43,11 @@ typedef enum {
      * Sends the frame buffer to the display for presentation.
      */
     Mgpu_Operation_PresentFramebuffer,
+
+    /*
+     * Requests the microgpu to initialize itself and fully reset itself.
+     */
+    Mgpu_Operation_Reset = 189, // Higher value that's hard to see accidentally
 } Mgpu_OperationType;
 
 typedef struct {

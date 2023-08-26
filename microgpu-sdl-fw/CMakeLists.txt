@@ -8,7 +8,6 @@ find_package(SDL2 CONFIG REQUIRED)
 add_executable(microgpu_sdl_fw
         main.c
         basic_databus.c
-        input.c
         sdl_display.c
         ../microgpu-common/color_rgb565.c
         ../microgpu-common/framebuffer.c
@@ -20,6 +19,8 @@ add_executable(microgpu_sdl_fw
         ../microgpu-common/operations/get_last_message.c
         ../microgpu-common/operations/present_framebuffer.c
         ../microgpu-common/operations/status.c
+        ../microgpu-common/operations/reset.c
+        ../microgpu-common/operations/reset.h
 )
 
 target_compile_definitions(microgpu_sdl_fw PUBLIC MGPU_COLOR_MODE_USE_RGB565)
