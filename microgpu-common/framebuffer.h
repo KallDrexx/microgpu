@@ -1,5 +1,6 @@
 #pragma once
 
+#include "alloc.h"
 #include "color.h"
 
 typedef struct {
@@ -7,25 +8,24 @@ typedef struct {
     uint16_t width;
     uint16_t height;
     uint8_t scale;
+    const Mgpu_Allocator *allocator;
 } Mgpu_FrameBuffer;
 
 /*
- * Returns the number of bytes that need to be allocated for the frame buffer's
- * pixel data based on the number of horizontal and vertical pixelBuffer for the
- * framebuffer. This can be used by the callers to allocate the memory however
- * they feel (stack or heap).
+ * Creates a new framebuffer based on the a specified height and width (in pixels). The
+ * frame buffer's width and height will be adjusted based on the passed in scale factor.
+ * So if an original width and height of 320x240 is passed in with a scale factor of 2, then
+ * the frame buffer will have a width and height 160x120.
+ *
+ * A scale factor of 1 or greater is required, a scale factor of zero is invalid.
  */
-size_t mgpu_framebuffer_get_required_buffer_size(uint16_t width, uint16_t height);
+Mgpu_FrameBuffer *mgpu_framebuffer_new(uint16_t originalWidth,
+                                       uint16_t originalHeight,
+                                       uint8_t scaleFactor,
+                                       const Mgpu_Allocator *allocator);
 
 /*
- * Creates a new framebuffer using the provided memory area for the pixel buffer.
- * The memory pointer passed in is assumed to be correctly pre-allocated based
- * on the size returned in `mgpu_framebuffer_get_required_buffer_size()`. It also
- * assumes that the width and height provided is the same as well.
- *
- * The frame buffer will be initialized to all black pixelBuffer.
- *
- * The caller assumes responsibility of freeing the buffer once they discard the
- * framebuffer.
+ * Uninitializes the framebuffer and deallocates all memory used by it, including the framebuffer
+ * pointer itself.
  */
-Mgpu_FrameBuffer mgpu_framebuffer_init(void *memory, uint16_t width, uint16_t height, uint8_t scale);
+void mgpu_framebuffer_free(Mgpu_FrameBuffer *frameBuffer);

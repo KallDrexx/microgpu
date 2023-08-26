@@ -20,7 +20,7 @@ bool isRunning, resetRequested;
 Mgpu_Display *display;
 Mgpu_Databus *databus;
 uint16_t width, height;
-Mgpu_FrameBuffer framebuffer;
+Mgpu_FrameBuffer *framebuffer;
 Mgpu_DatabusOptions dataBusOptions;
 
 bool setup(void) {
@@ -63,7 +63,7 @@ int databus_loop(void *data) {
     Mgpu_Response response;
     while (isRunning) {
         if (mgpu_databus_get_next_operation(databus, &operation)) {
-            mgpu_execute_operation(&operation, &framebuffer, display, databus, &resetRequested);
+            mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
             if (mgpu_basic_databus_get_last_response(databus, &response)) {
                 handleResponse(&response);
             }
@@ -89,7 +89,7 @@ void wait_for_init_op() {
 
             if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
                 // Can't respond to other operations before initialization
-                mgpu_execute_operation(&operation, &framebuffer, display, databus, &resetRequested);
+                mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
                 if (mgpu_basic_databus_get_last_response(databus, &response)) {
                     handleResponse(&response);
                 }
@@ -98,12 +98,11 @@ void wait_for_init_op() {
     }
 
     mgpu_display_get_dimensions(display, &width, &height);
-    width /= operation.initialize.frameBufferScale;
-    height /= operation.initialize.frameBufferScale;
-
-    size_t frameBufferBytes = mgpu_framebuffer_get_required_buffer_size(width, height);
-    void *memory = malloc(frameBufferBytes);
-    framebuffer = mgpu_framebuffer_init(memory, width, height, operation.initialize.frameBufferScale);
+    framebuffer = mgpu_framebuffer_new(width, height, operation.initialize.frameBufferScale, &basicAllocator);
+    if (framebuffer == NULL) {
+        fprintf(stderr, "Framebuffer failed to be created\n");
+        exit(1);
+    }
 
     SDL_Log("Initialization operation applied\n");
 }
@@ -165,7 +164,9 @@ void start_sdl_system(void) {
     SDL_WaitThread(databusThread, NULL);
 
     SDL_Log("Finishing tear down\n");
-    free(framebuffer.pixels);
+    mgpu_framebuffer_free(framebuffer);
+    framebuffer = NULL;
+
     mgpu_display_free(display);
     display = NULL;
 }
@@ -175,8 +176,6 @@ int main(int argc, char *args[]) {
 
     while (true) {
         resetRequested = false;
-        framebuffer.width = 0;
-        framebuffer.height = 0;
         start_sdl_system();
         if (!resetRequested) {
             // User specifically requested closing but not a reset, so actually exit
