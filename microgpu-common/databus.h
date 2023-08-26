@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "alloc.h"
 #include "operations.h"
 #include "responses.h"
 
@@ -16,26 +17,17 @@ typedef struct Mgpu_Databus Mgpu_Databus;
  * Implementation specific structure that provides options for configuration
  * of the databus.
  */
-typedef struct Mgpu_DatabusOptions Mgpu_DataBusOptions;
+typedef struct Mgpu_DatabusOptions Mgpu_DatabusOptions;
 
 /*
- * Gets the size of memory required to be allocated in order to instantiate the databus.
+ * Creates a new databus based on the passed in options.
  */
-size_t mgpu_databus_get_size(Mgpu_DataBusOptions *options);
+Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator);
 
 /*
- * Initializes the databus using the passed in pre-allocated memory. The memory area
- * provided must be allocated to the size specified in the return value of
- * `mgpu_databus_get_size()`.
+ * Uninitializes the databus and frees all memory allocated for it.
  */
-Mgpu_Databus *mgpu_databus_init(void *memory, Mgpu_DataBusOptions *options);
-
-/*
- * Tears down the databus.
- *
- * The caller is responsible for deallocating the memory of the overall databus pointer.
- */
-void mgpu_databus_uninit(Mgpu_Databus *databus);
+void mgpu_databus_free(Mgpu_Databus *databus);
 
 /*
  * Blocks and waits for the next operation to be received over the databus.

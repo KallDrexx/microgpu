@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL.h>
+#include "microgpu-common/alloc.h"
 #include "microgpu-common/operations.h"
 #include "microgpu-common/operation_execution.h"
 #include "basic_databus.h"
@@ -10,31 +11,26 @@
 #define FPS 60
 #define FRAME_TARGET_TIME (1000/FPS)
 
+static const Mgpu_Allocator basicAllocator = {
+        .Mgpu_AllocateFn = malloc,
+        .Mgpu_FreeFn = free,
+};
+
 bool isRunning, resetRequested;
 Mgpu_Display *display;
 Mgpu_Databus *databus;
 uint16_t width, height;
 Mgpu_FrameBuffer framebuffer;
-struct Mgpu_DataBusOptions dataBusOptions;
+Mgpu_DatabusOptions dataBusOptions;
 
 bool setup(void) {
-    size_t databusSize = mgpu_databus_get_size((Mgpu_DataBusOptions *) &dataBusOptions);
-    void *memory = malloc(databusSize);
-    if (memory == NULL) {
-        fprintf(stderr, "Failed to initialize initial databus memory\n");
+    databus = mgpu_databus_new(&dataBusOptions, &basicAllocator);
+    if (databus == NULL) {
+        fprintf(stderr, "Failed to initialize databus.\n");
         return false;
     }
 
-    databus = mgpu_databus_init(memory, (Mgpu_DataBusOptions *) &dataBusOptions);
-
-    size_t displaySize = mgpu_display_get_size();
-    memory = malloc(displaySize);
-    if (memory == NULL) {
-        fprintf(stderr, "Failed to initialize initial display memory\n");
-        return false;
-    }
-
-    display = mgpu_display_init(memory);
+    display = mgpu_display_new(&basicAllocator);
     if (display == NULL) {
         fprintf(stderr, "Failed to initialize display\n");
         return false;
@@ -74,8 +70,8 @@ int databus_loop(void *data) {
         }
     }
 
-    mgpu_databus_uninit(databus);
-    free(databus);
+    mgpu_databus_free(databus);
+    databus = NULL;
 
     return 0;
 }
@@ -170,8 +166,8 @@ void start_sdl_system(void) {
 
     SDL_Log("Finishing tear down\n");
     free(framebuffer.pixels);
-    mgpu_display_uninit(display);
-    free(display);
+    mgpu_display_free(display);
+    display = NULL;
 }
 
 int main(int argc, char *args[]) {

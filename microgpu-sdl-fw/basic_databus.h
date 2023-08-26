@@ -3,10 +3,10 @@
 #include "microgpu-common/databus.h"
 
 struct Mgpu_Databus {
-    void *nothing;
+    const Mgpu_Allocator *allocator;
 };
 
-struct Mgpu_DataBusOptions {
+struct Mgpu_DatabusOptions {
     void *nothing;
 };
 

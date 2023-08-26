@@ -8,17 +8,28 @@ bool hasResponse;
 Mgpu_Response lastSeenResponse;
 uint16_t operationCount;
 
-size_t mgpu_databus_get_size(Mgpu_DataBusOptions *options) {
-    return sizeof(struct Mgpu_Databus);
-}
+Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
+    assert(options != NULL);
+    assert(allocator != NULL);
 
-Mgpu_Databus *mgpu_databus_init(void *memory, Mgpu_DataBusOptions *options) {
+    Mgpu_Databus *databus = allocator->Mgpu_AllocateFn(sizeof(Mgpu_Databus));
+    databus->allocator = allocator;
+
+    if (databus == NULL) {
+        return NULL;
+    }
+
     hasResponse = false;
     operationCount = 0;
-    return memory;
+
+    return databus;
 }
 
-void mgpu_databus_uninit(Mgpu_Databus *databus) {}
+void mgpu_databus_free(Mgpu_Databus *databus) {
+    if (databus != NULL) {
+        databus->allocator->Mgpu_FreeFn(databus);
+    }
+}
 
 bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
     assert(operation != NULL);

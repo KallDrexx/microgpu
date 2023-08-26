@@ -49,17 +49,16 @@ void transfer_framebuffer(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) 
     }
 }
 
-size_t mgpu_display_get_size() {
-    // Since using SDL guarantees we are running on pc, and thus have more
-    // malloc freedom, we'll malloc all the internal elements ourselves,
-    // especially since we won't know the size of most SDL types afaik.
-    return sizeof(Mgpu_Display);
-}
+Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator) {
+    assert(allocator != NULL);
 
-Mgpu_Display *mgpu_display_init(void *memory) {
-    assert(memory != NULL);
+    Mgpu_Display *display = allocator->Mgpu_AllocateFn(sizeof(Mgpu_Display));
+    display->allocator = allocator;
+    if (display == NULL) {
+        fprintf(stderr, "NULL pointer returned from allocation function.\n");
+        return NULL;
+    }
 
-    Mgpu_Display *display = (Mgpu_Display *) memory;
     display->width = WINDOW_WIDTH;
     display->height = WINDOW_HEIGHT;
 
@@ -79,7 +78,7 @@ Mgpu_Display *mgpu_display_init(void *memory) {
 
     if (!display->window) {
         fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
-        mgpu_display_uninit(display);
+        mgpu_display_free(display);
 
         return NULL;
     }
@@ -87,7 +86,7 @@ Mgpu_Display *mgpu_display_init(void *memory) {
     display->renderer = SDL_CreateRenderer(display->window, -1, 0);
     if (!display->renderer) {
         fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
-        mgpu_display_uninit(display);
+        mgpu_display_free(display);
 
         return NULL;
     }
@@ -95,7 +94,7 @@ Mgpu_Display *mgpu_display_init(void *memory) {
     display->pixelBuffer = malloc(sizeof(uint32_t) * display->height * display->width);
     if (display->pixelBuffer == NULL) {
         fprintf(stderr, "Error allocating pixel buffer\n");
-        mgpu_display_uninit(display);
+        mgpu_display_free(display);
 
         return NULL;
     }
@@ -109,7 +108,7 @@ Mgpu_Display *mgpu_display_init(void *memory) {
 
     if (display->texture == NULL) {
         fprintf(stderr, "Failed to create texture: %s\n", SDL_GetError());
-        mgpu_display_uninit(display);
+        mgpu_display_free(display);
 
         return NULL;
     }
@@ -117,12 +116,14 @@ Mgpu_Display *mgpu_display_init(void *memory) {
     return display;
 }
 
-void mgpu_display_uninit(Mgpu_Display *display) {
+void mgpu_display_free(Mgpu_Display *display) {
     if (display != NULL) {
         // SDL_DestroyRenderer destroys associated textures, so we shouldn't do that ourselves
         SDL_DestroyRenderer(display->renderer);
         SDL_DestroyWindow(display->window);
-        free(display->pixelBuffer);
+        display->allocator->Mgpu_FreeFn(display->pixelBuffer);
+        display->pixelBuffer = NULL;
+        display->allocator->Mgpu_FreeFn(display);
     }
 }
 

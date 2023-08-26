@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include "alloc.h"
 #include "framebuffer.h"
 
 /*
@@ -9,27 +10,18 @@
 typedef struct Mgpu_Display Mgpu_Display;
 
 /*
- * Gets the amount of memory that needs to be allocated to create the display
+ * Creates a new display instance. Display instances will keep a reference
+ * to the allocator to ensure it uses the corresponding and correct free
+ * function for any deallocations.
  */
-size_t mgpu_display_get_size(void);
+Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator);
 
 /*
- * Creates a newly initialized display using the passed in memory. The memory pointer passed
- * in must be pre-allocated to the same amount of memory returned in the
- * `mgpu_display_get_size()` call.
- *
- * Will return a NULL pointer if initialization fails.
+ * De-initializes the display and frees memory the display had allocated
+ * to it. The pointer to the display will also be freed, and consumers should
+ * not refer to that address anymore.
  */
-Mgpu_Display *mgpu_display_init(void *memory);
-
-/*
- * Tears down the display.
- *
- * The caller is responsible for freeing the memory used by the
- * display pointer itself (the same memory that was passed into
- * `mgpu_display_init()`.
- */
-void mgpu_display_uninit(Mgpu_Display *display);
+void mgpu_display_free(Mgpu_Display *display);
 
 /*
  * Gets the number of horizontal and vertical pixels on the display being used.
