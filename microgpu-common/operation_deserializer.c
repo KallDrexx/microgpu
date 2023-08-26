@@ -76,7 +76,13 @@ bool deserialize_present_framebuffer(Mgpu_Operation *operation) {
     return true;
 }
 
-bool deserialize_reset(Mgpu_Operation *operation) {
+bool deserialize_reset(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
+    // Require magic bytes just to ensure the reset request was valid and wasn't caused
+    // by an incorrect read.
+    if (size < 4 || bytes[1] != 0x09 || bytes[2] != 0x13 || bytes[3] != 0xac) {
+        return false;
+    }
+
     operation->type = Mgpu_Operation_Reset;
     return true;
 }
@@ -110,7 +116,7 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
             return deserialize_present_framebuffer(operation);
 
         case Mgpu_Operation_Reset:
-            return deserialize_reset(operation);
+            return deserialize_reset(bytes, size, operation);
 
         default:
             return false;
