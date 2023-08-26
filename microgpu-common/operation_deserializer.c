@@ -18,13 +18,13 @@ Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex) 
 #error "No color mode specified"
 #endif
 
-bool deserialize_status_op(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    // No arguments
+bool deserialize_status_op(Mgpu_Operation *operation) {
+    operation->type = Mgpu_Operation_GetStatus;
     return true;
 }
 
-bool deserialize_last_message_op(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    // No arguments
+bool deserialize_last_message_op(Mgpu_Operation *operation) {
+    operation->type = Mgpu_Operation_GetLastMessage;
     return true;
 }
 
@@ -71,6 +71,11 @@ bool deserialize_draw_triangle(const uint8_t bytes[], size_t size, Mgpu_Operatio
     return true;
 }
 
+bool deserialize_present_framebuffer(Mgpu_Operation *operation) {
+    operation->type = Mgpu_Operation_PresentFramebuffer;
+    return true;
+}
+
 bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     assert(bytes != NULL);
     assert(operation != NULL);
@@ -85,16 +90,19 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
             return deserialize_initialize_op(bytes, size, operation);
 
         case Mgpu_Operation_GetStatus:
-            return deserialize_status_op(bytes, size, operation);
+            return deserialize_status_op(operation);
 
         case Mgpu_Operation_GetLastMessage:
-            return deserialize_last_message_op(bytes, size, operation);
+            return deserialize_last_message_op(operation);
 
         case Mgpu_Operation_DrawRectangle:
             return deserialize_draw_rectangle(bytes, size, operation);
 
         case Mgpu_Operation_DrawTriangle:
             return deserialize_draw_triangle(bytes, size, operation);
+
+        case Mgpu_Operation_PresentFramebuffer:
+            return deserialize_present_framebuffer(operation);
 
         default:
             return false;
