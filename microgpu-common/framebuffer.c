@@ -9,7 +9,7 @@ Mgpu_FrameBuffer mgpu_framebuffer_init(void *memory, uint16_t width, uint16_t he
     assert(memory != NULL);
 
     Mgpu_FrameBuffer framebuffer = {
-            .pixels = (Mgpu_Color *)memory,
+            .pixels = (Mgpu_Color *) memory,
             .height = height,
             .width = width,
             .scale = scale,

@@ -2,10 +2,11 @@
 #include "databus.h"
 #include "messages.h"
 #include "operations.h"
-#include "microgpu-common/operations/get_last_message.h"
-#include "microgpu-common/operations/status.h"
 #include "microgpu-common/operations/drawing/rectangle.h"
 #include "microgpu-common/operations/drawing/triangle.h"
+#include "microgpu-common/operations/get_last_message.h"
+#include "microgpu-common/operations/present_framebuffer.h"
+#include "microgpu-common/operations/status.h"
 
 void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_FrameBuffer *frameBuffer,
@@ -32,6 +33,10 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
 
         case Mgpu_Operation_GetLastMessage:
             mgpu_exec_get_last_message(databus);
+            break;
+
+        case Mgpu_Operation_PresentFramebuffer:
+            mgpu_exec_present_framebuffer(display, frameBuffer);
             break;
 
         default:

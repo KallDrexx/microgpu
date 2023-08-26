@@ -13,13 +13,13 @@ add_executable(microgpu_sdl_fw
         ../microgpu-common/color_rgb565.c
         ../microgpu-common/framebuffer.c
         ../microgpu-common/messages.c
+        ../microgpu-common/operation_deserializer.c
         ../microgpu-common/operation_execution.c
         ../microgpu-common/operations/drawing/rectangle.c
         ../microgpu-common/operations/drawing/triangle.c
-        ../microgpu-common/operations/status.c
         ../microgpu-common/operations/get_last_message.c
-        ../microgpu-common/operations/get_last_message.h
-        ../microgpu-common/operation_deserializer.c
+        ../microgpu-common/operations/present_framebuffer.c
+        ../microgpu-common/operations/status.c
 )
 
 target_compile_definitions(microgpu_sdl_fw PUBLIC MGPU_COLOR_MODE_USE_RGB565)

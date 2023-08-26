@@ -68,6 +68,11 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operationCount++;
             return true;
 
+        case 7:
+            operation->type = Mgpu_Operation_PresentFramebuffer;
+            operationCount++;
+            return true;
+
         default:
             SDL_Delay(1000);
             return false;

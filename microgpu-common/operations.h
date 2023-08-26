@@ -9,18 +9,42 @@
  * What type of operations are supported
  */
 typedef enum {
+    /*
+     * Operation to initialize the microgpu system. Must be provided before
+     * most other operations can operate and has no effect after a previous
+     * initialization call.
+     */
     Mgpu_Operation_Initialize = 1,
+
+    /*
+     * Operation to draw a filled in rectangle to the framebuffer.
+     */
     Mgpu_Operation_DrawRectangle,
+
+    /*
+     * Operation to draw a filled in triangle between three defined points.
+     */
     Mgpu_Operation_DrawTriangle,
+
+    /*
+     * Requests getting the status of the microgpu system. Can be requested
+     * prior to initialization, which is useful for getting the display
+     * resolution to compute framebuffer scale.
+     */
     Mgpu_Operation_GetStatus,
+
+    /*
+     * Requests the latest message raised by the microgpu system, which usually
+     * corresponds to the previously executed operation.
+     */
     Mgpu_Operation_GetLastMessage,
+
+    /*
+     * Sends the frame buffer to the display for presentation.
+     */
+    Mgpu_Operation_PresentFramebuffer,
 } Mgpu_OperationType;
 
-/*
- * Operation to initialize the microgpu system. Must be provided before
- * most other operations can operate and has no effect after a previous
- * initialization call.
- */
 typedef struct {
     /*
      * How much to scale the frame buffer down from the display resolution.
@@ -33,17 +57,11 @@ typedef struct {
     uint8_t frameBufferScale;
 } Mgpu_InitializeOperation;
 
-/*
- * Operation to draw a filled in rectangle to the framebuffer.
- */
 typedef struct {
     uint16_t startX, startY, width, height;
     Mgpu_Color color;
 } Mgpu_DrawRectangleOperation;
 
-/*
- * Operation to draw a filled in triangle between three defined points.
- */
 typedef struct {
     uint16_t x0, y0, x1, y1, x2, y2;
     Mgpu_Color color;

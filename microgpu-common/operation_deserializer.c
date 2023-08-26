@@ -5,13 +5,15 @@
 Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex);
 
 #ifdef MGPU_COLOR_MODE_USE_RGB565
-    Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex) {
-        uint8_t red = bytes[firstColorByteIndex] & 0xF8;
-        uint8_t green = (bytes[firstColorByteIndex] & 0x07) << 3 | (bytes[firstColorByteIndex + 1] & 0xE0);
-        uint8_t blue = bytes[firstColorByteIndex + 1] & 0x1F;
 
-        return mgpu_color_from_rgb565(red, green, blue);
-    }
+Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex) {
+    uint8_t red = bytes[firstColorByteIndex] & 0xF8;
+    uint8_t green = (bytes[firstColorByteIndex] & 0x07) << 3 | (bytes[firstColorByteIndex + 1] & 0xE0);
+    uint8_t blue = bytes[firstColorByteIndex + 1] & 0x1F;
+
+    return mgpu_color_from_rgb565(red, green, blue);
+}
+
 #else
 #error "No color mode specified"
 #endif
@@ -27,14 +29,14 @@ bool deserialize_last_message_op(const uint8_t bytes[], size_t size, Mgpu_Operat
 }
 
 bool deserialize_initialize_op(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-   if (size < 2) {
-       return false;
-   }
+    if (size < 2) {
+        return false;
+    }
 
-   operation->type = Mgpu_Operation_Initialize;
-   operation->initialize.frameBufferScale = bytes[1];
+    operation->type = Mgpu_Operation_Initialize;
+    operation->initialize.frameBufferScale = bytes[1];
 
-   return true;
+    return true;
 }
 
 bool deserialize_draw_rectangle(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {

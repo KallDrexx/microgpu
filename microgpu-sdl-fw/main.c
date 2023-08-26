@@ -138,7 +138,6 @@ int main(int argc, char *args[]) {
         }
 
         process_input();
-        mgpu_display_render(display, &framebuffer);
     }
 
     free(framebuffer.pixels);
