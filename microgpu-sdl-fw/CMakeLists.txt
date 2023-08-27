@@ -2,12 +2,23 @@ cmake_minimum_required(VERSION 3.26)
 project(microgpu_sdl_fw C)
 
 set(CMAKE_C_STANDARD 17)
+set(DATABUS_TYPE basic)
+
+if (DATABUS_TYPE STREQUAL "basic")
+    set(DATABUS_SOURCES basic_databus.c)
+    set(DATABUS_DEFINE DATABUS_BASIC)
+elseif (${DATABUS_TYPE} STREQUAL "tcp")
+    set(DATABUS_SOURCES tcp_databus.c)
+    set(DATABUS_DEFINE DATABUS_TCP)
+else ()
+    message(FATAL_ERROR "No valid databus type set")
+endif ()
 
 find_package(SDL2 CONFIG REQUIRED)
 
 add_executable(microgpu_sdl_fw
         main.c
-        basic_databus.c
+        ${DATABUS_SOURCES}
         sdl_display.c
         ../microgpu-common/alloc.h
         ../microgpu-common/color_rgb565.c
@@ -21,11 +32,10 @@ add_executable(microgpu_sdl_fw
         ../microgpu-common/operations/present_framebuffer.c
         ../microgpu-common/operations/reset.c
         ../microgpu-common/operations/status.c
-        tcp_databus.c
-        tcp_databus.h
 )
 
 target_compile_definitions(microgpu_sdl_fw PUBLIC MGPU_COLOR_MODE_USE_RGB565)
+target_compile_definitions(microgpu_sdl_fw PUBLIC ${DATABUS_DEFINE})
 
 target_link_libraries(microgpu_sdl_fw
         PRIVATE

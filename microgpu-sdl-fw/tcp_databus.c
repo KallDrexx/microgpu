@@ -1,10 +1,15 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <assert.h>
+#include <SDL.h>
 #include "microgpu-common/databus.h"
 #include "tcp_databus.h"
 
-int sockInit(void)
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET -1
+#endif
+
+int initSockets(void)
 {
 #ifdef _WIN32
     WSADATA wsa_data;
@@ -14,7 +19,7 @@ int sockInit(void)
 #endif
 }
 
-int sockQuit(void)
+int quitSocketHandling(void)
 {
 #ifdef _WIN32
     return WSACleanup();
@@ -31,7 +36,7 @@ bool isInvalidSocket(SOCKET socket) {
 #endif
 }
 
-int sockClose(SOCKET sock)
+int closeSocket(SOCKET sock)
 {
     int status = 0;
 
@@ -46,7 +51,7 @@ int sockClose(SOCKET sock)
     return status;
 }
 
-Mgpu_Databus *mgpu_databus_init(Mgpu_DatabusOptions *options, Mgpu_Allocator *allocator) {
+Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
     assert(options != NULL);
     assert(allocator != NULL);
 
@@ -55,11 +60,15 @@ Mgpu_Databus *mgpu_databus_init(Mgpu_DatabusOptions *options, Mgpu_Allocator *al
         return NULL;
     }
 
+    databus->serverSocket = INVALID_SOCKET;
+    databus->clientSocket = INVALID_SOCKET;
+
     // create the socket
-    sockInit();
-    databus->socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (isInvalidSocket(databus->socket)) {
+    initSockets();
+    databus->serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (isInvalidSocket(databus->serverSocket)) {
         fprintf(stderr, "Invalid socket returned\n");
+        mgpu_databus_free(databus);
         return NULL;
     }
 
@@ -69,23 +78,63 @@ Mgpu_Databus *mgpu_databus_init(Mgpu_DatabusOptions *options, Mgpu_Allocator *al
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
-    if (bind(databus->socket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) != 0) {
+    if (bind(databus->serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) != 0) {
         fprintf(stderr, "Failed to bind socket\n");
+        mgpu_databus_free(databus);
         return NULL;
     }
 
-    if ((listen(databus->socket, 5)) != 0) {
-        printf("Listen failed...\n");
-        exit(0);
+    // Only let one connection in at a time
+    if ((listen(databus->serverSocket, 1)) != 0) {
+        fprintf(stderr, "Listen failed...\n");
+        mgpu_databus_free(databus);
+        return NULL;
     }
 
-
+    return databus;
 }
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus != NULL) {
-        sockClose(databus->socket);
-        sockQuit();
+        closeSocket(databus->clientSocket);
+        closeSocket(databus->serverSocket);
+        quitSocketHandling();
         databus->allocator->Mgpu_FreeFn(databus);
     }
+}
+
+bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
+    assert(databus != NULL);
+    assert(operation != NULL);
+
+    if (isInvalidSocket(databus->clientSocket)) {
+        struct sockaddr_in clientAddr;
+        int addrSize = sizeof(clientAddr);
+
+        databus->clientSocket = accept(databus->serverSocket, (struct sockaddr *) &clientAddr, &addrSize);
+        if (isInvalidSocket(databus->clientSocket)) {
+            fprintf(stderr, "Failed to accept client socket\n");
+            return false;
+        }
+    }
+
+    char buffer[1024];
+    int bytesRead = recv(databus->clientSocket, buffer, sizeof(buffer), 0);
+    if (bytesRead == -1) {
+        fprintf(stderr, "Failed to read from client socket\n");
+        databus->clientSocket = INVALID_SOCKET;
+        return false;
+    }
+
+    if (bytesRead == 0) {
+        SDL_Log("Client disconnected\n");
+        databus->clientSocket = INVALID_SOCKET;
+        return false;
+    }
+
+    return false;
+}
+
+void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
+    // TODO: fill in
 }

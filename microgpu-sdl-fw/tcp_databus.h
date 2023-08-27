@@ -24,5 +24,5 @@ struct Mgpu_DatabusOptions {
 
 struct Mgpu_Databus {
     const Mgpu_Allocator *allocator;
-    SOCKET socket;
+    SOCKET serverSocket, clientSocket;
 };
