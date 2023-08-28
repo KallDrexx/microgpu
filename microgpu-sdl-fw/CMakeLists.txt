@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 project(microgpu_sdl_fw C)
 
 set(CMAKE_C_STANDARD 17)
-set(DATABUS_TYPE basic)
+set(DATABUS_TYPE tcp)
 
 if (DATABUS_TYPE STREQUAL "basic")
     set(DATABUS_SOURCES basic_databus.c)

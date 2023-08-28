@@ -8,7 +8,7 @@ Mgpu_FrameBuffer *mgpu_framebuffer_new(uint16_t originalWidth,
     assert(allocator != NULL);
     assert(scaleFactor >= 1);
 
-    Mgpu_FrameBuffer *frameBuffer = allocator->Mgpu_AllocateFn(sizeof(Mgpu_FrameBuffer));
+    Mgpu_FrameBuffer *frameBuffer = allocator->AllocateFn(sizeof(Mgpu_FrameBuffer));
     if (frameBuffer == NULL) {
         return NULL;
     }
@@ -17,7 +17,7 @@ Mgpu_FrameBuffer *mgpu_framebuffer_new(uint16_t originalWidth,
     frameBuffer->width = originalWidth / scaleFactor;
     frameBuffer->height = originalHeight / scaleFactor;
     frameBuffer->scale = scaleFactor;
-    frameBuffer->pixels = allocator->Mgpu_AllocateFn(sizeof(Mgpu_Color) * frameBuffer->width * frameBuffer->height);
+    frameBuffer->pixels = allocator->AllocateFn(sizeof(Mgpu_Color) * frameBuffer->width * frameBuffer->height);
     if (frameBuffer->pixels == NULL) {
         mgpu_framebuffer_free(frameBuffer);
         return NULL;
@@ -33,10 +33,10 @@ Mgpu_FrameBuffer *mgpu_framebuffer_new(uint16_t originalWidth,
 void mgpu_framebuffer_free(Mgpu_FrameBuffer *frameBuffer) {
     if (frameBuffer != NULL) {
         if (frameBuffer->pixels != NULL) {
-            frameBuffer->allocator->Mgpu_FreeFn(frameBuffer->pixels);
+            frameBuffer->allocator->FreeFn(frameBuffer->pixels);
             frameBuffer->pixels = NULL;
         }
 
-        frameBuffer->allocator->Mgpu_FreeFn(frameBuffer);
+        frameBuffer->allocator->FreeFn(frameBuffer);
     }
 }

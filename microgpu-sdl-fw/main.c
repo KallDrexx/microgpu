@@ -18,8 +18,8 @@
 #define FRAME_TARGET_TIME (1000/FPS)
 
 static const Mgpu_Allocator basicAllocator = {
-        .Mgpu_AllocateFn = malloc,
-        .Mgpu_FreeFn = free,
+        .AllocateFn = malloc,
+        .FreeFn = free,
 };
 
 bool isRunning, resetRequested;

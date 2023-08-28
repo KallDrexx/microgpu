@@ -10,10 +10,10 @@ typedef struct {
      * Function to allocate memory of a certain size. Should return `NULL` if memory could
      * not be allocated for any reason.
      */
-    void *(*const Mgpu_AllocateFn)(size_t);
+    void *(*const AllocateFn)(size_t);
 
     /*
-     * Frees memory allocated with the corresponding `Mgpu_AllocateFn` call.
+     * Frees memory allocated with the corresponding `AllocateFn` call.
      */
-    void (*const Mgpu_FreeFn)(void *);
+    void (*const FreeFn)(void *);
 } Mgpu_Allocator;
