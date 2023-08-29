@@ -76,41 +76,62 @@ bool readBytes(Mgpu_Databus *databus, char *buffer, size_t bufferSize, int *byte
     return true;
 }
 
+void readPacketFromQueue(Mgpu_Databus *databus,
+                         Mgpu_Operation *operation,
+                         bool *hadFullPacket,
+                         bool *operationDeserializeResult) {
+    *hadFullPacket = false;
+
+    // Do we have a complete packet in the queue?
+    if (globalByteQueueSize > 2) {
+        uint16_t packetSize = ((uint16_t)globalByteQueue[0] << 8) | globalByteQueue[1];
+        if (packetSize > BYTE_QUEUE_MAX_SIZE) {
+            fprintf(stderr, "Client reported a packet size of %u, which is over max\n", packetSize);
+
+            // TODO: Figure out a better way to solve this? For now just clear the queue.
+            // This tcp implementation is test code anyway. It most likely means we've skipped bytes.
+            globalByteQueueSize = 0;
+            return;
+        }
+
+        // Do we have at enough bytes in the queue for how big of a packet we were told to expect
+        if (globalByteQueueSize >= packetSize + 2) {
+            uint8_t *startPoint = globalByteQueue + 2;
+            bool deserializeSuccess = mgpu_operation_deserialize(startPoint, packetSize, operation);
+
+            // Shift the remaining contents over
+            size_t remainingSize = globalByteQueueSize - packetSize - 2;
+            if (remainingSize == 0) {
+                // nothing to shift
+                globalByteQueueSize = 0;
+            } else {
+                uint8_t *endPoint = startPoint + packetSize + 1;
+                memmove(0, endPoint, remainingSize);
+                globalByteQueueSize = remainingSize;
+            }
+
+            *hadFullPacket = true;
+            *operationDeserializeResult = deserializeSuccess;
+        }
+    }
+}
+
 bool readOperation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
     char buffer[1024];
-    int bytesRead;
 
     while(true) {
-        // Do we have a complete packet in the queue?
-        if (globalByteQueueSize > 2) {
-            uint16_t packetSize = ((uint16_t)globalByteQueue[0] << 8) | globalByteQueue[1];
-            if (packetSize > BYTE_QUEUE_MAX_SIZE) {
-                fprintf(stderr, "Client reported a packet size of %u, which is over max\n", packetSize);
+        bool hasFullPacket, operationDeserializationResult;
+        readPacketFromQueue(databus, operation, &hasFullPacket, &operationDeserializationResult);
 
-                // TODO: Figure out a better way to solve this? For now just clear the queue.
-                // This tcp implementation is test code anyway. It most likely means we've skipped bytes.
-                globalByteQueueSize = 0;
-                continue;
-            }
+        if (hasFullPacket) {
+            return operationDeserializationResult;
+        }
 
-            // Do we have at enough bytes in the queue for how big of a packet we were told to expect
-            if (globalByteQueueSize >= packetSize + 2) {
-                uint8_t *startPoint = globalByteQueue + 2;
-                bool deserializeSuccess = mgpu_operation_deserialize(startPoint, packetSize, operation);
-
-                // Shift the remaining contents over
-                size_t remainingSize = globalByteQueueSize - packetSize - 2;
-                if (remainingSize == 0) {
-                    // nothing to shift
-                    globalByteQueueSize = 0;
-                } else {
-                    uint8_t *endPoint = startPoint + packetSize + 1;
-                    memmove(0, endPoint, remainingSize);
-                    globalByteQueueSize = remainingSize;
-                }
-
-                return deserializeSuccess;
-            }
+        // We didn't have a full packet, so we need more bytes
+        int bytesRead;
+        if (!readBytes(databus, buffer, sizeof(buffer), &bytesRead)) {
+            // Reading the connection failed
+            return false;
         }
     }
 }
@@ -192,14 +213,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         globalByteQueueSize = 0;
     }
 
-    char buffer[1024];
-
-    // Keep reading until we have a whole packet
-
-
-
-
-    return false;
+    return readOperation(databus, operation);
 }
 
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
