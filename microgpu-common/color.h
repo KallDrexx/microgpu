@@ -49,3 +49,4 @@ Mgpu_Color mgpu_color_from_rgb888(uint8_t red, uint8_t green, uint8_t blue);
  * between 0 and 255.
  */
 void mgpu_color_get_rgb888(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8_t *blue);
+

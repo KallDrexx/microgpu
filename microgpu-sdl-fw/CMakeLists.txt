@@ -32,6 +32,8 @@ add_executable(microgpu_sdl_fw
         ../microgpu-common/operations/present_framebuffer.c
         ../microgpu-common/operations/reset.c
         ../microgpu-common/operations/status.c
+        ../microgpu-common/response_serializater.c
+        ../microgpu-common/response_serializater.h
 )
 
 target_compile_definitions(microgpu_sdl_fw PUBLIC MGPU_COLOR_MODE_USE_RGB565)

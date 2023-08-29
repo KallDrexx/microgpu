@@ -4,6 +4,7 @@
 #include <SDL.h>
 #include "microgpu-common/databus.h"
 #include "microgpu-common/operation_deserializer.h"
+#include "microgpu-common/response_serializater.h"
 #include "tcp_databus.h"
 
 #ifndef INVALID_SOCKET
@@ -217,5 +218,15 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 }
 
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
-    // TODO: fill in
+    assert(databus != NULL);
+    assert(response != NULL);
+
+    uint8_t buffer[1024];
+    int bufferBytesWritten = mgpu_serialize_response(response, buffer, sizeof(buffer));
+    if (bufferBytesWritten < 0) {
+        fprintf(stderr, "Failed to serialize response: %u\n", bufferBytesWritten);
+        return;
+    }
+
+    send(databus->clientSocket, (char*)buffer, bufferBytesWritten, 0);
 }
