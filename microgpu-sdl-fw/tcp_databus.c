@@ -166,10 +166,11 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = options->port;
+    serverAddr.sin_port = htons(options->port);
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
+    SDL_Log("Binding databus to tcp port %u\n", options->port);
     if (bind(databus->serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) != 0) {
         fprintf(stderr, "Failed to bind socket\n");
         mgpu_databus_free(databus);
@@ -205,6 +206,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         int addrSize = sizeof(clientAddr);
 
         databus->clientSocket = accept(databus->serverSocket, (struct sockaddr *) &clientAddr, &addrSize);
+        SDL_Log("Client connection accepted.\n");
         if (isInvalidSocket(databus->clientSocket)) {
             fprintf(stderr, "Failed to accept client socket\n");
             return false;

@@ -30,6 +30,10 @@ Mgpu_FrameBuffer *framebuffer;
 Mgpu_DatabusOptions dataBusOptions;
 
 bool setup(void) {
+#ifdef DATABUS_TCP
+    dataBusOptions.port = 9123;
+#endif
+
     databus = mgpu_databus_new(&dataBusOptions, &basicAllocator);
     if (databus == NULL) {
         fprintf(stderr, "Failed to initialize databus.\n");
@@ -66,11 +70,11 @@ void handleResponse(Mgpu_Response *response) {
 
 int databus_loop(void *data) {
     Mgpu_Operation operation;
-    Mgpu_Response response;
     while (isRunning) {
         if (mgpu_databus_get_next_operation(databus, &operation)) {
             mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
 #ifdef DATABUS_BASIC
+            Mgpu_Response response;
             if (mgpu_basic_databus_get_last_response(databus, &response)) {
                 handleResponse(&response);
             }

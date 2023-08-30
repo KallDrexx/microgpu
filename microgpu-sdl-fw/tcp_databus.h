@@ -19,7 +19,7 @@ typedef int SOCKET;
 #endif
 
 struct Mgpu_DatabusOptions {
-    uint8_t port;
+    uint16_t port;
 };
 
 struct Mgpu_Databus {
