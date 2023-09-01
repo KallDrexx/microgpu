@@ -19,30 +19,30 @@ typedef enum {
     /*
      * Operation to draw a filled in rectangle to the framebuffer.
      */
-    Mgpu_Operation_DrawRectangle,
+    Mgpu_Operation_DrawRectangle = 2,
 
     /*
      * Operation to draw a filled in triangle between three defined points.
      */
-    Mgpu_Operation_DrawTriangle,
+    Mgpu_Operation_DrawTriangle = 3,
 
     /*
      * Requests getting the status of the microgpu system. Can be requested
      * prior to initialization, which is useful for getting the display
      * resolution to compute framebuffer scale.
      */
-    Mgpu_Operation_GetStatus,
+    Mgpu_Operation_GetStatus = 4,
 
     /*
      * Requests the latest message raised by the microgpu system, which usually
      * corresponds to the previously executed operation.
      */
-    Mgpu_Operation_GetLastMessage,
+    Mgpu_Operation_GetLastMessage = 5,
 
     /*
      * Sends the frame buffer to the display for presentation.
      */
-    Mgpu_Operation_PresentFramebuffer,
+    Mgpu_Operation_PresentFramebuffer = 6,
 
     /*
      * Requests the microgpu to initialize itself and fully reset itself.

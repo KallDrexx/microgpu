@@ -134,6 +134,16 @@ bool readOperation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
             // Reading the connection failed
             return false;
         }
+
+        if (globalByteQueueSize + bytesRead > BYTE_QUEUE_MAX_SIZE) {
+            SDL_LogError(0, "Queue grew too large\n");
+            exit(2);
+        }
+
+        for (int x = 0; x < bytesRead; x++) {
+            globalByteQueue[globalByteQueueSize + x] = buffer[x];
+        }
+        globalByteQueueSize += bytesRead;
     }
 }
 
