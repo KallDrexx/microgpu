@@ -106,8 +106,8 @@ void readPacketFromQueue(Mgpu_Databus *databus,
                 // nothing to shift
                 globalByteQueueSize = 0;
             } else {
-                uint8_t *endPoint = startPoint + packetSize + 1;
-                memmove(0, endPoint, remainingSize);
+                uint8_t *endPoint = startPoint + packetSize;
+                memmove(globalByteQueue, endPoint, remainingSize);
                 globalByteQueueSize = remainingSize;
             }
 
