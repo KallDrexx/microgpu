@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Common", "Microgpu.Common\Microgpu.Common.csproj", "{EBE4B810-7768-473F-8158-24D488CB0669}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Scratchpad", "Microgpu.Scratchpad\Microgpu.Scratchpad.csproj", "{9553E398-CB3B-4DD7-903E-9577C117A186}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Common.Tcp", "Microgpu.Common.Tcp\Microgpu.Common.Tcp.csproj", "{4083D035-3869-4239-A389-B09B6EEDF0A6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EBE4B810-7768-473F-8158-24D488CB0669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBE4B810-7768-473F-8158-24D488CB0669}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBE4B810-7768-473F-8158-24D488CB0669}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBE4B810-7768-473F-8158-24D488CB0669}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9553E398-CB3B-4DD7-903E-9577C117A186}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9553E398-CB3B-4DD7-903E-9577C117A186}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9553E398-CB3B-4DD7-903E-9577C117A186}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9553E398-CB3B-4DD7-903E-9577C117A186}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

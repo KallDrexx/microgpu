@@ -12,7 +12,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
     assert(options != NULL);
     assert(allocator != NULL);
 
-    Mgpu_Databus *databus = allocator->Mgpu_AllocateFn(sizeof(Mgpu_Databus));
+    Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
 
     if (databus == NULL) {
@@ -27,7 +27,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus != NULL) {
-        databus->allocator->Mgpu_FreeFn(databus);
+        databus->allocator->FreeFn(databus);
     }
 }
 

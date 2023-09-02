@@ -4,8 +4,6 @@
 target/
 Cargo.lock
 
-Cargo.lock
-
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -19,3 +17,5 @@ CTestTestfile.cmake
 _deps
 cmake-build-*
 
+[Bb]in/
+[Oo]bj/
