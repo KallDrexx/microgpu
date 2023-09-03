@@ -8,7 +8,7 @@
 #include "microgpu-common/operation_execution.h"
 
 #if defined(DATABUS_BASIC)
-#include "basic_databus.h"
+#include "test_databus.h"
 
 #elif defined(DATABUS_TCP)
 #include "tcp_databus.h"
@@ -75,7 +75,7 @@ int databus_loop(void *data) {
             mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
 #ifdef DATABUS_BASIC
             Mgpu_Response response;
-            if (mgpu_basic_databus_get_last_response(databus, &response)) {
+            if (mgpu_test_databus_get_last_response(databus, &response)) {
                 handleResponse(&response);
             }
 #endif
@@ -103,7 +103,7 @@ void wait_for_init_op() {
                 // Can't respond to other operations before initialization
                 mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
 #ifdef DATABUS_BASIC
-                if (mgpu_basic_databus_get_last_response(databus, &response)) {
+                if (mgpu_test_databus_get_last_response(databus, &response)) {
                     handleResponse(&response);
                 }
 #endif
@@ -129,7 +129,7 @@ void handle_sdl_keyup_event(SDL_Event *event) {
 
         case SDLK_DELETE:
 #ifdef DATABUS_BASIC
-            mgpu_basic_databus_trigger_reset(databus);
+            mgpu_test_databus_trigger_reset(databus);
 #else
             resetRequested = true;
 #endif

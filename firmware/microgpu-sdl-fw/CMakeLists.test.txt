@@ -1,7 +1,7 @@
 add_executable(microgpu_sdl_fw_test
         main.c
         sdl_display.c
-        basic_databus.c
+        test_databus.c
         ../microgpu-common/alloc.h
         ../microgpu-common/color_rgb565.c
         ../microgpu-common/framebuffer.c

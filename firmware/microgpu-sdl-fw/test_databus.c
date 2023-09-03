@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <SDL.h>
-#include "basic_databus.h"
+#include "test_databus.h"
 
 #define RESET_OPERATION_ID 250
 
@@ -116,7 +116,7 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
     }
 }
 
-bool mgpu_basic_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *response) {
+bool mgpu_test_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *response) {
     if (hasResponse) {
         *response = lastSeenResponse;
         hasResponse = false;
@@ -126,6 +126,6 @@ bool mgpu_basic_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *
     return false;
 }
 
-void mgpu_basic_databus_trigger_reset(Mgpu_Databus *databus) {
+void mgpu_test_databus_trigger_reset(Mgpu_Databus *databus) {
     operationCount = RESET_OPERATION_ID;
 }
