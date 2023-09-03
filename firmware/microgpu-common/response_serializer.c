@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "response_serializater.h"
+#include "response_serializer.h"
 
 int serialize_status(Mgpu_StatusResponse *status, uint8_t buffer[], size_t bufferSize) {
     assert(status != NULL);
