@@ -29,3 +29,8 @@ Mgpu_FrameBuffer *mgpu_framebuffer_new(uint16_t originalWidth,
  * pointer itself.
  */
 void mgpu_framebuffer_free(Mgpu_FrameBuffer *frameBuffer);
+
+/*
+ * Clears the frame buffer to the specified color.
+ */
+void mgpu_framebuffer_clear(Mgpu_FrameBuffer *frameBuffer, Mgpu_Color color);

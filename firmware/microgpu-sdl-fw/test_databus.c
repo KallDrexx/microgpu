@@ -88,6 +88,33 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operationCount++;
             return true;
 
+        case 8:
+            operation->type = Mgpu_Operation_DrawRectangle;
+            operation->drawRectangle.startX = 100;
+            operation->drawRectangle.startY = 200;
+            operation->drawRectangle.width = 50;
+            operation->drawRectangle.height = 20;
+            operation->drawRectangle.color = mgpu_color_from_rgb888(0, 0, 255);
+            operationCount++;
+            return true;
+
+        case 9:
+            operation->type = Mgpu_Operation_DrawTriangle;
+            operation->drawTriangle.x0 = 60;
+            operation->drawTriangle.y0 = 10;
+            operation->drawTriangle.x1 = 30;
+            operation->drawTriangle.y1 = 100;
+            operation->drawTriangle.x2 = 90;
+            operation->drawTriangle.y2 = 100;
+            operation->drawTriangle.color = mgpu_color_from_rgb888(0, 255, 0);
+            operationCount++;
+            return true;
+
+        case 10:
+            operation->type = Mgpu_Operation_PresentFramebuffer;
+            operationCount++;
+            return true;
+
         case RESET_OPERATION_ID:
             operation->type = Mgpu_Operation_Reset;
             operationCount++;

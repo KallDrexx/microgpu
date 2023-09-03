@@ -40,3 +40,14 @@ void mgpu_framebuffer_free(Mgpu_FrameBuffer *frameBuffer) {
         frameBuffer->allocator->FreeFn(frameBuffer);
     }
 }
+
+void mgpu_framebuffer_clear(Mgpu_FrameBuffer *frameBuffer, Mgpu_Color color) {
+    assert(frameBuffer != NULL);
+
+    int pixelTotal = frameBuffer->width * frameBuffer->height;
+    Mgpu_Color *pixel = frameBuffer->pixels;
+    for (int x = 0; x < pixelTotal; x++) {
+        *pixel = color;
+        pixel++;
+    }
+}
