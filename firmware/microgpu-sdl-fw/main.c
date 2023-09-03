@@ -72,7 +72,13 @@ int databus_loop(void *data) {
     Mgpu_Operation operation;
     while (isRunning) {
         if (mgpu_databus_get_next_operation(databus, &operation)) {
-            mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
+            Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
+            mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, &releasedFrameBuffer);
+
+            if (operation.type == Mgpu_Operation_PresentFramebuffer) {
+                assert(releasedFrameBuffer == framebuffer);
+            }
+
 #ifdef DATABUS_BASIC
             Mgpu_Response response;
             if (mgpu_test_databus_get_last_response(databus, &response)) {
@@ -101,7 +107,7 @@ void wait_for_init_op() {
 
             if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
                 // Can't respond to other operations before initialization
-                mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested);
+                mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, NULL);
 #ifdef DATABUS_BASIC
                 if (mgpu_test_databus_get_last_response(databus, &response)) {
                     handleResponse(&response);

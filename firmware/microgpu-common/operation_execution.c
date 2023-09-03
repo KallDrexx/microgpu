@@ -13,7 +13,8 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_FrameBuffer *frameBuffer,
                             Mgpu_Display *display,
                             Mgpu_Databus *databus,
-                            bool *resetFlag) {
+                            bool *resetFlag,
+                            Mgpu_FrameBuffer **releasedFrameBuffer) {
     // Don't clear the last operation's message if the next operation
     // being requested is to get the latest message
     if (operation->type != Mgpu_Operation_GetLastMessage) {
@@ -38,7 +39,7 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             break;
 
         case Mgpu_Operation_PresentFramebuffer:
-            mgpu_exec_present_framebuffer(display, frameBuffer);
+            mgpu_exec_present_framebuffer(display, frameBuffer, releasedFrameBuffer);
             break;
 
         case Mgpu_Operation_Reset:

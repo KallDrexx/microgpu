@@ -136,7 +136,7 @@ void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_
     *width = display->width;
 }
 
-void mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
+Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
     assert(display != NULL);
     assert(frameBuffer != NULL);
     assert(frameBuffer->width > 0);
@@ -153,4 +153,8 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
 
     SDL_RenderCopy(display->renderer, display->texture, NULL, NULL);
     SDL_RenderPresent(display->renderer);
+
+    // Since we copied the frame buffer to a texture, and that texture is used for
+    // SDL's window refresh cycle, we can immediately release the frame buffer
+    return frameBuffer;
 }
