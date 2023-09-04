@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdbool.h>
 #include "triangle.h"
 
 typedef struct {
