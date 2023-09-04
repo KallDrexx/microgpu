@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Scratchpad", "Micr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Common.Tcp", "Microgpu.Common.Tcp\Microgpu.Common.Tcp.csproj", "{4083D035-3869-4239-A389-B09B6EEDF0A6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Meadow.Scratchpad", "Microgpu.Meadow.Scratchpad\Microgpu.Meadow.Scratchpad.csproj", "{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
