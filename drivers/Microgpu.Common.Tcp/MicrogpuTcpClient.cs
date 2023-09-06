@@ -14,6 +14,9 @@ public class MicrogpuTcpClient : IDisposable
     {
         _host = host;
         _port = port;
+        
+        _socket.SendTimeout = 1000;
+        _socket.ReceiveTimeout = 1000;
     }
     
     public async Task ConnectAsync()

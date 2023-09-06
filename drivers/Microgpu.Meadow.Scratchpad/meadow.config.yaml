@@ -4,8 +4,8 @@
 Device:
   Name: MicrogpuMeadowScratchpad
 
-Coprocessor:
-  AutomaticallyStartNetwork: true
-  AutomaticallyReconnect: true
-  MaximumRetryCount: 7
+#Coprocessor:
+#  AutomaticallyStartNetwork: true
+#  AutomaticallyReconnect: true
+#  MaximumRetryCount: 7
   
