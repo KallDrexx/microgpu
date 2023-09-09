@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
 project(microgpu_sdl_fw C)
 
 set(CMAKE_C_STANDARD 17)
