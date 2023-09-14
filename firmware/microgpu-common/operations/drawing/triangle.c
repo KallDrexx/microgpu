@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "microgpu-common/common.h"
 #include "triangle.h"
 
 typedef struct {

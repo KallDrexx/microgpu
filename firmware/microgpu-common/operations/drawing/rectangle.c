@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include "microgpu-common/common.h"
 #include "rectangle.h"
 
 void mgpu_draw_rectangle(Mgpu_DrawRectangleOperation *drawRectangle, Mgpu_FrameBuffer *frameBuffer) {
