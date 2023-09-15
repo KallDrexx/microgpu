@@ -16,8 +16,10 @@ compile_commands.json
 CTestTestfile.cmake
 _deps
 cmake-build-*
+build/
 
 [Bb]in/
 [Oo]bj/
 
 wifi.config.yaml
+sdkconfig*
