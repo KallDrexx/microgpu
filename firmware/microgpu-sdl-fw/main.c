@@ -6,6 +6,7 @@
 #include "microgpu-common/alloc.h"
 #include "microgpu-common/operations.h"
 #include "microgpu-common/operation_execution.h"
+#include "sdl_display.h"
 
 #if defined(DATABUS_BASIC)
 #include "test_databus.h"
@@ -28,6 +29,10 @@ Mgpu_Databus *databus;
 uint16_t width, height;
 Mgpu_FrameBuffer *framebuffer;
 Mgpu_DatabusOptions dataBusOptions;
+Mgpu_DisplayOptions displayOptions = {
+        .width = 1024,
+        .height = 768,
+};
 
 bool setup(void) {
 #ifdef DATABUS_TCP
@@ -40,7 +45,7 @@ bool setup(void) {
         return false;
     }
 
-    display = mgpu_display_new(&basicAllocator);
+    display = mgpu_display_new(&basicAllocator, &displayOptions);
     if (display == NULL) {
         fprintf(stderr, "Failed to initialize display\n");
         return false;
@@ -196,7 +201,7 @@ void start_sdl_system(void) {
 }
 
 int main(int argc, char *args[]) {
-    SDL_Log("Color size: %u\n", sizeof(Mgpu_Color));
+    SDL_Log("Color size: %llu\n", sizeof(Mgpu_Color));
 
     while (true) {
         resetRequested = false;

@@ -3,9 +3,6 @@
 #include "sdl_display.h"
 #include "microgpu-common/display.h"
 
-#define WINDOW_HEIGHT 480
-#define WINDOW_WIDTH 640
-
 void transfer_framebuffer(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
     Mgpu_Color *source = frameBuffer->pixels;
     uint32_t *target = display->pixelBuffer;
@@ -49,7 +46,7 @@ void transfer_framebuffer(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) 
     }
 }
 
-Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator) {
+Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options) {
     assert(allocator != NULL);
 
     Mgpu_Display *display = allocator->AllocateFn(sizeof(Mgpu_Display));
@@ -59,8 +56,8 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator) {
         return NULL;
     }
 
-    display->width = WINDOW_WIDTH;
-    display->height = WINDOW_HEIGHT;
+    display->width = options->width;
+    display->height = options->height;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         fprintf(stderr, "Error initializing SDL: %s.\n", SDL_GetError());

@@ -10,11 +10,17 @@
 typedef struct Mgpu_Display Mgpu_Display;
 
 /*
+ * Implementation specific structure that provides options for
+ * configuring displays.
+ */
+typedef struct Mgpu_DisplayOptions Mgpu_DisplayOptions;
+
+/*
  * Creates a new display instance. Display instances will keep a reference
  * to the allocator to ensure it uses the corresponding and correct free
- * function for any deallocations.
+ * function for any de-allocations.
  */
-Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator);
+Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options);
 
 /*
  * De-initializes the display and frees memory the display had allocated

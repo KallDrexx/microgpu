@@ -12,3 +12,7 @@ struct Mgpu_Display {
     SDL_Renderer *renderer;
     const Mgpu_Allocator *allocator;
 };
+
+struct Mgpu_DisplayOptions {
+    uint16_t width, height;
+};
