@@ -65,13 +65,12 @@ void init_i80_bus(const Mgpu_DisplayOptions *options, esp_lcd_panel_io_handle_t 
                     options->dataPins.data7,
             },
             .bus_width = 8,
-            .max_transfer_bytes = options->pixelWidth * 100 * sizeof(Mgpu_Color), // not sure why demo uses 100 rows
+            .max_transfer_bytes = options->pixelWidth * options->pixelHeight * sizeof(Mgpu_Color),
             .psram_trans_align = 64,
             .sram_trans_align = 4,
     };
 
     ESP_ERROR_CHECK(esp_lcd_new_i80_bus(&busConfig, &bus));
-
     esp_lcd_panel_io_i80_config_t ioConfig = {
             .cs_gpio_num = options->controlPins.chipSelect,
             .pclk_hz = 2 * 1000 * 1000, // Example uses 2Mhz when PSRAM is used
@@ -88,18 +87,40 @@ void init_i80_bus(const Mgpu_DisplayOptions *options, esp_lcd_panel_io_handle_t 
             .lcd_cmd_bits = 8, // Might need to be adjusted for other displays
             .lcd_param_bits = 8, // Might need to be adjusted for other displays
     };
+
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_i80(bus, &ioConfig, io_handle));
+}
+
+void log_display_options(const Mgpu_DisplayOptions *options) {
+    ESP_LOGI(LOG_TAG, "Microgpu i80 LCD display options:");
+    ESP_LOGI(LOG_TAG, "Display resolution: %u x %u", options->pixelWidth, options->pixelHeight);
+    ESP_LOGI(LOG_TAG, "Reset pin: %u", options->controlPins.reset);
+    ESP_LOGI(LOG_TAG, "Chip select pin: %u", options->controlPins.chipSelect);
+    ESP_LOGI(LOG_TAG, "DC pin: %u", options->controlPins.dataCommand);
+    ESP_LOGI(LOG_TAG, "Write clock pin: %u", options->controlPins.writeClock);
+    ESP_LOGI(LOG_TAG, "Data0 pin: %u", options->dataPins.data0);
+    ESP_LOGI(LOG_TAG, "Data1 pin: %u", options->dataPins.data1);
+    ESP_LOGI(LOG_TAG, "Data2 pin: %u", options->dataPins.data2);
+    ESP_LOGI(LOG_TAG, "Data3 pin: %u", options->dataPins.data3);
+    ESP_LOGI(LOG_TAG, "Data4 pin: %u", options->dataPins.data4);
+    ESP_LOGI(LOG_TAG, "Data5 pin: %u", options->dataPins.data5);
+    ESP_LOGI(LOG_TAG, "Data6 pin: %u", options->dataPins.data6);
+    ESP_LOGI(LOG_TAG, "Data7 pin: %u", options->dataPins.data7);
 }
 
 Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options) {
     assert(allocator != NULL);
     assert(options != NULL);
 
+    log_display_options(options);
+
     esp_lcd_panel_io_handle_t ioHandle = NULL;
     init_i80_bus(options, &ioHandle);
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     init_ili9341_panel(ioHandle, &panel_handle, options);
+
+    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
 
     Mgpu_Display *display = allocator->AllocateFn(sizeof(Mgpu_Display));
     display->allocator = allocator;
