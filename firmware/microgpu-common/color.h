@@ -9,11 +9,7 @@ typedef enum {
 
 #ifdef MGPU_COLOR_MODE_USE_RGB565
 
-typedef struct {
-    uint16_t red: 5;
-    uint16_t green: 6;
-    uint16_t blue: 5;
-} Mgpu_Color;
+typedef uint16_t Mgpu_Color;
 
 /*
  * Creates a color based on red, green, and blue values already converted
