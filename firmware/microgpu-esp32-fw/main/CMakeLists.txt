@@ -1,9 +1,11 @@
-set(SOURCES main.c
-        displays/i80_display.c
+set(SOURCES
         ../../microgpu-common/framebuffer.c
         ../../microgpu-common/color_rgb565.c
         ../../microgpu-common/operations/drawing/rectangle.c
         ../../microgpu-common/operations/drawing/triangle.c
+        displays/i80_display.c
+        spi_databus.c
+        main.c
 )
 
 idf_component_register(SRCS ${SOURCES}

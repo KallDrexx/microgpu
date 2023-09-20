@@ -9,6 +9,7 @@
 #include "microgpu-common/operations/drawing/triangle.h"
 #include "common.h"
 #include "displays/i80_display.h"
+#include "spi_databus.h"
 
 Mgpu_FrameBuffer *frameBuffer;
 Mgpu_Display *display;
