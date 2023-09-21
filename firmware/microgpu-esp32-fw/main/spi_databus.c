@@ -2,7 +2,10 @@
 #include <driver/gpio.h>
 #include <memory.h>
 #include "esp_log.h"
+#include "microgpu-common/common.h"
 #include "microgpu-common/databus.h"
+#include "microgpu-common/operation_deserializer.h"
+#include "microgpu-common/response_serializer.h"
 #include "spi_databus.h"
 #include "common.h"
 
@@ -83,6 +86,9 @@ void mgpu_databus_free(Mgpu_Databus *databus) {
 }
 
 bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
+    assert(databus != NULL);
+    assert(operation != NULL);
+
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));
     memset(receiveBuffer, 0, BUFFER_SIZE);
@@ -99,9 +105,45 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         return false;
     }
 
-    // TODO: deserialize operation
+    size_t length = min(transaction.length, transaction.trans_len);
+    return mgpu_operation_deserialize(receiveBuffer, length, operation);
 }
 
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
+    assert(databus != NULL);
+    assert(response != NULL);
 
+    memset(sendBuffer, 0, BUFFER_SIZE);
+    int byteCount = mgpu_serialize_response(response, sendBuffer, BUFFER_SIZE);
+    if (byteCount >= 0) {
+        switch (byteCount) {
+            case MGPU_ERROR_BUFFER_TOO_SMALL:
+                ESP_LOGE(LOG_TAG, "Attempted to serialize response, but it required a larger buffer");
+                break;
+
+            case MGPU_ERROR_UNKNOWN_RESPONSE_TYPE:
+                ESP_LOGE(LOG_TAG, "Attempted to serialize a response, but no serializer exists for that response type");
+                break;
+
+            default:
+                ESP_LOGE(LOG_TAG, "Response serializing failed with unknown error: %u", byteCount);
+                break;
+        }
+
+        return;
+    }
+
+    spi_slave_transaction_t transaction;
+    memset(&transaction, 0, sizeof(transaction));
+    memset(receiveBuffer, 0, BUFFER_SIZE);
+
+    // Set up the SPI transaction
+    transaction.length = BUFFER_SIZE * 8;
+    transaction.rx_buffer = receiveBuffer;
+    transaction.tx_buffer = sendBuffer;
+
+    esp_err_t spiResult = spi_slave_transmit(databus->spiHost, &transaction, portMAX_DELAY);
+    if (spiResult != ESP_OK) {
+        ESP_LOGE(LOG_TAG, "SPI send failed: %s", esp_err_to_name(spiResult));
+    }
 }

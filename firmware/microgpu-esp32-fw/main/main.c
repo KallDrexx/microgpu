@@ -3,8 +3,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "microgpu-common/alloc.h"
+#include "microgpu-common/databus.h"
 #include "microgpu-common/display.h"
 #include "microgpu-common/framebuffer.h"
+#include "microgpu-common/operation_execution.h"
 #include "microgpu-common/operations/drawing/rectangle.h"
 #include "microgpu-common/operations/drawing/triangle.h"
 #include "common.h"
@@ -14,6 +16,9 @@
 Mgpu_FrameBuffer *frameBuffer;
 Mgpu_Display *display;
 Mgpu_DisplayOptions displayOptions;
+Mgpu_Databus *databus;
+Mgpu_DatabusOptions databusOptions;
+bool resetRequested;
 
 static const Mgpu_Allocator standardAllocator = {
         .AllocateFn = malloc,
@@ -41,10 +46,53 @@ bool setup(void) {
 
     display = mgpu_display_new(&standardAllocator, &displayOptions);
     if (display == NULL) {
-        ESP_LOGE(LOG_TAG, "No display was created");
+        ESP_LOGE(LOG_TAG, "Display could not be created");
         return false;
     }
 
+    ESP_LOGI(LOG_TAG, "Initializing SPI databus");
+    databusOptions.copiPin = 14;
+    databusOptions.cipoPin = 15;
+    databusOptions.sclkPin = 16;
+    databusOptions.csPin = 17;
+    databusOptions.handshakePin = 18;
+
+    databus = mgpu_databus_new(&databusOptions, &standardAllocator);
+    if (databus == NULL) {
+        ESP_LOGE(LOG_TAG, "Databus could not be created");
+        return false;
+    }
+
+    return true;
+}
+
+bool wait_for_initialization(void) {
+    ESP_LOGI(LOG_TAG, "Waiting for initialization operation");
+    Mgpu_Operation operation;
+
+    while (true) {
+        bool hasOperation = mgpu_databus_get_next_operation(databus, &operation);
+        if (hasOperation) {
+            if (operation.type == Mgpu_Operation_Initialize) {
+                break;
+            }
+        }
+
+        // Before initialization, we can only respond to get status and get last message
+        if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
+            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, NULL);
+        }
+    }
+
+    uint16_t width, height;
+    mgpu_display_get_dimensions(display, &width, &height);
+    frameBuffer = mgpu_framebuffer_new(width, height, operation.initialize.frameBufferScale, &standardAllocator);
+    if (frameBuffer == NULL) {
+        ESP_LOGE(LOG_TAG, "Framebuffer could not be created");
+        return false;
+    }
+
+    ESP_LOGI(LOG_TAG, "Initialization successful");
     return true;
 }
 
@@ -56,34 +104,21 @@ void app_main(void)
         return;
     }
 
-    uint16_t width, height;
-    mgpu_display_get_dimensions(display, &width, &height);
+    if (!wait_for_initialization()) {
+        ESP_LOGE(LOG_TAG, "No initialization occurred, exiting");
+        return;
+    }
 
-    frameBuffer = mgpu_framebuffer_new(width, height, 1, &standardAllocator);
+    Mgpu_Operation operation;
+    while (1) {
+        if (resetRequested) {
+            ESP_LOGW(LOG_TAG, "Reset requested, exiting");
+            return;
+        }
 
-    Mgpu_DrawRectangleOperation rectangle = {
-            .width = 200,
-            .height = 100,
-            .startX = 10,
-            .startY = 100,
-            .color = mgpu_color_from_rgb888(255, 0, 0),
-    };
-
-    Mgpu_DrawTriangleOperation triangle = {
-            .x0 = 25,
-            .y0 = 10,
-            .x1 = 45,
-            .y1 = 100,
-            .x2 = 300,
-            .y2 = 200,
-            .color = mgpu_color_from_rgb888(0, 255, 0),
-    };
-
-    mgpu_draw_rectangle(&rectangle, frameBuffer);
-    mgpu_draw_triangle(&triangle, frameBuffer);
-    mgpu_display_render(display, frameBuffer);
-
-    while(1) {
-        vTaskDelay(1000);
+        if (mgpu_databus_get_next_operation(databus, &operation)) {
+            Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
+            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, &releasedFrameBuffer);
+        }
     }
 }
