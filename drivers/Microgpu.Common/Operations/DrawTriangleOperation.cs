@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Microgpu.Common.Operations
 {
-    public class DrawTriangleOperation<TColor> : IOperation where TColor : IColorType
+    public class DrawTriangleOperation<TColor> : IFireAndForgetOperation where TColor : IColorType
     {
         public required ushort X0 { get; init; }
         public required ushort Y0 { get; init; }
@@ -12,24 +13,23 @@ namespace Microgpu.Common.Operations
         public required ushort Y2 { get; init; }
         public required TColor Color { get; init; }
         
-        public void Serialize(List<byte> bytes)
+        public int Serialize(Span<byte> bytes)
         {
-            bytes.Clear();
-            bytes.Add(3);
-            bytes.Add((byte)(X0 >> 8));
-            bytes.Add((byte)(X0 & 0xFF));
-            bytes.Add((byte)(Y0 >> 8));
-            bytes.Add((byte)(Y0 & 0xFF));
-            bytes.Add((byte)(X1 >> 8));
-            bytes.Add((byte)(X1 & 0xFF));
-            bytes.Add((byte)(Y1 >> 8));
-            bytes.Add((byte)(Y1 & 0xFF));
-            bytes.Add((byte)(X2 >> 8));
-            bytes.Add((byte)(X2 & 0xFF));
-            bytes.Add((byte)(Y2 >> 8));
-            bytes.Add((byte)(Y2 & 0xFF));
+            bytes[0] = (3);
+            bytes[1] = (byte)(X0 >> 8);
+            bytes[2] = (byte)(X0 & 0xFF);
+            bytes[3] = (byte)(Y0 >> 8);
+            bytes[4] = (byte)(Y0 & 0xFF);
+            bytes[5] = (byte)(X1 >> 8);
+            bytes[6] = (byte)(X1 & 0xFF);
+            bytes[7] = (byte)(Y1 >> 8);
+            bytes[8] = (byte)(Y1 & 0xFF);
+            bytes[9] = (byte)(X2 >> 8);
+            bytes[10] = (byte)(X2 & 0xFF);
+            bytes[11] = (byte)(Y2 >> 8);
+            bytes[12] = (byte)(Y2 & 0xFF);
             
-            Color.AppendBytes(bytes);
+            return 13 + Color.WriteBytes(bytes[12..]);
         }
     }
 }

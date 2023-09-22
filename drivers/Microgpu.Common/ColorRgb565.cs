@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Microgpu.Common
 {
@@ -26,10 +27,12 @@ namespace Microgpu.Common
             return FromRgb565(red, green, blue);
         }
         
-        public void AppendBytes(List<byte> bytes)
+        public int WriteBytes(Span<byte> bytes)
         {
-            bytes.Add((byte)(Value >> 8));
-            bytes.Add((byte)(Value & 0xFF));
+            bytes[0] = (byte)(Value >> 8);
+            bytes[1] = (byte)(Value & 0xFF);
+
+            return 2;
         }
     }
 }

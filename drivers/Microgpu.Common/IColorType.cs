@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 namespace Microgpu.Common
 {
@@ -7,6 +7,10 @@ namespace Microgpu.Common
     /// </summary>
     public interface IColorType
     {
-        void AppendBytes(List<byte> bytes);
+        /// <summary>
+        /// Writes the bytes for the color to the beginning of the provided byte span
+        /// </summary>
+        /// <returns>The number of bytes written to the span</returns>
+        int WriteBytes(Span<byte> bytes);
     }
 }

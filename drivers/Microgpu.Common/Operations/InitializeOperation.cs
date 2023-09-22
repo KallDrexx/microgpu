@@ -1,16 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 namespace Microgpu.Common.Operations
 {
-    public class InitializeOperation : IOperation
+    public class InitializeOperation : IFireAndForgetOperation
     {
         public byte FrameBufferScale { get; set; }
         
-        public void Serialize(List<byte> bytes)
+        public int Serialize(Span<byte> bytes)
         {
-            bytes.Clear();
-            bytes.Add(1);
-            bytes.Add(FrameBufferScale);
+            bytes[0] = 1;
+            bytes[1] = FrameBufferScale;
+
+            return 2;
         }
     }
 }

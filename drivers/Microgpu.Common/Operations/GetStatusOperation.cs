@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 namespace Microgpu.Common.Operations
 {
-    public class GetStatusOperation : IOperation
+    public class GetStatusOperation : IResponsiveOperation
     {
-        public void Serialize(List<byte> bytes)
+        public int Serialize(Span<byte> bytes)
         {
-            bytes.Clear();
-            bytes.Add(4);
+            bytes[0] = 4;
+            
+            return 1;
         }
     }
 }

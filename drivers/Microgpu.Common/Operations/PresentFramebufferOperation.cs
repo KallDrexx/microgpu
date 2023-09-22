@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
 
 namespace Microgpu.Common.Operations;
 
-public class PresentFramebufferOperation : IOperation
+public class PresentFramebufferOperation : IFireAndForgetOperation
 {
-    public void Serialize(List<byte> bytes)
+    public int Serialize(Span<byte> bytes)
     {
-        bytes.Clear();
-        bytes.Add(6);
+        bytes[0] = 6;
+
+        return 1;
     }
 }

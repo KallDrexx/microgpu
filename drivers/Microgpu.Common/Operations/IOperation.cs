@@ -1,18 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
-namespace Microgpu.Common.Operations
+namespace Microgpu.Common.Operations;
+
+/// <summary>
+/// An operation that can be requested from the Microgpu.
+/// </summary>
+public interface IOperation
 {
     /// <summary>
-    /// Represents an operation that can be requested from the Microgpu.
+    /// Serializes the current operation to the passed in list of bytes.
+    /// The byte list will be cleared during serialization. Serialization should
+    /// be done in network byte order.
     /// </summary>
-    public interface IOperation
-    {
-        /// <summary>
-        /// Serializes the current operation to the passed in list of bytes.
-        /// The byte list will be cleared during serialization. Serialization should
-        /// be done in network byte order.
-        /// </summary>
-        /// <param name="bytes"></param>
-        void Serialize(List<byte> bytes);
-    }
+    /// <param name="bytes">Set of bytes we can serialize this data into</param>
+    /// <returns>The number of bytes written into the byte array</returns>
+    int Serialize(Span<byte> bytes);
+}
+
+/// <summary>
+/// An operation that expects a response from the gpu.
+/// </summary>
+public interface IResponsiveOperation : IOperation
+{
+}
+
+/// <summary>
+/// An operation that is sent to the gpu without a response coming back
+/// </summary>
+public interface IFireAndForgetOperation : IOperation
+{
 }

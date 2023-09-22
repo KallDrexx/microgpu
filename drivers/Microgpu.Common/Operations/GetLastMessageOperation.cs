@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Microgpu.Common.Operations
 {
-    public class GetLastMessageOperation : IOperation
+    public class GetLastMessageOperation : IResponsiveOperation
     {
-        public void Serialize(List<byte> bytes)
+        public int Serialize(Span<byte> bytes)
         {
-            bytes.Clear();
-            bytes.Add(5);
+            bytes[0] = 5;
+
+            return 1;
         }
     }
 }

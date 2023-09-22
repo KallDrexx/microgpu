@@ -13,8 +13,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Microgpu.Common.Tcp\Microgpu.Common.Tcp.csproj" />
       <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj" />
+      <ProjectReference Include="..\Microgpu.Meadow.Common\Microgpu.Meadow.Common.csproj" />
     </ItemGroup>
     
     <ItemGroup>
