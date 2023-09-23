@@ -106,6 +106,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
     }
 
     size_t length = min(transaction.length, transaction.trans_len);
+
     return mgpu_operation_deserialize(receiveBuffer, length, operation);
 }
 
@@ -115,7 +116,7 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
 
     memset(sendBuffer, 0, BUFFER_SIZE);
     int byteCount = mgpu_serialize_response(response, sendBuffer + 2, BUFFER_SIZE - 2);
-    if (byteCount >= 0) {
+    if (byteCount <= 0) {
         switch (byteCount) {
             case MGPU_ERROR_BUFFER_TOO_SMALL:
                 ESP_LOGE(LOG_TAG, "Attempted to serialize response, but it required a larger buffer");
@@ -126,7 +127,7 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
                 break;
 
             default:
-                ESP_LOGE(LOG_TAG, "Response serializing failed with unknown error: %u", byteCount);
+                ESP_LOGE(LOG_TAG, "Response serializing failed with unknown error: %d", byteCount);
                 break;
         }
 

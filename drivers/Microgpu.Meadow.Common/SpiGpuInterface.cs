@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Meadow.Hardware;
 using Microgpu.Common.Operations;
@@ -24,6 +25,9 @@ namespace Microgpu.Meadow.Common
             _handshakePin = handshakePin;
             _resetPin = resetPin;
             _chipSelectPin = chipSelectPin;
+
+            _resetPin.State = true;
+            _chipSelectPin.State = true;
         }
         
         public static async Task<SpiGpuInterface> CreateAsync(ISpiBus spiBus, 
@@ -45,7 +49,7 @@ namespace Microgpu.Meadow.Common
         }
 
         public async Task<TResponse> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
-            where TResponse : IResponse
+            where TResponse : IResponse, new()
         {
             await WaitForHandshakeAsync();
             var byteCount = operation.Serialize(_writeBuffer);
@@ -62,7 +66,7 @@ namespace Microgpu.Meadow.Common
             _spiBus.Read(null, _readBuffer.AsSpan(0, responseLength));
             _chipSelectPin.State = true;
 
-            var response = Activator.CreateInstance<TResponse>();
+            var response = new TResponse();
             response.Deserialize(_readBuffer.AsSpan(0, responseLength));
 
             return response;
@@ -75,7 +79,7 @@ namespace Microgpu.Meadow.Common
             
             // Reset the display
             _resetPin.State = false;
-            await Task.Delay(100);
+            await Task.Delay(1000);
             _resetPin.State = true;
             
             // Wait for the gpu to be ready

@@ -53,6 +53,7 @@ bool setup(void) {
     databusOptions.sclkPin = 16;
     databusOptions.csPin = 17;
     databusOptions.handshakePin = 18;
+    databusOptions.spiHost = SPI2_HOST;
 
     databus = mgpu_databus_new(&databusOptions, &standardAllocator);
     if (databus == NULL) {

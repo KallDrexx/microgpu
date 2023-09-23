@@ -13,11 +13,17 @@ public class StatusResponse : IResponse
     
     public void Deserialize(ReadOnlySpan<byte> bytes)
     {
-        IsInitialized = bytes[0] == 1;
-        DisplayWidth = BitConverter.ToUInt16(bytes.Slice(1, 2));
-        DisplayHeight = BitConverter.ToUInt16(bytes.Slice(3, 2));
-        FrameBufferWidth = BitConverter.ToUInt16(bytes.Slice(5, 2));
-        FrameBufferHeight = BitConverter.ToUInt16(bytes.Slice(7, 2));
-        ColorMode = (ColorMode)bytes[9];
+        if (bytes[0] != (byte)ResponseType.Status)
+        {
+            var message = $"Expected type byte of 1, found {bytes[0]}";
+            throw new InvalidOperationException(message);
+        }
+        
+        IsInitialized = bytes[1] == 1;
+        DisplayWidth = (ushort)(bytes[2] << 8 | bytes[3]);
+        DisplayHeight = (ushort)(bytes[4] << 8 | bytes[5]);
+        FrameBufferWidth = (ushort)(bytes[6] << 8 | bytes[7]);
+        FrameBufferHeight = (ushort)(bytes[8] << 8 | bytes[9]);
+        ColorMode = (ColorMode)bytes[10];
     }
 }
