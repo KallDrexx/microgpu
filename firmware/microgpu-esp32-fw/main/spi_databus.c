@@ -114,7 +114,7 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
     assert(response != NULL);
 
     memset(sendBuffer, 0, BUFFER_SIZE);
-    int byteCount = mgpu_serialize_response(response, sendBuffer, BUFFER_SIZE);
+    int byteCount = mgpu_serialize_response(response, sendBuffer + 2, BUFFER_SIZE - 2);
     if (byteCount >= 0) {
         switch (byteCount) {
             case MGPU_ERROR_BUFFER_TOO_SMALL:
@@ -132,6 +132,9 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
 
         return;
     }
+
+    sendBuffer[0] = (uint8_t)(byteCount >> 8);
+    sendBuffer[1] = (uint8_t)(byteCount & 0xFF);
 
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microgpu.Common.Responses;
 
 namespace Microgpu.Common.Operations;
 
@@ -21,7 +22,7 @@ public interface IOperation
 /// <summary>
 /// An operation that expects a response from the gpu.
 /// </summary>
-public interface IResponsiveOperation : IOperation
+public interface IResponsiveOperation<TResponse> : IOperation where TResponse : IResponse
 {
 }
 

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Meadow.Hardware;
 using Microgpu.Common.Operations;
+using Microgpu.Common.Responses;
 
 namespace Microgpu.Meadow.Common
 {
@@ -12,6 +13,7 @@ namespace Microgpu.Meadow.Common
         private readonly IDigitalOutputPort _resetPin;
         private readonly IDigitalOutputPort _chipSelectPin;
         private readonly byte[] _writeBuffer = new byte[1024];
+        private readonly byte[] _readBuffer = new byte[1024];
 
         private SpiGpuInterface(ISpiBus spiBus, 
             IDigitalInputPort handshakePin, 
@@ -35,10 +37,35 @@ namespace Microgpu.Meadow.Common
             return spi;
         }
 
-        public void SendFireAndForget(IFireAndForgetOperation operation)
+        public async Task SendFireAndForgetAsync(IFireAndForgetOperation operation)
         {
+            await WaitForHandshakeAsync();
             var byteCount = operation.Serialize(_writeBuffer);
             _spiBus.Write(_chipSelectPin, _writeBuffer.AsSpan(0, byteCount));
+        }
+
+        public async Task<TResponse> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
+            where TResponse : IResponse
+        {
+            await WaitForHandshakeAsync();
+            var byteCount = operation.Serialize(_writeBuffer);
+            _spiBus.Write(_chipSelectPin, _writeBuffer.AsSpan(0, byteCount));
+
+            await WaitForHandshakeAsync();
+            
+            // The first two bytes tells us how many bytes we need to read. We need to keep chip select
+            // low in order to read the length without resetting the transaction
+            _chipSelectPin.State = false;
+            _spiBus.Read(null, _readBuffer.AsSpan(0, 2));
+            
+            var responseLength = (ushort) (_readBuffer[0] << 8 | _readBuffer[1]);
+            _spiBus.Read(null, _readBuffer.AsSpan(0, responseLength));
+            _chipSelectPin.State = true;
+
+            var response = Activator.CreateInstance<TResponse>();
+            response.Deserialize(_readBuffer.AsSpan(0, responseLength));
+
+            return response;
         }
 
         private async Task ResetAsync()
@@ -52,12 +79,17 @@ namespace Microgpu.Meadow.Common
             _resetPin.State = true;
             
             // Wait for the gpu to be ready
+            await WaitForHandshakeAsync();
+        }
+        
+        private async Task WaitForHandshakeAsync()
+        {
             var startedAt = DateTime.Now;
             while (!_handshakePin.State)
             {
                 if (DateTime.Now - startedAt > TimeSpan.FromSeconds(5))
                 {
-                    throw new TimeoutException("Timeout waiting for gpu to start");
+                    throw new TimeoutException("Timeout waiting for SPI handshake");
                 }
                 
                 await Task.Delay(100);

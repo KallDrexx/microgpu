@@ -1,8 +1,9 @@
 ﻿using System;
+using Microgpu.Common.Responses;
 
 namespace Microgpu.Common.Operations
 {
-    public class GetStatusOperation : IResponsiveOperation
+    public class GetStatusOperation : IResponsiveOperation<StatusResponse>
     {
         public int Serialize(Span<byte> bytes)
         {

@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Units;
+using Microgpu.Common.Operations;
+using Microgpu.Common.Responses;
 using Microgpu.Meadow.Common;
 
 namespace Microgpu.Meadow.Scratchpad
@@ -20,7 +22,19 @@ namespace Microgpu.Meadow.Scratchpad
             
             Console.WriteLine("Initializing GPU...");
             _spiGpuInterface = await SpiGpuInterface.CreateAsync(spiBus, handshake, reset, chipSelect);
+            
             Console.WriteLine("GPU initialized");
+
+            var status = await _spiGpuInterface.SendResponsiveOperationAsync(new GetStatusOperation());
+            LogStatus(status);
+        }
+
+        private static void LogStatus(StatusResponse status)
+        {
+            Console.WriteLine("Status received");
+            Console.WriteLine($"Is initialized: {status.IsInitialized}");
+            Console.WriteLine($"Display resolution: {status.DisplayWidth}x{status.DisplayHeight}");
+            Console.WriteLine($"Framebuffer resolution: {status.FrameBufferWidth}x{status.FrameBufferHeight}");
         }
     }
 }

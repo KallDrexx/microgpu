@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+using Microgpu.Common.Responses;
 
 namespace Microgpu.Common.Operations
 {
-    public class GetLastMessageOperation : IResponsiveOperation
+    public class GetLastMessageOperation : IResponsiveOperation<LastMessageResponse>
     {
         public int Serialize(Span<byte> bytes)
         {
