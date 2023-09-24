@@ -1,14 +1,21 @@
 #include <stdbool.h>
+#include <microgpu-common/operations/drawing/triangle.h>
 #include "esp_log.h"
 #include "microgpu-common/alloc.h"
 #include "microgpu-common/databus.h"
 #include "microgpu-common/display.h"
 #include "microgpu-common/framebuffer.h"
 #include "microgpu-common/operation_execution.h"
-#include "microgpu-common/operations/drawing/rectangle.h"
 #include "common.h"
 #include "displays/i80_display.h"
+
+#ifdef DATABUS_SPI
 #include "spi_databus.h"
+#elif defined(DATABUS_TEST)
+#include "test_databus.h"
+#else
+#error "No databus set"
+#endif
 
 Mgpu_FrameBuffer *frameBuffer;
 Mgpu_Display *display;
@@ -21,6 +28,41 @@ static const Mgpu_Allocator standardAllocator = {
         .AllocateFn = malloc,
         .FreeFn = free,
 };
+
+#ifdef DATABUS_SPI
+void init_databus_options() {
+    ESP_LOGI(LOG_TAG, "Initializing SPI databus");
+    databusOptions.copiPin = 14;
+    databusOptions.cipoPin = 15;
+    databusOptions.sclkPin = 16;
+    databusOptions.csPin = 17;
+    databusOptions.handshakePin = 18;
+    databusOptions.spiHost = SPI2_HOST;
+}
+#elif defined(DATABUS_TEST)
+void init_databus_options() {
+    ESP_LOGI(LOG_TAG, "Initializing test databus");
+}
+
+void handleResponse(Mgpu_Response *response) {
+    switch (response->type) {
+        case Mgpu_Response_Status:
+            ESP_LOGI(LOG_TAG, "Status received");
+            ESP_LOGI(LOG_TAG, "Display: %ux%u", response->status.displayWidth, response->status.displayHeight);
+            ESP_LOGI(LOG_TAG, "Framebuffer: %ux%u", response->status.frameBufferWidth, response->status.frameBufferHeight);
+            ESP_LOGI(LOG_TAG, "Color mode: %u", response->status.colorMode);
+            ESP_LOGI(LOG_TAG, "Is Initialized: %u", response->status.isInitialized);
+            break;
+
+        case Mgpu_Response_LastMessage:
+            ESP_LOGI(LOG_TAG, "GetLastMessage response received: %s", response->lastMessage.message);
+            break;
+
+        default:
+            break;
+    }
+}
+#endif
 
 bool setup(void) {
     ESP_LOGI(LOG_TAG, "Initializing display");
@@ -47,14 +89,7 @@ bool setup(void) {
         return false;
     }
 
-    ESP_LOGI(LOG_TAG, "Initializing SPI databus");
-    databusOptions.copiPin = 14;
-    databusOptions.cipoPin = 15;
-    databusOptions.sclkPin = 16;
-    databusOptions.csPin = 17;
-    databusOptions.handshakePin = 18;
-    databusOptions.spiHost = SPI2_HOST;
-
+    init_databus_options();
     databus = mgpu_databus_new(&databusOptions, &standardAllocator);
     if (databus == NULL) {
         ESP_LOGE(LOG_TAG, "Databus could not be created");
@@ -79,6 +114,12 @@ bool wait_for_initialization(void) {
         // Before initialization, we can only respond to get status and get last message
         if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
             mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, NULL);
+#ifdef DATABUS_TEST
+            Mgpu_Response response;
+            if (mgpu_test_databus_get_last_response(databus, &response)) {
+                    handleResponse(&response);
+                }
+#endif
         }
     }
 
@@ -116,6 +157,12 @@ void app_main(void) {
         if (mgpu_databus_get_next_operation(databus, &operation)) {
             Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
             mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, &releasedFrameBuffer);
+#ifdef DATABUS_TEST
+            Mgpu_Response response;
+            if (mgpu_test_databus_get_last_response(databus, &response)) {
+                handleResponse(&response);
+            }
+#endif
         }
     }
 }

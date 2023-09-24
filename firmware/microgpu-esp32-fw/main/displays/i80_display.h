@@ -33,4 +33,7 @@ struct Mgpu_Display {
     const Mgpu_Allocator *allocator;
     esp_lcd_panel_handle_t panel;
     uint16_t pixelWidth, pixelHeight;
+    uint16_t *buffer1;
+    uint16_t *buffer2;
+    int linesPerBuffer;
 };

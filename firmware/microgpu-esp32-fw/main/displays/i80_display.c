@@ -2,6 +2,7 @@
 #include <esp_log.h>
 #include <esp_lcd_panel_vendor.h>
 #include <esp_lcd_panel_ops.h>
+#include <esp_heap_caps.h>
 #include "microgpu-common/color.h"
 #include "microgpu-common/display.h"
 #include "../common.h"
@@ -10,6 +11,13 @@
 #ifndef MGPU_COLOR_MODE_USE_RGB565
 #error "Color mode RGB565 required"
 #endif
+
+size_t calc_buffer_line_height(const Mgpu_DisplayOptions *options) {
+    assert(options != NULL);
+    assert(options->pixelHeight % 10 == 0 && "Heights must be a multiple of 10");
+
+    return options->pixelHeight / 10;
+}
 
 void init_ili9341_panel(esp_lcd_panel_io_handle_t io_handle,
                         esp_lcd_panel_handle_t *panel,
@@ -49,6 +57,8 @@ void init_ili9341_panel(esp_lcd_panel_io_handle_t io_handle,
 }
 
 void init_i80_bus(const Mgpu_DisplayOptions *options, esp_lcd_panel_io_handle_t *io_handle) {
+    size_t lines = calc_buffer_line_height(options);
+
     esp_lcd_i80_bus_handle_t bus = NULL;
     esp_lcd_i80_bus_config_t busConfig = {
             .clk_src = LCD_CLK_SRC_DEFAULT,
@@ -65,7 +75,7 @@ void init_i80_bus(const Mgpu_DisplayOptions *options, esp_lcd_panel_io_handle_t 
                     options->dataPins.data7,
             },
             .bus_width = 8,
-            .max_transfer_bytes = options->pixelWidth * options->pixelHeight * sizeof(Mgpu_Color),
+            .max_transfer_bytes = options->pixelWidth * lines * sizeof(Mgpu_Color),
             .psram_trans_align = 64,
             .sram_trans_align = 4,
     };
@@ -127,6 +137,11 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_Displ
     display->panel = panel_handle;
     display->pixelWidth = options->pixelWidth;
     display->pixelHeight = options->pixelHeight;
+    display->linesPerBuffer = calc_buffer_line_height(options);
+
+    size_t bufferBytes = options->pixelWidth * display->linesPerBuffer * sizeof(Mgpu_Color);
+    display->buffer1 = heap_caps_malloc(bufferBytes, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
+    display->buffer2 = heap_caps_malloc(bufferBytes, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
 
     return display;
 }
@@ -151,7 +166,24 @@ Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *f
     assert(frameBuffer != NULL);
     assert(frameBuffer->scale == 1 && "TODO: Implement scaling support");
 
-    esp_lcd_panel_draw_bitmap(display->panel, 0, 0, display->pixelWidth, display->pixelHeight, frameBuffer->pixels);
+    uint16_t *currentBuffer = display->buffer2;
+    uint16_t *sourcePixel = frameBuffer->pixels;
+    size_t pixelCountPerBuffer = display->linesPerBuffer * display->pixelWidth;
+
+    // Write to the lcd one buffer at a time to batch up transactions, to better take advantage of DMA
+    for (int rowOffset = 0; rowOffset < display->pixelHeight; rowOffset += display->linesPerBuffer) {
+        currentBuffer = currentBuffer == display->buffer2 ? display->buffer1 : display->buffer2;
+        uint16_t *destinationPixel = currentBuffer;
+
+        for (int x = 0; x < pixelCountPerBuffer; x++) {
+            *destinationPixel = *sourcePixel;
+            destinationPixel++;
+            sourcePixel++;
+        }
+
+        esp_lcd_panel_draw_bitmap(display->panel, 0, rowOffset, display->pixelWidth, rowOffset + display->linesPerBuffer, currentBuffer);
+    }
+
 
     // Release the frame buffer back. This *may* not be valid as draw might be async via dma??
     return frameBuffer;

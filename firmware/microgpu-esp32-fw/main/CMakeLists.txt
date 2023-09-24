@@ -1,3 +1,18 @@
+set(DATABUS_TYPE test)
+
+if (DATABUS_TYPE STREQUAL "test")
+    set(DATABUS_SOURCE test_databus.c)
+    set(DATABUS_DEFINE DATABUS_TEST)
+elseif (${DATABUS_TYPE} STREQUAL "spi")
+    set(DATABUS_SOURCE spi_databus.c)
+    set(DATABUS_DEFINE DATABUS_SPI)
+else ()
+    message(FATAL_ERROR "No valid databus type set")
+endif ()
+
+set(DATABUS_SOURCE spi_databus.c)
+set(DATABUS_SOURCE test_databus.c)
+
 set(SOURCES
         ../../microgpu-common/framebuffer.c
         ../../microgpu-common/color_rgb565.c
@@ -12,11 +27,12 @@ set(SOURCES
         ../../microgpu-common/operations/status.c
         ../../microgpu-common/response_serializer.c
         displays/i80_display.c
-        spi_databus.c
+        ${DATABUS_SOURCE}
         main.c
 )
 
 idf_component_register(SRCS ${SOURCES}
         INCLUDE_DIRS "." "../../")
 
-target_compile_definitions(${COMPONENT_LIB} ${ARGV0} PUBLIC MGPU_COLOR_MODE_USE_RGB565)
+target_compile_definitions(${COMPONENT_LIB} PUBLIC MGPU_COLOR_MODE_USE_RGB565)
+target_compile_definitions(${COMPONENT_LIB} PUBLIC ${DATABUS_DEFINE})
