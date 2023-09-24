@@ -2,6 +2,9 @@
 #include "rectangle.h"
 
 void mgpu_draw_rectangle(Mgpu_DrawRectangleOperation *drawRectangle, Mgpu_FrameBuffer *frameBuffer) {
+    assert(drawRectangle != NULL);
+    assert(frameBuffer != NULL);
+
     if (drawRectangle->startX >= frameBuffer->width || drawRectangle->startY >= frameBuffer->height) {
         // It starts out of bounds, so nothing to draw.
         return;

@@ -1,4 +1,4 @@
-set(DATABUS_TYPE spi)
+set(DATABUS_TYPE test)
 
 if (DATABUS_TYPE STREQUAL "test")
     set(DATABUS_SOURCE test_databus.c)
