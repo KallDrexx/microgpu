@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Meadow.Hardware;
@@ -15,6 +16,10 @@ namespace Microgpu.Meadow.Common
         private readonly IDigitalOutputPort _chipSelectPin;
         private readonly byte[] _writeBuffer = new byte[1024];
         private readonly byte[] _readBuffer = new byte[1024];
+        private readonly long[] _waitTimes = new long[20];
+        private readonly long[] _spiTimes = new long[20];
+        private int _spiTimeIndex = 0;
+        private int _waitTimeIndex = 0;
 
         private SpiGpuInterface(ISpiBus spiBus, 
             IDigitalInputPort handshakePin, 
@@ -44,8 +49,19 @@ namespace Microgpu.Meadow.Common
         public async Task SendFireAndForgetAsync(IFireAndForgetOperation operation)
         {
             await WaitForHandshakeAsync();
+            var timer = Stopwatch.StartNew();
             var byteCount = operation.Serialize(_writeBuffer);
             _spiBus.Write(_chipSelectPin, _writeBuffer.AsSpan(0, byteCount));
+            timer.Stop();
+            
+            _spiTimes[_spiTimeIndex] = timer.ElapsedMilliseconds;
+            _spiTimeIndex++;
+            if (_spiTimeIndex >= _spiTimes.Length)
+            {
+                _spiTimeIndex = 0;
+                var average = _spiTimes.Average();
+                Console.WriteLine($"Average SPI time: {average}ms");
+            }
         }
 
         public async Task<TResponse> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
@@ -88,6 +104,7 @@ namespace Microgpu.Meadow.Common
         
         private async Task WaitForHandshakeAsync()
         {
+            var timer = Stopwatch.StartNew();
             var startedAt = DateTime.Now;
             while (!_handshakePin.State)
             {
@@ -97,6 +114,15 @@ namespace Microgpu.Meadow.Common
                 }
                 
                 await Task.Delay(100);
+            }
+            timer.Stop();
+            _waitTimes[_waitTimeIndex] = timer.ElapsedMilliseconds;
+            _waitTimeIndex++;
+            if (_waitTimeIndex >= _waitTimes.Length)
+            {
+                _waitTimeIndex = 0;
+                var average = _waitTimes.Average();
+                Console.WriteLine($"Average wait time: {average}ms");
             }
         }
     }

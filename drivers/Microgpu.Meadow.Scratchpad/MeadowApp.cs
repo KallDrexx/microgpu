@@ -22,7 +22,7 @@ namespace Microgpu.Meadow.Scratchpad
             var chipSelect = Device.CreateDigitalOutputPort(Device.Pins.D04, true);
             
             var config = new SpiClockConfiguration(
-                new Frequency(500, Frequency.UnitType.Kilohertz),
+                new Frequency(10, Frequency.UnitType.Megahertz),
                 SpiClockConfiguration.Mode.Mode0);
         
             var spiBus = Device.CreateSpiBus(Device.Pins.SCK, Device.Pins.COPI, Device.Pins.CIPO, config);
@@ -52,24 +52,26 @@ namespace Microgpu.Meadow.Scratchpad
 
         public override async Task Run()
         {
-            // var octahedron = new Octahedron();
-            // await octahedron.Run(_spiGpuInterface);
+            var octahedron = new Octahedron();
+            await octahedron.Run(_spiGpuInterface);
 
-            await _spiGpuInterface.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
-            {
-                StartX = 100,
-                StartY = 20,
-                Width = 100,
-                Height = 150,
-                Color = ColorRgb565.FromRgb888(255, 0, 0),
-            });
-
-            await _spiGpuInterface.SendFireAndForgetAsync(new PresentFramebufferOperation());
-
-            while (true)
-            {
-                await Task.Delay(1000);
-            }
+            // await _spiGpuInterface.SendFireAndForgetAsync(new DrawTriangleOperation<ColorRgb565>
+            // {
+            //     X0 = 60,
+            //     Y0 = 20,
+            //     X1 = 30,
+            //     Y1 = 100,
+            //     X2 = 90,
+            //     Y2 = 100,
+            //     Color = ColorRgb565.FromRgb888(255, 0, 0),
+            // });
+            //
+            // await _spiGpuInterface.SendFireAndForgetAsync(new PresentFramebufferOperation());
+            //
+            // while (true)
+            // {
+            //     await Task.Delay(1000);
+            // }
         }
 
         private static void LogStatus(StatusResponse status)

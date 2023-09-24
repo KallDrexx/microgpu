@@ -1,4 +1,4 @@
-set(DATABUS_TYPE test)
+set(DATABUS_TYPE spi)
 
 if (DATABUS_TYPE STREQUAL "test")
     set(DATABUS_SOURCE test_databus.c)
@@ -9,9 +9,6 @@ elseif (${DATABUS_TYPE} STREQUAL "spi")
 else ()
     message(FATAL_ERROR "No valid databus type set")
 endif ()
-
-set(DATABUS_SOURCE spi_databus.c)
-set(DATABUS_SOURCE test_databus.c)
 
 set(SOURCES
         ../../microgpu-common/framebuffer.c

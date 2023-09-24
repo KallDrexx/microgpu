@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microgpu.Common;
@@ -27,9 +28,14 @@ public class Octahedron
         var xRotation = 0;
         var light = new Vector3(1, 0, 3);
         var lightUnitVector = light.Unit;
+        var frameTimes = new long[10];
+        var spiTimes = new long[10];
+        var frameTimeIndex = 0;
 
         while(true)
         {
+            var spiTime = 0L;
+            var frameTimer = Stopwatch.StartNew();
             var rotatedOctehedron = octehedron
                 .Select(x => new Triangle(x.V1.RotateOnZ(zRotation), x.V2.RotateOnZ(zRotation), x.V3.RotateOnZ(zRotation)))
                 .Select(x => new Triangle(x.V1.RotateOnY(yRotation), x.V2.RotateOnY(yRotation), x.V3.RotateOnY(yRotation)))
@@ -58,6 +64,7 @@ public class Octahedron
                     var (x1, y1) = ToScreen(projectedTriangle.V2);
                     var (x2, y2) = ToScreen(projectedTriangle.V3);
 
+                    var spiTimer = Stopwatch.StartNew();
                     await spiGpuInterface.SendFireAndForgetAsync(new DrawTriangleOperation<ColorRgb565>
                     {
                         X0 = x0,
@@ -68,15 +75,31 @@ public class Octahedron
                         Y2 = y2,
                         Color = color,
                     });
+                    spiTimer.Stop();
+                    spiTime += spiTimer.ElapsedMilliseconds;
                 }
             }
 
             yRotation += 5;
             xRotation += 5;
 
+            var spiTimer2 = Stopwatch.StartNew();
             await spiGpuInterface.SendFireAndForgetAsync(new PresentFramebufferOperation());
-            // await Task.Delay(16);
-            // return;
+            spiTimer2.Stop();
+            spiTime += spiTimer2.ElapsedMilliseconds;
+            
+            frameTimer.Stop();
+            frameTimes[frameTimeIndex] = frameTimer.ElapsedMilliseconds;
+            spiTimes[frameTimeIndex] = spiTime;
+            frameTimeIndex++;
+
+            if (frameTimeIndex >= frameTimes.Length)
+            {
+                frameTimeIndex = 0;
+                var frameTimeAverage = frameTimes.Average();
+                var spiTimeAverage = spiTimes.Average();
+                Console.WriteLine($"Frame time: {frameTimeAverage}ms, SPI time: {spiTimeAverage}ms");
+            }
         }   
     }
 

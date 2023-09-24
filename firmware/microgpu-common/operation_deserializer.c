@@ -52,14 +52,6 @@ bool deserialize_draw_rectangle(const uint8_t bytes[], size_t size, Mgpu_Operati
     operation->drawRectangle.height = ((uint16_t) bytes[7] << 8) | bytes[8];
     operation->drawRectangle.color = deserialize_color(bytes, 9);
 
-
-    printf("Draw rectangle at (%u,%u) width: %u, height: %u, color: %u\n",
-           operation->drawRectangle.startX,
-           operation->drawRectangle.startY,
-           operation->drawRectangle.width,
-           operation->drawRectangle.height,
-           operation->drawRectangle.color);
-
     return true;
 }
 

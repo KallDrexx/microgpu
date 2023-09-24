@@ -29,7 +29,7 @@ namespace Microgpu.Common.Operations
             bytes[11] = (byte)(Y2 >> 8);
             bytes[12] = (byte)(Y2 & 0xFF);
             
-            return 13 + Color.WriteBytes(bytes[12..]);
+            return 13 + Color.WriteBytes(bytes[13..]);
         }
     }
 }
