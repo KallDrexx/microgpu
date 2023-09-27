@@ -83,7 +83,7 @@ void init_i80_bus(const Mgpu_DisplayOptions *options, esp_lcd_panel_io_handle_t 
     ESP_ERROR_CHECK(esp_lcd_new_i80_bus(&busConfig, &bus));
     esp_lcd_panel_io_i80_config_t ioConfig = {
             .cs_gpio_num = options->controlPins.chipSelect,
-            .pclk_hz = 2 * 1000 * 1000, // Example uses 2Mhz when PSRAM is used
+            .pclk_hz = 20 * 1000 * 1000, // Example uses 2Mhz when PSRAM is used
             .trans_queue_depth = 10,
             .dc_levels = {
                     .dc_idle_level = 0,

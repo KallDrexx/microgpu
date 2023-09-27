@@ -28,14 +28,9 @@ public class Octahedron
         var xRotation = 0;
         var light = new Vector3(1, 0, 3);
         var lightUnitVector = light.Unit;
-        var frameTimes = new long[10];
-        var spiTimes = new long[10];
-        var frameTimeIndex = 0;
 
         while(true)
         {
-            var spiTime = 0L;
-            var frameTimer = Stopwatch.StartNew();
             var rotatedOctehedron = octehedron
                 .Select(x => new Triangle(x.V1.RotateOnZ(zRotation), x.V2.RotateOnZ(zRotation), x.V3.RotateOnZ(zRotation)))
                 .Select(x => new Triangle(x.V1.RotateOnY(yRotation), x.V2.RotateOnY(yRotation), x.V3.RotateOnY(yRotation)))
@@ -76,30 +71,13 @@ public class Octahedron
                         Color = color,
                     });
                     spiTimer.Stop();
-                    spiTime += spiTimer.ElapsedMilliseconds;
                 }
             }
 
             yRotation += 5;
             xRotation += 5;
 
-            var spiTimer2 = Stopwatch.StartNew();
             await spiGpuInterface.SendFireAndForgetAsync(new PresentFramebufferOperation());
-            spiTimer2.Stop();
-            spiTime += spiTimer2.ElapsedMilliseconds;
-            
-            frameTimer.Stop();
-            frameTimes[frameTimeIndex] = frameTimer.ElapsedMilliseconds;
-            spiTimes[frameTimeIndex] = spiTime;
-            frameTimeIndex++;
-
-            if (frameTimeIndex >= frameTimes.Length)
-            {
-                frameTimeIndex = 0;
-                var frameTimeAverage = frameTimes.Average();
-                var spiTimeAverage = spiTimes.Average();
-                Console.WriteLine($"Frame time: {frameTimeAverage}ms, SPI time: {spiTimeAverage}ms");
-            }
         }   
     }
 
