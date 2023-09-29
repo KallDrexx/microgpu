@@ -14,6 +14,7 @@ namespace Microgpu.Meadow.Scratchpad
     public class MeadowApp : App<F7FeatherV2>
     {
         private SpiGpuInterface _spiGpuInterface = null!;
+        private int _width, _height;
         
         public override async Task Initialize()
         {
@@ -42,6 +43,8 @@ namespace Microgpu.Meadow.Scratchpad
             });
             
             status = await _spiGpuInterface.SendResponsiveOperationAsync(new GetStatusOperation());
+            _width = status.FrameBufferWidth;
+            _height = status.FrameBufferHeight;
             LogStatus(status);
 
             if (!status.IsInitialized)
@@ -53,25 +56,7 @@ namespace Microgpu.Meadow.Scratchpad
         public override async Task Run()
         {
             var octahedron = new Octahedron();
-            await octahedron.Run(_spiGpuInterface);
-
-            // await _spiGpuInterface.SendFireAndForgetAsync(new DrawTriangleOperation<ColorRgb565>
-            // {
-            //     X0 = 60,
-            //     Y0 = 20,
-            //     X1 = 30,
-            //     Y1 = 100,
-            //     X2 = 90,
-            //     Y2 = 100,
-            //     Color = ColorRgb565.FromRgb888(255, 0, 0),
-            // });
-            //
-            // await _spiGpuInterface.SendFireAndForgetAsync(new PresentFramebufferOperation());
-            //
-            // while (true)
-            // {
-            //     await Task.Delay(1000);
-            // }
+            await octahedron.Run(_spiGpuInterface, _width, _height);
         }
 
         private static void LogStatus(StatusResponse status)

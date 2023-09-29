@@ -164,26 +164,40 @@ void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_
 Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
     assert(display != NULL);
     assert(frameBuffer != NULL);
-    assert(frameBuffer->scale == 1 && "TODO: Implement scaling support");
 
     uint16_t *currentBuffer = display->buffer2;
+    uint16_t *destPixel = currentBuffer;
     uint16_t *sourcePixel = frameBuffer->pixels;
-    size_t pixelCountPerBuffer = display->linesPerBuffer * display->pixelWidth;
+    uint16_t displayRowCount = 0;
 
     // Write to the lcd one buffer at a time to batch up transactions, to better take advantage of DMA
-    for (int rowOffset = 0; rowOffset < display->pixelHeight; rowOffset += display->linesPerBuffer) {
-        currentBuffer = currentBuffer == display->buffer2 ? display->buffer1 : display->buffer2;
-        uint16_t *destinationPixel = currentBuffer;
+    for (int sourceRow = 0; sourceRow < frameBuffer->height; sourceRow++) {
+        uint16_t *sourceRowStart = sourcePixel;
+        for (int rowScale = 0; rowScale < frameBuffer->scale; rowScale++) {
+            sourcePixel = sourceRowStart;
+            for (int x = 0; x < frameBuffer->width; x++) {
+                for (int widthScale = 0; widthScale < frameBuffer->scale; widthScale++) {
+                    *destPixel = *sourcePixel;
+                    destPixel++;
+                }
 
-        for (int x = 0; x < pixelCountPerBuffer; x++) {
-            *destinationPixel = *sourcePixel;
-            destinationPixel++;
-            sourcePixel++;
+                sourcePixel++;
+            }
+
+            displayRowCount++;
+            if (displayRowCount % display->linesPerBuffer == 0) {
+                esp_lcd_panel_draw_bitmap(display->panel,
+                                          0,
+                                          displayRowCount - display->linesPerBuffer,
+                                          display->pixelWidth,
+                                          displayRowCount,
+                                          currentBuffer);
+
+                currentBuffer = currentBuffer == display->buffer2 ? display->buffer1 : display->buffer2;
+                destPixel = currentBuffer;
+            }
         }
-
-        esp_lcd_panel_draw_bitmap(display->panel, 0, rowOffset, display->pixelWidth, rowOffset + display->linesPerBuffer, currentBuffer);
     }
-
 
     // Release the frame buffer back. This *may* not be valid as draw might be async via dma??
     return frameBuffer;

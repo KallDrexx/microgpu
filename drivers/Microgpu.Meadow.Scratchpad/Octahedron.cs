@@ -10,7 +10,7 @@ namespace Microgpu.Meadow.Scratchpad;
 
 public class Octahedron
 {
-    public async Task Run(SpiGpuInterface spiGpuInterface) {
+    public async Task Run(SpiGpuInterface spiGpuInterface, int width, int height) {
         var camera = new Camera();
         var octehedron = new[] {
             new Triangle((1, 0, 0), (0, 1, 0), (0, 0, 1)),
@@ -55,9 +55,9 @@ public class Octahedron
                     var color = ColorRgb565.FromRgb888(colorValue, colorValue, colorValue);
 
                     // draw
-                    var (x0, y0) = ToScreen(projectedTriangle.V1);
-                    var (x1, y1) = ToScreen(projectedTriangle.V2);
-                    var (x2, y2) = ToScreen(projectedTriangle.V3);
+                    var (x0, y0) = ToScreen(projectedTriangle.V1, width, height);
+                    var (x1, y1) = ToScreen(projectedTriangle.V2, width, height);
+                    var (x2, y2) = ToScreen(projectedTriangle.V3, width, height);
 
                     var spiTimer = Stopwatch.StartNew();
                     await spiGpuInterface.SendFireAndForgetAsync(new DrawTriangleOperation<ColorRgb565>
@@ -81,10 +81,10 @@ public class Octahedron
         }   
     }
 
-    private (ushort, ushort) ToScreen(Vector3 vector)
+    private (ushort, ushort) ToScreen(Vector3 vector, int screenWidth, int screenHeight)
     {
-        var x = (ushort) (vector.X * 100 + 160);
-        var y = (ushort) (vector.Y * 100 + 120);
+        var x = (ushort) (vector.X * 100 + screenWidth / 2);
+        var y = (ushort) (vector.Y * 100 + screenHeight / 2);
         return (x, y);
     }
 
