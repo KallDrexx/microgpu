@@ -1,5 +1,7 @@
+#include <stdlib.h>
 #include <assert.h>
 #include <SDL.h>
+#include "microgpu-common/operation_deserializer.h"
 #include "test_databus.h"
 
 #define RESET_OPERATION_ID 250
@@ -110,7 +112,25 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operationCount++;
             return true;
 
-        case 10:
+        case 10: {
+            // Two triangles side by side
+            uint8_t bytes[] = {
+                    0x00, 0x0b, 0x02, 0x00, 0xc8, 0x00, 0xc8, 0x00, 0x32, 0x00, 0x14, 0xf8, 0x00,
+                    0x00, 0x0b, 0x02, 0x01, 0x90, 0x00, 0xc8, 0x00, 0x32, 0x00, 0x14, 0x07, 0xe0,
+            };
+
+            uint8_t *buffer = malloc(26);
+            memmove(buffer, bytes, 26);
+
+            operation->type = Mgpu_Operation_Batch;
+            operation->batchOperation.byteLength = 26;
+            operation->batchOperation.bytes = buffer;
+
+            operationCount++;
+            return true;
+        }
+
+        case 11:
             operation->type = Mgpu_Operation_PresentFramebuffer;
             operationCount++;
             return true;

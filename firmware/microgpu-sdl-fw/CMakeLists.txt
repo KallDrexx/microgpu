@@ -20,6 +20,7 @@ function(create_sdl_target)
             ../microgpu-common/messages.c
             ../microgpu-common/operation_deserializer.c
             ../microgpu-common/operation_execution.c
+            ../microgpu-common/operations/batch.c
             ../microgpu-common/operations/drawing/rectangle.c
             ../microgpu-common/operations/drawing/triangle.c
             ../microgpu-common/operations/get_last_message.c

@@ -45,6 +45,12 @@ typedef enum {
     Mgpu_Operation_PresentFramebuffer = 6,
 
     /*
+     * A single operation that contains one or more operations inside of it. Used to
+     * reduce overhead in some transports.
+     */
+    Mgpu_Operation_Batch = 7,
+
+    /*
      * Requests the microgpu to initialize itself and fully reset itself.
      */
     Mgpu_Operation_Reset = 189, // Higher value that's hard to see accidentally
@@ -72,6 +78,11 @@ typedef struct {
     Mgpu_Color color;
 } Mgpu_DrawTriangleOperation;
 
+typedef struct {
+    uint16_t byteLength;
+    const uint8_t *bytes;
+} Mgpu_BatchOperation;
+
 /*
  * Single type that can represent any type of operation that
  * the microgpu framework can support.
@@ -82,5 +93,6 @@ typedef struct {
         Mgpu_InitializeOperation initialize;
         Mgpu_DrawRectangleOperation drawRectangle;
         Mgpu_DrawTriangleOperation drawTriangle;
+        Mgpu_BatchOperation batchOperation;
     };
 } Mgpu_Operation;

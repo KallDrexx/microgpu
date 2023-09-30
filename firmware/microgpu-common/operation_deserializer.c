@@ -88,6 +88,26 @@ bool deserialize_reset(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
     return true;
 }
 
+bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
+    if (size < 3) {
+        return false;
+    }
+
+    uint16_t innerSize = (bytes[1] << 8) | bytes[2];
+    if (innerSize < size - 3) {
+        return false;
+    }
+
+    operation->type = Mgpu_Operation_Batch;
+    operation->batchOperation.byteLength = innerSize;
+
+    // This should be ok as the operation should not be used by the time
+    // the next databus operation occurs.
+    operation->batchOperation.bytes = bytes + 3;
+
+    return true;
+}
+
 bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     assert(bytes != NULL);
     assert(operation != NULL);
@@ -115,6 +135,9 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
 
         case Mgpu_Operation_PresentFramebuffer:
             return deserialize_present_framebuffer(operation);
+
+        case Mgpu_Operation_Batch:
+            return deserialize_batch(bytes, size, operation);
 
         case Mgpu_Operation_Reset:
             return deserialize_reset(bytes, size, operation);

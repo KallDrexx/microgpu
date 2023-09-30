@@ -2,6 +2,7 @@
 #include "databus.h"
 #include "messages.h"
 #include "operations.h"
+#include "microgpu-common/operations/batch.h"
 #include "microgpu-common/operations/drawing/rectangle.h"
 #include "microgpu-common/operations/drawing/triangle.h"
 #include "microgpu-common/operations/get_last_message.h"
@@ -40,6 +41,10 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
 
         case Mgpu_Operation_PresentFramebuffer:
             mgpu_exec_present_framebuffer(display, frameBuffer, releasedFrameBuffer);
+            break;
+
+        case Mgpu_Operation_Batch:
+            mgpu_exec_batch(&operation->batchOperation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer);
             break;
 
         case Mgpu_Operation_Reset:
