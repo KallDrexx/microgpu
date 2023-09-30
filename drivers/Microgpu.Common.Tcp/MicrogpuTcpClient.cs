@@ -1,37 +1,38 @@
 ﻿using System.Net.Sockets;
 using Microgpu.Common.Operations;
+using System;
 
 namespace Microgpu.Common.Tcp;
 
 public class MicrogpuTcpClient : IDisposable
 {
-    private readonly Socket _socket = new(SocketType.Stream, ProtocolType.Tcp);
+    private readonly TcpClient _tcpClient = new();
+    // private readonly Socket _socket = new(SocketType.Stream, ProtocolType.Tcp);
     private readonly string _host;
     private readonly int _port;
-    private readonly byte[] _buffer = new byte[1026]; 
+    private readonly byte[] _buffer = new byte[1026];
+    private NetworkStream? _networkStream;
     
     public MicrogpuTcpClient(string host, int port)
     {
         _host = host;
         _port = port;
-        
-        _socket.SendTimeout = 1000;
-        _socket.ReceiveTimeout = 1000;
     }
     
     public async Task ConnectAsync()
     {
-        await _socket.ConnectAsync(_host, _port);
+        await _tcpClient.ConnectAsync(_host, _port);
+        _networkStream = _tcpClient.GetStream();
     }
     
     public async Task SendOperationAsync(IOperation operation)
     {
-        if (!_socket.Connected)
+        if (!_tcpClient.Connected)
         {
             await ConnectAsync();
         }
         
-        var byteCount = operation.Serialize(_buffer[2..]);
+        var byteCount = operation.Serialize(_buffer.AsSpan(2));
         
         var lengthByte1 = (byte)(byteCount >> 8);
         var lengthByte2 = (byte)(byteCount & 0xFF);
@@ -39,11 +40,12 @@ public class MicrogpuTcpClient : IDisposable
         _buffer[0] = lengthByte1;
         _buffer[1] = lengthByte2;
         
-        await _socket.SendAsync(_buffer.ToArray(), SocketFlags.None);
+        await _networkStream!.WriteAsync(_buffer.AsMemory(0, byteCount + 2));
     }
 
     public void Dispose()
     {
-        _socket.Dispose();
+        _networkStream?.Dispose();
+        _tcpClient.Dispose();
     }
 }
