@@ -29,6 +29,7 @@ public class Octahedron
         var light = new Vector3(1, 0, 3);
         var lightUnitVector = light.Unit;
 
+        var gpuBatch = new BatchOperation();
         while(true)
         {
             var rotatedOctehedron = octehedron
@@ -60,7 +61,7 @@ public class Octahedron
                     var (x2, y2) = ToScreen(projectedTriangle.V3, width, height);
 
                     var spiTimer = Stopwatch.StartNew();
-                    await spiGpuInterface.SendFireAndForgetAsync(new DrawTriangleOperation<ColorRgb565>
+                    gpuBatch.AddOperation(new DrawTriangleOperation<ColorRgb565>
                     {
                         X0 = x0,
                         Y0 = y0,
@@ -77,7 +78,8 @@ public class Octahedron
             yRotation += 5;
             xRotation += 5;
 
-            await spiGpuInterface.SendFireAndForgetAsync(new PresentFramebufferOperation());
+            gpuBatch.AddOperation(new PresentFramebufferOperation());
+            await spiGpuInterface.SendFireAndForgetAsync(gpuBatch);
         }   
     }
 

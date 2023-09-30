@@ -25,6 +25,7 @@ public class Octahedron
         var light = new Vector3(1, 0, 3);
         var lightUnitVector = light.Unit;
 
+        var gpuBatch = new BatchOperation();
         while(true)
         {
             var rotatedOctehedron = octehedron
@@ -54,8 +55,8 @@ public class Octahedron
                     var (x0, y0) = ToScreen(projectedTriangle.V1);
                     var (x1, y1) = ToScreen(projectedTriangle.V2);
                     var (x2, y2) = ToScreen(projectedTriangle.V3);
-
-                    await client.SendOperationAsync(new DrawTriangleOperation<ColorRgb565>
+                    
+                    gpuBatch.AddOperation(new DrawTriangleOperation<ColorRgb565>
                     {
                         X0 = x0,
                         Y0 = y0,
@@ -71,7 +72,8 @@ public class Octahedron
             yRotation += 5;
             xRotation += 5;
 
-            await client.SendOperationAsync(new PresentFramebufferOperation());
+            gpuBatch.AddOperation(new PresentFramebufferOperation());
+            await client.SendOperationAsync(gpuBatch);
             await Task.Delay(16);
             // return;
         }   
