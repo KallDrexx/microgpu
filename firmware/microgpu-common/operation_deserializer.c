@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include "microgpu-common/messages.h"
 #include "color.h"
 #include "operation_deserializer.h"
 
@@ -90,11 +91,17 @@ bool deserialize_reset(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
 
 bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     if (size < 3) {
+        char msg[MESSAGE_MAX_LEN] = {0};
+        snprintf(msg, MESSAGE_MAX_LEN, "Batch message had too few characters (size %u)", size);
+        mgpu_message_set(msg);
         return false;
     }
 
     uint16_t innerSize = (bytes[1] << 8) | bytes[2];
-    if (innerSize < size - 3) {
+    if (innerSize > size - 3) {
+        char msg[MESSAGE_MAX_LEN] = {0};
+        snprintf(msg, MESSAGE_MAX_LEN, "Batch message inner size too large (size %u, innerSize %u)", size, innerSize);
+        mgpu_message_set(msg);
         return false;
     }
 

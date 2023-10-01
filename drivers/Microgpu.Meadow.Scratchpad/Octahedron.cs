@@ -29,9 +29,12 @@ public class Octahedron
         var light = new Vector3(1, 0, 3);
         var lightUnitVector = light.Unit;
 
+        var frameTimes = new long[100];
+        var frameTimeIndex = 0;
         var gpuBatch = new BatchOperation();
         while(true)
         {
+            var stopwatch = Stopwatch.StartNew();
             var rotatedOctehedron = octehedron
                 .Select(x => new Triangle(x.V1.RotateOnZ(zRotation), x.V2.RotateOnZ(zRotation), x.V3.RotateOnZ(zRotation)))
                 .Select(x => new Triangle(x.V1.RotateOnY(yRotation), x.V2.RotateOnY(yRotation), x.V3.RotateOnY(yRotation)))
@@ -80,6 +83,15 @@ public class Octahedron
 
             gpuBatch.AddOperation(new PresentFramebufferOperation());
             await spiGpuInterface.SendFireAndForgetAsync(gpuBatch);
+            stopwatch.Stop();
+            
+            frameTimes[frameTimeIndex] = stopwatch.ElapsedMilliseconds;
+            frameTimeIndex++;
+            if (frameTimeIndex == frameTimes.Length) {
+                frameTimeIndex = 0;
+                var averageFrameTime = frameTimes.Average();
+                Console.WriteLine($"Average frame time: {averageFrameTime}ms");
+            }
         }   
     }
 

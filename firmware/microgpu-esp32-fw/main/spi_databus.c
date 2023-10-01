@@ -107,7 +107,19 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
     size_t length = min(transaction.length, transaction.trans_len);
 
-    return mgpu_operation_deserialize(receiveBuffer, length, operation);
+    if (!mgpu_operation_deserialize(receiveBuffer, length, operation)) {
+        ESP_LOGW(LOG_TAG, "Failed to deserialize SPI transaction");
+
+        printf("data: ");
+        for (int x = 0; x < length; x++) {
+            printf("%02X ", receiveBuffer[x]);
+        }
+
+        printf("\n");
+        return false;
+    }
+
+    return true;
 }
 
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
