@@ -91,6 +91,8 @@ int databus_loop(void *data) {
                 handleResponse(&response);
             }
 #endif
+        } else {
+            SDL_Log("Failed to deserialize data\n");
         }
     }
 

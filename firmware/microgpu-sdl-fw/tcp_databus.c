@@ -234,13 +234,16 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
     assert(response != NULL);
 
     uint8_t buffer[1024];
-    int bufferBytesWritten = mgpu_serialize_response(response, buffer, sizeof(buffer));
+    int bufferBytesWritten = mgpu_serialize_response(response, buffer + 2, sizeof(buffer) - 2);
     if (bufferBytesWritten < 0) {
         fprintf(stderr, "Failed to serialize response: %u\n", bufferBytesWritten);
         return;
     }
 
-    send(databus->clientSocket, (char*)buffer, bufferBytesWritten, 0);
+    buffer[0] = bufferBytesWritten >> 8;
+    buffer[1] = bufferBytesWritten & 0xFF;
+
+    send(databus->clientSocket, (char*)buffer, bufferBytesWritten + 2, 0);
 }
 
 uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {

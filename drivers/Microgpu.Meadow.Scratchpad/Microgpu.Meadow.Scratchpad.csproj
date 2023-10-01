@@ -15,7 +15,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj" />
-      <ProjectReference Include="..\Microgpu.Meadow.Common\Microgpu.Meadow.Common.csproj" />
+      <ProjectReference Include="..\Microgpu.Sample.Common\Microgpu.Sample.Common.csproj" />
     </ItemGroup>
     
     <ItemGroup>

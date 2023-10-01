@@ -2,17 +2,13 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.1</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>11.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Meadow" Version="1.3.0" />
-      <PackageReference Include="Meadow.Contracts" Version="1.3.0" />
-      <PackageReference Include="System.Memory" Version="4.5.5" />
     </ItemGroup>
 
 </Project>

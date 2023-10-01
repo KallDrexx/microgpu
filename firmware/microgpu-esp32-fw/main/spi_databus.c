@@ -106,7 +106,6 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
     }
 
     size_t length = min(transaction.length, transaction.trans_len);
-
     if (!mgpu_operation_deserialize(receiveBuffer, length, operation)) {
         ESP_LOGW(LOG_TAG, "Failed to deserialize SPI transaction");
 

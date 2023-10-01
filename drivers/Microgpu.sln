@@ -4,11 +4,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Common", "Microgpu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Scratchpad", "Microgpu.Scratchpad\Microgpu.Scratchpad.csproj", "{9553E398-CB3B-4DD7-903E-9577C117A186}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Common.Tcp", "Microgpu.Common.Tcp\Microgpu.Common.Tcp.csproj", "{4083D035-3869-4239-A389-B09B6EEDF0A6}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Meadow.Scratchpad", "Microgpu.Meadow.Scratchpad\Microgpu.Meadow.Scratchpad.csproj", "{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Meadow.Common", "Microgpu.Meadow.Common\Microgpu.Meadow.Common.csproj", "{C774CD5B-6B04-45EF-9769-3E908E449E9F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Sample.Common", "Microgpu.Sample.Common\Microgpu.Sample.Common.csproj", "{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,17 +22,13 @@ Global
 		{9553E398-CB3B-4DD7-903E-9577C117A186}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9553E398-CB3B-4DD7-903E-9577C117A186}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9553E398-CB3B-4DD7-903E-9577C117A186}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4083D035-3869-4239-A389-B09B6EEDF0A6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3CE6825B-FE07-4A75-BE9F-02BBA0E74E69}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C774CD5B-6B04-45EF-9769-3E908E449E9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C774CD5B-6B04-45EF-9769-3E908E449E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C774CD5B-6B04-45EF-9769-3E908E449E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C774CD5B-6B04-45EF-9769-3E908E449E9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
