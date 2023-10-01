@@ -41,3 +41,10 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
  * triggered in reaction to an operation that requested a response.
  */
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response);
+
+/*
+ * Returns the maximum number of bytes the databus supports a single operation can be
+ * received as. A value of zero means the databus has no limit in how large an operation
+ * can be.
+ */
+uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus);

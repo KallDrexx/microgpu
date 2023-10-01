@@ -176,3 +176,8 @@ bool mgpu_test_databus_get_last_response(Mgpu_Databus *databus, Mgpu_Response *r
 void mgpu_test_databus_trigger_reset(Mgpu_Databus *databus) {
     operationCount = RESET_OPERATION_ID;
 }
+
+uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
+    assert(databus != NULL);
+    return 984;
+}

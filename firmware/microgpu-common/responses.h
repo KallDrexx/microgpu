@@ -20,6 +20,9 @@ typedef struct {
     bool isInitialized;
     uint16_t displayWidth, displayHeight, frameBufferWidth, frameBufferHeight;
     Mgpu_ColorMode colorMode;
+
+    /* The maximum number of bytes that the gpu supports for each operation */
+    uint16_t opByteLimit;
 } Mgpu_StatusResponse;
 
 /*

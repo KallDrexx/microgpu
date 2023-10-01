@@ -3,7 +3,7 @@
 
 int serialize_status(Mgpu_StatusResponse *status, uint8_t buffer[], size_t bufferSize) {
     assert(status != NULL);
-    size_t requiredSize = 11;
+    size_t requiredSize = 13;
 
     if (bufferSize < requiredSize) {
         return MGPU_ERROR_BUFFER_TOO_SMALL;
@@ -20,8 +20,10 @@ int serialize_status(Mgpu_StatusResponse *status, uint8_t buffer[], size_t buffe
     buffer[8] = status->frameBufferHeight >> 8;
     buffer[9] = status->frameBufferHeight & 0xFF;
     buffer[10] = status->colorMode;
+    buffer[11] = status->opByteLimit >> 8;
+    buffer[12] = status->opByteLimit & 0xFF;
 
-    return 11;
+    return (int) requiredSize;
 }
 
 int serialize_last_message(Mgpu_LastMessageResponse *lastMessage, uint8_t buffer[], size_t bufferSize) {

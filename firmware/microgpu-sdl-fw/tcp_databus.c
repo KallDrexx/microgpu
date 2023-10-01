@@ -242,3 +242,8 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
 
     send(databus->clientSocket, (char*)buffer, bufferBytesWritten, 0);
 }
+
+uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
+    assert(databus != NULL);
+    return 0;
+}

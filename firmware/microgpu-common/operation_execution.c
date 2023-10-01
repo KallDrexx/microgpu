@@ -51,10 +51,11 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             mgpu_exec_reset(resetFlag);
             break;
 
-        default:
+        default: {
             char buffer[MESSAGE_MAX_LEN];
             snprintf(buffer, MESSAGE_MAX_LEN, "Cannot execute operation of type %u", operation->type);
             mgpu_message_set(buffer);
             break;
+        }
     }
 }

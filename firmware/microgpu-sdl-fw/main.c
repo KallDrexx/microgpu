@@ -61,7 +61,8 @@ void handleResponse(Mgpu_Response *response) {
             SDL_Log("Display: %ux%u\n", response->status.displayWidth, response->status.displayHeight);
             SDL_Log("Framebuffer: %ux%u\n", response->status.frameBufferWidth, response->status.frameBufferHeight);
             SDL_Log("Color mode: %u\n", response->status.colorMode);
-            SDL_Log("Is Initialized: %u\n\n", response->status.isInitialized);
+            SDL_Log("Is Initialized: %u\n", response->status.isInitialized);
+            SDL_Log("Byte limit: %u\n\n", response->status.opByteLimit);
             break;
 
         case Mgpu_Response_LastMessage:

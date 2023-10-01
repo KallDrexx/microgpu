@@ -66,6 +66,7 @@ namespace Microgpu.Meadow.Scratchpad
             Console.WriteLine($"Display resolution: {status.DisplayWidth}x{status.DisplayHeight}");
             Console.WriteLine($"Framebuffer resolution: {status.FrameBufferWidth}x{status.FrameBufferHeight}");
             Console.WriteLine($"Color mode: {status.ColorMode}");
+            Console.WriteLine($"Max Bytes: {status.MaxBytes}");
         }
     }
 }

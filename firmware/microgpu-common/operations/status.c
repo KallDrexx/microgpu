@@ -11,6 +11,7 @@ void mgpu_exec_status_op(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer, M
             .colorMode = mgpu_color_get_mode(),
             .displayHeight = height,
             .displayWidth = width,
+            .opByteLimit = mgpu_databus_get_max_size(databus),
     };
 
     // We know we aren't initialized if we don't have a frame buffer yet
