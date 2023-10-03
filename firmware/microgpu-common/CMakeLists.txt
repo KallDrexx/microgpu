@@ -1,0 +1,15 @@
+set(MICROGPU_COMMON_SOURCES
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/alloc.h
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/framebuffer.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/messages.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operation_deserializer.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operation_execution.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/batch.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/drawing/rectangle.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/drawing/triangle.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/get_last_message.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/present_framebuffer.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/reset.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/status.c
+    ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/response_serializer.c
+)

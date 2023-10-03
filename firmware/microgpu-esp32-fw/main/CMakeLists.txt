@@ -10,23 +10,15 @@ else ()
     message(FATAL_ERROR "No valid databus type set")
 endif ()
 
+set(MGPU_COMMON_DIR_PREFIX ../)
+include(../../microgpu-common/CMakeLists.txt)
+
 set(SOURCES
-        ../../microgpu-common/framebuffer.c
-        ../../microgpu-common/color_rgb565.c
-        ../../microgpu-common/messages.c
-        ../../microgpu-common/operation_deserializer.c
-        ../../microgpu-common/operation_execution.c
-        ../../microgpu-common/operations/batch.c
-        ../../microgpu-common/operations/drawing/rectangle.c
-        ../../microgpu-common/operations/drawing/triangle.c
-        ../../microgpu-common/operations/get_last_message.c
-        ../../microgpu-common/operations/present_framebuffer.c
-        ../../microgpu-common/operations/reset.c
-        ../../microgpu-common/operations/status.c
-        ../../microgpu-common/response_serializer.c
         displays/i80_display.c
         ${DATABUS_SOURCE}
         main.c
+        ${MICROGPU_COMMON_SOURCES}
+        ../../microgpu-common/color_rgb565.c
 )
 
 idf_component_register(SRCS ${SOURCES}
