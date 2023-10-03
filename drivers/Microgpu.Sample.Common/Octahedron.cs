@@ -9,7 +9,6 @@ public class Octahedron
     
     private readonly Gpu _gpu;
     private readonly Vector3 _light = new(1, 0, 3);
-    private readonly BatchOperation _gpuBatch = new();
     private readonly Camera _camera = new();
     private readonly Triangle[] _octahedron = {
         new((1, 0, 0), (0, 1, 0), (0, 0, 1)),
@@ -29,7 +28,7 @@ public class Octahedron
         _gpu = gpu;
     }
     
-    public async Task RunNextFrame(TimeSpan timeSinceLastFrame)
+    public void RunNextFrame(TimeSpan timeSinceLastFrame, BatchOperation gpuBatch)
     {
         _rotation = new Vector3(
             _rotation.X + RotationSpeed * (float)timeSinceLastFrame.TotalSeconds,
@@ -71,7 +70,7 @@ public class Octahedron
                 var (x1, y1) = ToScreen(projectedTriangle.V2);
                 var (x2, y2) = ToScreen(projectedTriangle.V3);
 
-                _gpuBatch.AddOperation(new DrawTriangleOperation<ColorRgb565>
+                gpuBatch.AddOperation(new DrawTriangleOperation<ColorRgb565>
                 {
                     X0 = x0,
                     Y0 = y0,
@@ -83,9 +82,6 @@ public class Octahedron
                 });
             }
         }
-
-        _gpuBatch.AddOperation(new PresentFramebufferOperation());
-        await _gpu.SendFireAndForgetAsync(_gpuBatch);
     }
 
     private (ushort, ushort) ToScreen(Vector3 vector)

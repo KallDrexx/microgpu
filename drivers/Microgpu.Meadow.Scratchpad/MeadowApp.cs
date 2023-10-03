@@ -4,17 +4,17 @@ using Meadow;
 using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Units;
+using Microgpu.Common;
 using Microgpu.Common.Comms;
-using Microgpu.Common.Responses;
 using Microgpu.Sample.Common;
 
 namespace Microgpu.Meadow.Scratchpad
 {
     public class MeadowApp : App<F7FeatherV2>
     {
-        private IGpuCommunication _gpuCommunication = null!;
+        private Gpu _gpu = null!;
         
-        public override Task Initialize()
+        public override async Task Initialize()
         {
             var reset = Device.CreateDigitalOutputPort(Device.Pins.D02, true);
             var handshake = Device.CreateDigitalInputPort(Device.Pins.D03);
@@ -25,18 +25,17 @@ namespace Microgpu.Meadow.Scratchpad
                 SpiClockConfiguration.Mode.Mode0);
         
             var spiBus = Device.CreateSpiBus(Device.Pins.SCK, Device.Pins.COPI, Device.Pins.CIPO, config);
-            _gpuCommunication = new MeadowSpiGpuCommunication(spiBus, handshake, reset, chipSelect);
-
-            return Task.CompletedTask;
+            
+            Console.WriteLine("Initializing GPU");
+            var gpuCommunication = new MeadowSpiGpuCommunication(spiBus, handshake, reset, chipSelect);
+            _gpu = await Gpu.CreateAsync(gpuCommunication);
+            await _gpu.InitializeAsync(1);
         }
 
         public override async Task Run()
         {
-            await SampleRunner.Run(new SampleRunner.SampleOptions
-            {
-                FramebufferScale = 1,
-                GpuCommunication = _gpuCommunication,
-            });
+            var sampleRunner = new SampleRunner(_gpu, TimeSpan.FromMilliseconds(0));
+            await sampleRunner.Run();
         }
     }
 }

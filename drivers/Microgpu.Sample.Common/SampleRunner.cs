@@ -2,56 +2,58 @@
 using System.Numerics;
 using Microgpu.Common;
 using Microgpu.Common.Comms;
+using Microgpu.Common.Operations;
 
 namespace Microgpu.Sample.Common;
 
-public static class SampleRunner
+public class SampleRunner
 {
-    public static async Task Run(SampleOptions options)
+    private readonly Gpu _gpu;
+    private readonly TimeSpan _minTimeBetweenFrames;
+    private readonly CancellationToken _cancellationToken;
+    private readonly BatchOperation _gpuBatch = new();
+    private readonly Octahedron _octahedron;
+    private readonly long[] _frameTimes = new long[1000];
+    private int _frameTimeIndex;
+    
+    public SampleRunner(Gpu gpu, 
+        TimeSpan minTimeBetweenFrames, 
+        CancellationToken? cancellationToken = null)
     {
-        var frameTimes = new long[1000];
-        var frameTimeIndex = 0;
-        
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
-
-        if (options.GpuCommunication == null)
-        {
-            throw new ArgumentNullException(nameof(options.GpuCommunication));
-        }
-
-        var gpu = await Gpu.CreateAsync(options.GpuCommunication);
-        await gpu.InitializeAsync(options.FramebufferScale);
-
+        _gpu = gpu ?? throw new ArgumentNullException(nameof(gpu));
+        _minTimeBetweenFrames = minTimeBetweenFrames;
+        _cancellationToken = cancellationToken ?? CancellationToken.None;
+        _octahedron = new Octahedron(gpu);
+    }
+    
+    public async Task Run()
+    {
         Console.WriteLine("GPU status:");
-        Console.WriteLine($"Is initialized: {gpu.IsInitialized}");
-        Console.WriteLine($"Display resolution: {gpu.DisplayResolution.X} x {gpu.DisplayResolution.Y}");
+        Console.WriteLine($"Is initialized: {_gpu.IsInitialized}");
+        Console.WriteLine($"Display resolution: {_gpu.DisplayResolution.X} x {_gpu.DisplayResolution.Y}");
         Console.WriteLine(
-            $"Framebuffer resolution: {gpu.FrameBufferResolution?.X ?? 0} x {gpu.FrameBufferResolution?.Y ?? 0}");
-        Console.WriteLine($"Color mode: {gpu.ColorMode}");
+            $"Framebuffer resolution: {_gpu.FrameBufferResolution?.X ?? 0} x {_gpu.FrameBufferResolution?.Y ?? 0}");
+        Console.WriteLine($"Color mode: {_gpu.ColorMode}");
 
-        var octahedron = new Octahedron(gpu);
         var timeSinceLastFrame = Stopwatch.StartNew();
-        while (!options.CancellationToken.IsCancellationRequested)
+        while (!_cancellationToken.IsCancellationRequested)
         {
             var frameTime = timeSinceLastFrame.ElapsedMilliseconds;
             timeSinceLastFrame.Restart();
-            frameTimes[frameTimeIndex] = frameTime;
-            frameTimeIndex++;
-            if (frameTimeIndex >= frameTimes.Length)
+            _frameTimes[_frameTimeIndex] = frameTime;
+            _frameTimeIndex++;
+            if (_frameTimeIndex >= _frameTimes.Length)
             {
-                frameTimeIndex = 0;
-                var average = frameTimes.Average();
-                Console.WriteLine($"Average frame time: {average}ms ({frameTimes.Length / average:0}fps)");
+                _frameTimeIndex = 0;
+                var average = _frameTimes.Average();
+                Console.WriteLine($"Average frame time: {average}ms ({_frameTimes.Length / average:0}fps)");
             }
             
             var innerFrameTime = Stopwatch.StartNew();
-            await octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime));
+            await ExecuteFrameLogic(frameTime);
             innerFrameTime.Stop();
             
-            var waitTime = options.MinTimeBetweenFrames - innerFrameTime.Elapsed;
+            var waitTime = _minTimeBetweenFrames - innerFrameTime.Elapsed;
             if (waitTime < TimeSpan.FromMilliseconds(1))
             {
                 // Always wait 1 millisecond in case this is running on a low core count
@@ -59,15 +61,14 @@ public static class SampleRunner
                 waitTime = TimeSpan.FromMilliseconds(1);
             }
 
-            await Task.Delay(waitTime);
+            await Task.Delay(waitTime, _cancellationToken);
         }
     }
 
-    public class SampleOptions
+    private async Task ExecuteFrameLogic(long frameTime)
     {
-        public IGpuCommunication? GpuCommunication { get; set; }
-        public TimeSpan MinTimeBetweenFrames { get; set; }
-        public byte FramebufferScale { get; set; } = 1;
-        public CancellationToken CancellationToken { get; set; } = CancellationToken.None;
+        _octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime), _gpuBatch);
+        _gpuBatch.AddOperation(new PresentFramebufferOperation());
+        await _gpu.SendFireAndForgetAsync(_gpuBatch);
     }
 }
