@@ -51,6 +51,20 @@ typedef enum {
     Mgpu_Operation_Batch = 7,
 
     /*
+     * Defines a texture the GPU should track. Gives the identifier and dimensions
+     * of the texture. If called with an identifier that was previously defined,
+     * the previous texture is cleared and a new one is started. If the new
+     * width and height are zeros, then the texture is considered undefined.
+     */
+    Mgpu_Operation_DefineTexture = 8,
+
+    /*
+     * Appends bytes representing pixel color data to a defined texture's data. Bytes are
+     * expected to be raw color data based on the firmware's active color mode.
+     */
+    Mgpu_Operation_AppendTexturePixels = 9,
+
+    /*
      * Requests the microgpu to initialize itself and fully reset itself.
      */
     Mgpu_Operation_Reset = 189, // Higher value that's hard to see accidentally
@@ -83,6 +97,17 @@ typedef struct {
     const uint8_t *bytes;
 } Mgpu_BatchOperation;
 
+typedef struct {
+    uint8_t textureId;
+    uint16_t width, height;
+} Mgpu_DefineTextureOperation;
+
+typedef struct {
+    uint8_t textureId;
+    uint16_t colorCount;
+    Mgpu_Color *bytes;
+} Mgpu_AppendTexturePixelOperation;
+
 /*
  * Single type that can represent any type of operation that
  * the microgpu framework can support.
@@ -94,5 +119,7 @@ typedef struct {
         Mgpu_DrawRectangleOperation drawRectangle;
         Mgpu_DrawTriangleOperation drawTriangle;
         Mgpu_BatchOperation batchOperation;
+        Mgpu_DefineTextureOperation defineTextureOperation;
+        Mgpu_AppendTexturePixelOperation appendTexturePixelOperation;
     };
 } Mgpu_Operation;
