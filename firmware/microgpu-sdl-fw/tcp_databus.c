@@ -15,18 +15,16 @@
 uint8_t *globalByteQueue;
 size_t globalByteQueueSize; // How many bytes we've pushed into the byte queue
 
-int initSockets(void)
-{
+int initSockets(void) {
 #ifdef _WIN32
     WSADATA wsa_data;
-    return WSAStartup(MAKEWORD(1,1), &wsa_data);
+    return WSAStartup(MAKEWORD(1, 1), &wsa_data);
 #else
     return 0;
 #endif
 }
 
-int quitSocketHandling(void)
-{
+int quitSocketHandling(void) {
 #ifdef _WIN32
     return WSACleanup();
 #else
@@ -42,8 +40,7 @@ bool isInvalidSocket(SOCKET socket) {
 #endif
 }
 
-int closeSocket(SOCKET sock)
-{
+int closeSocket(SOCKET sock) {
     int status = 0;
 
 #ifdef _WIN32
@@ -85,7 +82,7 @@ void readPacketFromQueue(Mgpu_Databus *databus,
 
     // Do we have a complete packet in the queue?
     if (globalByteQueueSize > 2) {
-        uint16_t packetSize = ((uint16_t)globalByteQueue[0] << 8) | globalByteQueue[1];
+        uint16_t packetSize = ((uint16_t) globalByteQueue[0] << 8) | globalByteQueue[1];
         if (packetSize > BYTE_QUEUE_MAX_SIZE) {
             fprintf(stderr, "Client reported a packet size of %u, which is over max\n", packetSize);
 
@@ -120,7 +117,7 @@ void readPacketFromQueue(Mgpu_Databus *databus,
 bool readOperation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
     char buffer[1024];
 
-    while(true) {
+    while (true) {
         bool hasFullPacket, operationDeserializationResult;
         readPacketFromQueue(databus, operation, &hasFullPacket, &operationDeserializationResult);
 
@@ -162,7 +159,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     // Initialize the packet if it's not already allocated
     if (globalByteQueue == NULL) {
-        globalByteQueue = allocator->AllocateFn(sizeof(uint8_t ) * BYTE_QUEUE_MAX_SIZE);
+        globalByteQueue = allocator->AllocateFn(sizeof(uint8_t) * BYTE_QUEUE_MAX_SIZE);
     }
 
     // create the socket
@@ -243,10 +240,11 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
     buffer[0] = bufferBytesWritten >> 8;
     buffer[1] = bufferBytesWritten & 0xFF;
 
-    send(databus->clientSocket, (char*)buffer, bufferBytesWritten + 2, 0);
+    send(databus->clientSocket, (char *) buffer, bufferBytesWritten + 2, 0);
 }
 
 uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
     assert(databus != NULL);
     return 0;
 }
+

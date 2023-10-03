@@ -4,8 +4,10 @@
 #include "microgpu-common/alloc.h"
 
 #ifdef _WIN32
+
 #include <winsock2.h>
 #include <Ws2tcpip.h>
+
 #pragma comment(lib, "Ws2_32")
 #else
 // Assume that any non-Windows platform uses POSIX-style sockets instead.

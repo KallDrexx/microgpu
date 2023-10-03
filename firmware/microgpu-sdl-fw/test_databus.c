@@ -5,10 +5,13 @@
 #include "test_databus.h"
 
 #define RESET_OPERATION_ID 250
+#define TEST_TEXTURE_PIXEL_COUNT 50
 
 bool hasResponse;
 Mgpu_Response lastSeenResponse;
 uint16_t operationCount;
+
+Mgpu_Color testTexturePixels[TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT];
 
 Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
     assert(options != NULL);
@@ -23,6 +26,36 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     hasResponse = false;
     operationCount = 0;
+
+    // Generate the test texture values in columns of red->white->green->white->blue,
+    // with a yellow top and purple bottom
+#define COL_WIDTH (TEST_TEXTURE_PIXEL_COUNT / 5)
+    Mgpu_Color *pixel = testTexturePixels;
+    for (int row = 0; row < TEST_TEXTURE_PIXEL_COUNT; row++) {
+        for (int col = 0; col < TEST_TEXTURE_PIXEL_COUNT; col++) {
+            if (col == 0) {
+                *pixel = mgpu_color_from_rgb888(0, 255, 0);
+            } else if (col == TEST_TEXTURE_PIXEL_COUNT - 1) {
+                *pixel = mgpu_color_from_rgb565(0, 63, 30);
+            } else if (row == 0) {
+                *pixel = mgpu_color_from_rgb565(31, 62, 0);
+            } else if (row == TEST_TEXTURE_PIXEL_COUNT - 1) {
+                *pixel = mgpu_color_from_rgb565(30, 0, 31);
+            } else if (col < COL_WIDTH) {
+                *pixel = mgpu_color_from_rgb888(255, 0, 0);
+            } else if (col < COL_WIDTH * 2) {
+                *pixel = mgpu_color_from_rgb888(255, 255, 255);
+            } else if (col < COL_WIDTH * 3) {
+                *pixel = mgpu_color_from_rgb888(0, 255, 0);
+            } else if (col < COL_WIDTH * 4) {
+                *pixel = mgpu_color_from_rgb888(255, 255, 255);
+            } else {
+                *pixel = mgpu_color_from_rgb888(0, 0, 255);
+            }
+
+            pixel++;
+        }
+    }
 
     return databus;
 }
@@ -108,7 +141,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawTriangle.y1 = 100;
             operation->drawTriangle.x2 = 90;
             operation->drawTriangle.y2 = 100;
-            operation->drawTriangle.color = mgpu_color_from_rgb888(0, 255, 0);
+            operation->drawTriangle.color = mgpu_color_from_rgb888(120, 120, 120);
             operationCount++;
             return true;
 
@@ -131,6 +164,37 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         }
 
         case 11:
+            operation->type = Mgpu_Operation_SetTextureCount;
+            operation->setTextureCount.textureCount = 10;
+            operationCount++;
+            return true;
+
+        case 12:
+            operation->type = Mgpu_Operation_DefineTexture;
+            operation->defineTexture.textureId = 5;
+            operation->defineTexture.width = TEST_TEXTURE_PIXEL_COUNT;
+            operation->defineTexture.height = TEST_TEXTURE_PIXEL_COUNT;
+            operation->defineTexture.transparentColor = mgpu_color_from_rgb888(255, 255, 255);
+            operationCount++;
+            return true;
+
+        case 13:
+            operation->type = Mgpu_Operation_AppendTexturePixels;
+            operation->appendTexturePixels.textureId = 5;
+            operation->appendTexturePixels.pixelCount = sizeof(testTexturePixels) / sizeof(Mgpu_Color);
+            operation->appendTexturePixels.pixels = testTexturePixels;
+            operationCount++;
+            return true;
+
+        case 14:
+            operation->type = Mgpu_Operation_RenderTexture;
+            operation->drawTexture.textureId = 5;
+            operation->drawTexture.xPosition = 50;
+            operation->drawTexture.yPosition = 50;
+            operationCount++;
+            return true;
+
+        case 15:
             operation->type = Mgpu_Operation_PresentFramebuffer;
             operationCount++;
             return true;

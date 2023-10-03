@@ -10,7 +10,9 @@
 #include "displays/i80_display.h"
 
 #ifdef DATABUS_SPI
+
 #include "spi_databus.h"
+
 #elif defined(DATABUS_TEST)
 #include "test_databus.h"
 #else
@@ -22,6 +24,7 @@ Mgpu_Display *display;
 Mgpu_DisplayOptions displayOptions;
 Mgpu_Databus *databus;
 Mgpu_DatabusOptions databusOptions;
+Mgpu_TextureManager *textureManager;
 bool resetRequested;
 
 static const Mgpu_Allocator standardAllocator = {
@@ -30,6 +33,7 @@ static const Mgpu_Allocator standardAllocator = {
 };
 
 #ifdef DATABUS_SPI
+
 void init_databus_options() {
     ESP_LOGI(LOG_TAG, "Initializing SPI databus");
     databusOptions.copiPin = 14;
@@ -39,6 +43,7 @@ void init_databus_options() {
     databusOptions.handshakePin = 18;
     databusOptions.spiHost = SPI2_HOST;
 }
+
 #elif defined(DATABUS_TEST)
 void init_databus_options() {
     ESP_LOGI(LOG_TAG, "Initializing test databus");
@@ -96,6 +101,12 @@ bool setup(void) {
         return false;
     }
 
+    textureManager = mgpu_texture_manager_new(&standardAllocator);
+    if (textureManager == NULL) {
+        ESP_LOGE(LOG_TAG, "Texture manager could not be created");
+        return false;
+    }
+
     return true;
 }
 
@@ -113,7 +124,7 @@ bool wait_for_initialization(void) {
 
         // Before initialization, we can only respond to get status and get last message
         if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
-            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, NULL);
+            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, NULL, textureManager);
 #ifdef DATABUS_TEST
             Mgpu_Response response;
             if (mgpu_test_databus_get_last_response(databus, &response)) {
@@ -156,7 +167,8 @@ void app_main(void) {
 
         if (mgpu_databus_get_next_operation(databus, &operation)) {
             Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
-            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, &releasedFrameBuffer);
+            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, &releasedFrameBuffer,
+                                   textureManager);
 #ifdef DATABUS_TEST
             Mgpu_Response response;
             if (mgpu_test_databus_get_last_response(databus, &response)) {

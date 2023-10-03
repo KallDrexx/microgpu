@@ -9,13 +9,15 @@
 #include "microgpu-common/operations/present_framebuffer.h"
 #include "microgpu-common/operations/reset.h"
 #include "microgpu-common/operations/status.h"
+#include "microgpu-common/operations/textures.h"
 
 void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_FrameBuffer *frameBuffer,
                             Mgpu_Display *display,
                             Mgpu_Databus *databus,
                             bool *resetFlag,
-                            Mgpu_FrameBuffer **releasedFrameBuffer) {
+                            Mgpu_FrameBuffer **releasedFrameBuffer,
+                            Mgpu_TextureManager *textureManager) {
     // Don't clear the last operation's message if the next operation
     // being requested is to get the latest message
     if (operation->type != Mgpu_Operation_GetLastMessage) {
@@ -44,11 +46,28 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             break;
 
         case Mgpu_Operation_Batch:
-            mgpu_exec_batch(&operation->batchOperation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer);
+            mgpu_exec_batch(&operation->batchOperation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer,
+                            textureManager);
             break;
 
         case Mgpu_Operation_Reset:
             mgpu_exec_reset(resetFlag);
+            break;
+
+        case Mgpu_Operation_SetTextureCount:
+            mgpu_exec_texture_count(textureManager, &operation->setTextureCount);
+            break;
+
+        case Mgpu_Operation_DefineTexture:
+            mgpu_exec_texture_define(textureManager, &operation->defineTexture);
+            break;
+
+        case Mgpu_Operation_AppendTexturePixels:
+            mgpu_exec_texture_append(textureManager, &operation->appendTexturePixels);
+            break;
+
+        case Mgpu_Operation_RenderTexture:
+            mgpu_exec_texture_render(textureManager, frameBuffer, &operation->drawTexture);
             break;
 
         default: {

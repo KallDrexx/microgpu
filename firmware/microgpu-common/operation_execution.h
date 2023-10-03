@@ -3,6 +3,7 @@
 #include "display.h"
 #include "operations.h"
 #include "databus.h"
+#include "texture_manager.h"
 
 /*
  * Attempts to execute the specified operation if supported. Most operations are supported, with
@@ -13,4 +14,5 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_Display *display,
                             Mgpu_Databus *databus,
                             bool *resetFlag,
-                            Mgpu_FrameBuffer **releasedFrameBuffer);
+                            Mgpu_FrameBuffer **releasedFrameBuffer,
+                            Mgpu_TextureManager *textureManager);
