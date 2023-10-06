@@ -2,13 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
 #include "messages.h"
 #include "texture_manager.h"
 
 typedef struct {
     uint8_t id;
     uint16_t width, height;
+    Mgpu_Color transparentColor;
     size_t pixelsWritten;
     Mgpu_Color *pixels;
 } Texture;
@@ -108,6 +108,7 @@ void add_new_texture(Mgpu_TextureManager *textureManager, size_t addAtIndex, Mgp
     texture->height = info->height;
     texture->pixelsWritten = 0;
     texture->pixels = pixels;
+    texture->transparentColor = info->transparentColor;
 }
 
 void remove_texture(Mgpu_TextureManager *manager, size_t removeAtIndex) {
@@ -163,6 +164,7 @@ void update_texture(Texture *texture, Mgpu_TextureInfo *info, Mgpu_Allocator *al
     // come in.
     texture->width = info->width;
     texture->height = info->height;
+    texture->transparentColor = info->transparentColor;
     texture->pixelsWritten = 0;
     allocator->FreeFn(texture->pixels);
     texture->pixels = allocator->AllocateFn(sizeof(Mgpu_Color) * info->height * info->width);
@@ -259,7 +261,3 @@ void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16
     Mgpu_Color *startPos = texture->pixels + texture->pixelsWritten;
     memcpy(startPos, pixels, pixelsToWrite);
 }
-
-
-
-

@@ -100,6 +100,7 @@ typedef struct {
 typedef struct {
     uint8_t textureId;
     uint16_t width, height;
+    Mgpu_Color transparentColor;
 } Mgpu_DefineTextureOperation;
 
 typedef struct {
