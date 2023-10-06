@@ -4,6 +4,11 @@
 #include "alloc.h"
 #include "color.h"
 
+typedef struct {
+    uint8_t id;
+    uint16_t width, height;
+} Mgpu_TextureInfo;
+
 typedef struct Mgpu_TextureManager Mgpu_TextureManager;
 
 /*
@@ -25,7 +30,7 @@ void mgpu_texture_manager_free(Mgpu_TextureManager *textureManager);
  * in its place. If the width or height are zero, then the texture is cleared and no new
  * one is allocated.
  */
-void mgpu_texture_define(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t width, uint16_t height);
+void mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureInfo *info);
 
 /*
  * Appends the pixels to a previously defined texture.

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common.h"
 #include "messages.h"
 #include "texture_manager.h"
 
@@ -55,12 +56,10 @@ size_t get_potential_index_of_id(Mgpu_TextureManager *manager, uint8_t textureId
     return manager->textureCount;
 }
 
-void add_new_texture(Mgpu_TextureManager *textureManager,
-                     size_t addAtIndex,
-                     uint8_t id,
-                     uint16_t width,
-                     uint16_t height) {
-    if (width == 0 || height == 0) {
+void add_new_texture(Mgpu_TextureManager *textureManager, size_t addAtIndex, Mgpu_TextureInfo *info) {
+    assert(info != NULL);
+
+    if (info->width == 0 || info->height == 0) {
         // Removing an undefined texture
         return;
     }
@@ -70,16 +69,23 @@ void add_new_texture(Mgpu_TextureManager *textureManager,
     Texture *textures = textureManager->allocator->AllocateFn(sizeof(Texture) * afterCount);
     if (textures == NULL) {
         char msg[256];
-        snprintf(msg, sizeof(msg), "Defining texture id %u failed: failed to allocate additional texture space", id);
+        snprintf(msg,
+                 sizeof(msg),
+                 "Defining texture id %u failed: failed to allocate additional texture space",
+                 info->id);
         mgpu_message_set(msg);
 
         return;
     }
 
-    Mgpu_Color *pixels = textureManager->allocator->AllocateFn(sizeof(Mgpu_Color) * height * width);
+    Mgpu_Color *pixels = textureManager->allocator->AllocateFn(sizeof(Mgpu_Color) * info->height * info->width);
     if (pixels == NULL) {
         char msg[256];
-        snprintf(msg, sizeof(msg), "Defining texture id %u failed: failed to allocate pixel space", id);
+        snprintf(msg,
+                 sizeof(msg),
+                 "Defining texture id %u failed: failed to allocate pixel space",
+                 info->id);
+
         mgpu_message_set(msg);
 
         return;
@@ -87,36 +93,92 @@ void add_new_texture(Mgpu_TextureManager *textureManager,
 
     size_t bytesBeforeIndex = sizeof(Texture) * addAtIndex;
     size_t bytesAfterIndex = sizeof(Texture) * (afterCount - addAtIndex - 1);
-    memcpy_s(textures,
-             bytesBeforeIndex,
-             textureManager->textures,
-             bytesBeforeIndex);
+    memcpy(textures, textureManager->textures, bytesBeforeIndex);
 
     if (bytesAfterIndex > 0) {
-        memcpy_s(&textures[addAtIndex + 1],
-                 bytesAfterIndex,
-                 &textureManager->textures[addAtIndex],
-                 bytesAfterIndex);
-
+        memcpy(&textures[addAtIndex + 1], &textureManager->textures[addAtIndex], bytesAfterIndex);
     }
 
     textureManager->allocator->FreeFn(textureManager->textures);
     textureManager->textures = textures;
 
     Texture *texture = &textureManager->textures[addAtIndex];
-    texture->id = id;
-    texture->width = width;
-    texture->height = height;
+    texture->id = info->id;
+    texture->width = info->width;
+    texture->height = info->height;
     texture->pixelsWritten = 0;
     texture->pixels = pixels;
 }
 
-void remove_texture(Mgpu_TextureManager *textureManager, size_t removeAtIndex) {
-#error TODO
+void remove_texture(Mgpu_TextureManager *manager, size_t removeAtIndex) {
+    assert(manager != NULL);
+    assert(removeAtIndex >= manager->textureCount);
+
+    // If this is the last texture, just free the space
+    if (manager->textureCount == 1) {
+        manager->textureCount = 0;
+        manager->allocator->FreeFn(manager->textures);
+        manager->textures = NULL;
+
+        return;
+    }
+
+    size_t afterCount = manager->textureCount - 1;
+    manager->allocator->FreeFn(manager->textures[removeAtIndex].pixels);
+    manager->textures[removeAtIndex].pixels = NULL;
+
+    // Attempt to allocate smaller space for the texture collection. We could maybe
+    // lower the number of allocations by keeping capacity, but we have no obvious way
+    // to know when we can shrink the collection. So take the extra allocation hit in
+    // order to free up the memory for other uses in case this the removal of this
+    // texture does not precede new textures being added.
+    Texture *newSpace = manager->allocator->AllocateFn(sizeof(Texture) * afterCount);
+    Texture *oldSpace = manager->textures;
+    if (newSpace == NULL) {
+        // We could not allocate enough space. Invalidate the texture and leave it, hoping
+        // an update call tries to redefine that same texture id. The texture header is small
+        // enough that this *shouldn't* be an issue ever.
+        manager->textures[removeAtIndex].width = 0;
+        manager->textures[removeAtIndex].height = 0;
+        manager->textures[removeAtIndex].pixelsWritten = 0;
+
+        return;
+    }
+
+    // Move the non-removed texture headers to the new memory location
+    size_t bytesBeforeIndex = sizeof(Texture) * removeAtIndex;
+    size_t bytesAfterIndex = sizeof(Texture) * (afterCount - removeAtIndex - 1);
+    memcpy(newSpace, manager->textures, bytesBeforeIndex);
+    memcpy(newSpace + bytesBeforeIndex, oldSpace + (bytesBeforeIndex + sizeof(Texture)), bytesAfterIndex);
+
+    manager->textureCount = afterCount;
 }
 
-void update_texture(Texture *texture, uint16_t width, uint16_t height, Mgpu_Allocator *allocator) {
-#error TODO
+void update_texture(Texture *texture, Mgpu_TextureInfo *info, Mgpu_Allocator *allocator) {
+    assert(texture != NULL);
+    assert(info != NULL);
+
+    // Even if the height and width are the same, assume an update call is a desire
+    // to clear the texture's pixel data. Most likely new pixel data is going to
+    // come in.
+    texture->width = info->width;
+    texture->height = info->height;
+    texture->pixelsWritten = 0;
+    allocator->FreeFn(texture->pixels);
+    texture->pixels = allocator->AllocateFn(sizeof(Mgpu_Color) * info->height * info->width);
+
+    if (texture->pixels == NULL) {
+        // We could not allocate new pixel data, so this texture is now invalid.
+        texture->width = 0;
+        texture->height = 0;
+
+        char msg[256];
+        snprintf(msg,
+                 sizeof(msg),
+                 "Defining texture id %u failed: failed to allocate pixel space",
+                 info->id);
+        mgpu_message_set(msg);
+    }
 }
 
 Mgpu_TextureManager *mgpu_texture_manager_new(Mgpu_Allocator *allocator) {
@@ -150,32 +212,52 @@ void mgpu_texture_manager_free(Mgpu_TextureManager *textureManager) {
     }
 }
 
-void mgpu_texture_define(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t width, uint16_t height) {
+void mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureInfo *info) {
     assert(textureManager != NULL);
+    assert(info != NULL);
 
     Texture *texture = NULL;
-    size_t index = get_potential_index_of_id(textureManager, id, &texture);
+    size_t index = get_potential_index_of_id(textureManager, info->id, &texture);
     if (texture == NULL) {
         // Texture doesn't exist
-        add_new_texture(textureManager, index, id, width, height);
+        add_new_texture(textureManager, index, info);
         return;
     }
 
     // Texture was found
-    if (width == 0 || height == 0) {
+    if (info->width == 0 || info->height == 0) {
         // Texture is being removed
         remove_texture(textureManager, index);
         return;
     }
 
-    update_texture(texture, width, height, textureManager->allocator);
+    update_texture(texture, info, textureManager->allocator);
 }
 
 void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, Mgpu_Color *pixels) {
     assert(textureManager != NULL);
+    assert(pixels != NULL);
 
-#error TODO
+    Texture *texture = NULL;
+    get_potential_index_of_id(textureManager, id, &texture);
+    if (texture == NULL) {
+        char msg[256];
+        snprintf(msg,
+                 sizeof(msg),
+                 "Attempted to add pixels to texture %d, but that texture is not defined",
+                 id);
 
+        return;
+    }
+
+    size_t pixelsLeft = (texture->width * texture->height) - texture->pixelsWritten;
+    size_t pixelsToWrite = min(pixelsLeft, pixelCount);
+    if (pixelsToWrite == 0) {
+        return;
+    }
+
+    Mgpu_Color *startPos = texture->pixels + texture->pixelsWritten;
+    memcpy(startPos, pixels, pixelsToWrite);
 }
 
 
