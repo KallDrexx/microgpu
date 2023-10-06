@@ -115,6 +115,50 @@ bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
     return true;
 }
 
+bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
+    if (size < sizeof(Mgpu_DefineTextureOperation) + 1) {
+        return false;
+    }
+
+    operation->type = Mgpu_Operation_DefineTexture;
+    operation->defineTextureOperation.textureId = bytes[1];
+    operation->defineTextureOperation.width = ((uint16_t) bytes[1] << 8) | bytes[2];
+    operation->defineTextureOperation.height = ((uint16_t) bytes[3] << 8) | bytes[4];
+    operation->defineTextureOperation.transparentColor = deserialize_color(bytes, 5);
+
+    return true;
+}
+
+bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
+    if (size < sizeof(Mgpu_AppendTexturePixelOperation) + 1) {
+        return false;
+    }
+
+    operation->type = Mgpu_Operation_AppendTexturePixels;
+    operation->appendTexturePixelOperation.textureId = bytes[1];
+    operation->appendTexturePixelOperation.pixelCount = ((uint16_t) bytes[2] << 8) | bytes[3];
+
+    // Make sure the size is within bounds of the byte array
+    size_t bytesNeededForPixels = sizeof(Mgpu_Color) * operation->appendTexturePixelOperation.pixelCount;
+    if (bytesNeededForPixels > size - 4) {
+        char msg[MESSAGE_MAX_LEN] = {0};
+        snprintf(msg,
+                 MESSAGE_MAX_LEN,
+                 "Append to texture op had a pixel size of %u, but only %llu bytes were provided",
+                 operation->appendTexturePixelOperation.pixelCount,
+                 size - 4);
+
+        mgpu_message_set(msg);
+        return false;
+    }
+
+    // This should be ok as the operation should not be used by the time
+    // the next databus operation occurs.
+    operation->appendTexturePixelOperation.pixels = (Mgpu_Color *) (bytes + 4);
+
+    return true;
+}
+
 bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     assert(bytes != NULL);
     assert(operation != NULL);
@@ -148,6 +192,12 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
 
         case Mgpu_Operation_Reset:
             return deserialize_reset(bytes, size, operation);
+
+        case Mgpu_Operation_DefineTexture:
+            return deserialize_define_texture(bytes, size, operation);
+
+        case Mgpu_Operation_AppendTexturePixels:
+            return deserialize_append_pixels(bytes, size, operation);
 
         default:
             return false;
