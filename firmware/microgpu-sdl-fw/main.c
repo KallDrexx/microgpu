@@ -29,6 +29,7 @@ Mgpu_Display *display;
 Mgpu_Databus *databus;
 uint16_t width, height;
 Mgpu_FrameBuffer *framebuffer;
+Mgpu_TextureManager *textureManager;
 Mgpu_DatabusOptions dataBusOptions;
 Mgpu_DisplayOptions displayOptions = {
         .width = 1024,
@@ -49,6 +50,12 @@ bool setup(void) {
     display = mgpu_display_new(&basicAllocator, &displayOptions);
     if (display == NULL) {
         fprintf(stderr, "Failed to initialize display\n");
+        return false;
+    }
+
+    textureManager = mgpu_texture_manager_new(&basicAllocator);
+    if (textureManager == NULL) {
+        fprintf(stderr, "Failed to initialize texture manager\n");
         return false;
     }
 
@@ -80,7 +87,8 @@ int databus_loop(void *data) {
     while (isRunning) {
         if (mgpu_databus_get_next_operation(databus, &operation)) {
             Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
-            mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, &releasedFrameBuffer);
+            mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, &releasedFrameBuffer,
+                                   textureManager);
 
             if (operation.type == Mgpu_Operation_PresentFramebuffer) {
                 assert(releasedFrameBuffer == framebuffer);
@@ -116,7 +124,8 @@ void wait_for_init_op() {
 
             if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
                 // Can't respond to other operations before initialization
-                mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, NULL);
+                mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, NULL,
+                                       textureManager);
 #ifdef DATABUS_BASIC
                 if (mgpu_test_databus_get_last_response(databus, &response)) {
                     handleResponse(&response);

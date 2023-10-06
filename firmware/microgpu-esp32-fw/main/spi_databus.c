@@ -145,8 +145,8 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
         return;
     }
 
-    sendBuffer[0] = (uint8_t)(byteCount >> 8);
-    sendBuffer[1] = (uint8_t)(byteCount & 0xFF);
+    sendBuffer[0] = (uint8_t) (byteCount >> 8);
+    sendBuffer[1] = (uint8_t) (byteCount & 0xFF);
 
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));

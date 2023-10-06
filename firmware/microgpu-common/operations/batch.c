@@ -7,7 +7,8 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
                      Mgpu_Display *display,
                      Mgpu_Databus *databus,
                      bool *resetFlag,
-                     Mgpu_FrameBuffer **releasedFrameBuffer) {
+                     Mgpu_FrameBuffer **releasedFrameBuffer,
+                     Mgpu_TextureManager *textureManager) {
     assert(batchOperation != NULL);
     assert(frameBuffer != NULL);
     assert(databus != NULL);
@@ -30,7 +31,8 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
             return;
         }
 
-        mgpu_execute_operation(&operation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer);
+        mgpu_execute_operation(&operation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer,
+                               textureManager);
 
         buffer += innerSize + 2;
     }

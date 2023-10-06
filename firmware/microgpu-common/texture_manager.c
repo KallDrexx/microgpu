@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common.h"
 #include "messages.h"
 #include "texture_manager.h"
 
@@ -14,12 +15,12 @@ typedef struct {
 } Texture;
 
 struct Mgpu_TextureManager {
-    Mgpu_Allocator *allocator;
+    const Mgpu_Allocator *allocator;
     size_t textureCount;
     Texture *textures;
 };
 
-void free_texture(Texture *texture, Mgpu_Allocator *allocator) {
+void free_texture(Texture *texture, const Mgpu_Allocator *allocator) {
     assert(texture != NULL);
     assert(allocator != NULL);
 
@@ -155,7 +156,7 @@ void remove_texture(Mgpu_TextureManager *manager, size_t removeAtIndex) {
     manager->textureCount = afterCount;
 }
 
-void update_texture(Texture *texture, Mgpu_TextureInfo *info, Mgpu_Allocator *allocator) {
+void update_texture(Texture *texture, Mgpu_TextureInfo *info, const Mgpu_Allocator *allocator) {
     assert(texture != NULL);
     assert(info != NULL);
 
@@ -183,7 +184,7 @@ void update_texture(Texture *texture, Mgpu_TextureInfo *info, Mgpu_Allocator *al
     }
 }
 
-Mgpu_TextureManager *mgpu_texture_manager_new(Mgpu_Allocator *allocator) {
+Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator) {
     assert(allocator != NULL);
 
     Mgpu_TextureManager *manager = allocator->AllocateFn(sizeof(Mgpu_TextureManager));

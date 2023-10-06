@@ -11,6 +11,7 @@ set(MICROGPU_COMMON_SOURCES
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/present_framebuffer.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/reset.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/status.c
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/textures.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/response_serializer.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/texture_manager.c
 )

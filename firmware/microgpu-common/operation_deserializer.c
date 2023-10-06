@@ -144,9 +144,9 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
         char msg[MESSAGE_MAX_LEN] = {0};
         snprintf(msg,
                  MESSAGE_MAX_LEN,
-                 "Append to texture op had a pixel size of %u, but only %llu bytes were provided",
+                 "Append to texture op had a pixel size of %u, but only %u bytes were provided",
                  operation->appendTexturePixelOperation.pixelCount,
-                 size - 4);
+                 (int) (size - 4));
 
         mgpu_message_set(msg);
         return false;

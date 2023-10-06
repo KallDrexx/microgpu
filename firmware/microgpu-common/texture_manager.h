@@ -17,7 +17,7 @@ typedef struct Mgpu_TextureManager Mgpu_TextureManager;
  * used to allocate the texture manager itself, but also all textures that get
  * defined.
  */
-Mgpu_TextureManager *mgpu_texture_manager_new(Mgpu_Allocator *allocator);
+Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator);
 
 /*
  * Uninitializes and frees memory used by the texture manager. It gets freed
