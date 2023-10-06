@@ -15,5 +15,7 @@
     _a < _b ? _a : _b;       \
 })
 #elif defined(_MSC_VER)
+
 #include <stdlib.h>
+
 #endif

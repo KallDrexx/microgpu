@@ -9,6 +9,7 @@
 #include "sdl_display.h"
 
 #if defined(DATABUS_BASIC)
+
 #include "test_databus.h"
 
 #elif defined(DATABUS_TCP)

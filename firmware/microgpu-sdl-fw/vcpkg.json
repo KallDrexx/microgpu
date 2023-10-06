@@ -1,15 +1,19 @@
 {
-  "name" : "microgpu-sdl-fw",
-  "version-string" : "1.0.0",
-  "builtin-baseline" : "78b61582c9e093fda56a01ebb654be15a0033897",
-  "dependencies" : [ {
-    "name" : "vcpkg-cmake-config",
-    "version>=" : "2022-02-06#1"
-  }, {
-    "name" : "vcpkg-cmake",
-    "version>=" : "2023-05-04"
-  }, {
-    "name" : "sdl2",
-    "version>=" : "2.26.5"
-  } ]
+  "name": "microgpu-sdl-fw",
+  "version-string": "1.0.0",
+  "builtin-baseline": "78b61582c9e093fda56a01ebb654be15a0033897",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake-config",
+      "version>=": "2022-02-06#1"
+    },
+    {
+      "name": "vcpkg-cmake",
+      "version>=": "2023-05-04"
+    },
+    {
+      "name": "sdl2",
+      "version>=": "2.26.5"
+    }
+  ]
 }
