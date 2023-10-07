@@ -62,6 +62,10 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             mgpu_exec_texture_append(textureManager, &operation->appendTexturePixelOperation);
             break;
 
+        case Mgpu_Operation_RenderTexture:
+            mgpu_exec_texture_render(textureManager, frameBuffer, &operation->drawTextureOperation);
+            break;
+
         default: {
             char buffer[MESSAGE_MAX_LEN];
             snprintf(buffer, MESSAGE_MAX_LEN, "Cannot execute operation of type %u", operation->type);

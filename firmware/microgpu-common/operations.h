@@ -65,6 +65,11 @@ typedef enum {
     Mgpu_Operation_AppendTexturePixels = 9,
 
     /*
+     * Renders a texture directly to the frame buffer.
+     */
+    Mgpu_Operation_RenderTexture = 10,
+
+    /*
      * Requests the microgpu to initialize itself and fully reset itself.
      */
     Mgpu_Operation_Reset = 189, // Higher value that's hard to see accidentally
@@ -109,6 +114,20 @@ typedef struct {
     Mgpu_Color *pixels;
 } Mgpu_AppendTexturePixelOperation;
 
+typedef struct {
+    uint8_t textureId;
+
+    /*
+     * The x position to display the top left corner of the texture
+     */
+    int16_t xPosition;
+
+    /*
+     * The y position to display the top left corner of the texture
+     */
+    int16_t yPosition;
+} Mgpu_DrawTextureOperation;
+
 /*
  * Single type that can represent any type of operation that
  * the microgpu framework can support.
@@ -122,5 +141,6 @@ typedef struct {
         Mgpu_BatchOperation batchOperation;
         Mgpu_DefineTextureOperation defineTextureOperation;
         Mgpu_AppendTexturePixelOperation appendTexturePixelOperation;
+        Mgpu_DrawTextureOperation drawTextureOperation;
     };
 } Mgpu_Operation;

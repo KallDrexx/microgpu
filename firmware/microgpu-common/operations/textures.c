@@ -20,3 +20,12 @@ void mgpu_exec_texture_append(Mgpu_TextureManager *textureManager, Mgpu_AppendTe
 
     mgpu_texture_append(textureManager, operation->textureId, operation->pixelCount, operation->pixels);
 }
+
+void mgpu_exec_texture_render(Mgpu_TextureManager *textureManager,
+                              Mgpu_FrameBuffer *frameBuffer,
+                              Mgpu_DrawTextureOperation *operation) {
+    assert(textureManager != NULL);
+    assert(operation != NULL);
+
+    mgpu_texture_draw(textureManager, frameBuffer, operation->textureId, operation->xPosition, operation->yPosition);
+}

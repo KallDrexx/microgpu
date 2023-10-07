@@ -159,6 +159,22 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
     return true;
 }
 
+bool deserialize_draw_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
+    if (size < sizeof(Mgpu_DrawTextureOperation) + 1) {
+        return false;
+    }
+
+    operation->type = Mgpu_Operation_RenderTexture;
+    operation->drawTextureOperation.textureId = bytes[1];
+
+    // NOTE: This assumes all calling systems use the same negative number representation
+    // (2's compliment??) as the GPU's architecture.
+    operation->drawTextureOperation.xPosition = (int16_t)(((int16_t)bytes[2] >> 8) | bytes[3]);
+    operation->drawTextureOperation.yPosition = (int16_t)(((int16_t)bytes[4] >> 8) | bytes[5]);
+
+    return true;
+}
+
 bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     assert(bytes != NULL);
     assert(operation != NULL);
@@ -198,6 +214,9 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
 
         case Mgpu_Operation_AppendTexturePixels:
             return deserialize_append_pixels(bytes, size, operation);
+
+        case Mgpu_Operation_RenderTexture:
+            return deserialize_draw_texture(bytes, size, operation);
 
         default:
             return false;

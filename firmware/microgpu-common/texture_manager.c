@@ -262,3 +262,43 @@ void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16
     Mgpu_Color *startPos = texture->pixels + texture->pixelsWritten;
     memcpy(startPos, pixels, pixelsToWrite);
 }
+
+void mgpu_texture_draw(Mgpu_TextureManager *textureManager,
+                       Mgpu_FrameBuffer *frameBuffer,
+                       uint16_t textureId,
+                       int16_t xPosition,
+                       int16_t yPosition) {
+    assert(textureManager != NULL);
+    assert(frameBuffer != NULL);
+    assert(frameBuffer->pixels != NULL);
+
+    Texture *texture = NULL;
+    get_potential_index_of_id(textureManager, textureId, &texture);
+    if (texture == NULL || texture->pixels == NULL || texture->width == 0 || texture->height == 0) {
+        return; // No texture defined
+    }
+
+    uint16_t startX = max(xPosition, 0);
+    uint16_t startY = max(yPosition, 0);
+    uint16_t lastX = min(xPosition + texture->width, frameBuffer->width - 1);
+    uint16_t lastY = min(yPosition + texture->height, frameBuffer->height - 1);
+    uint16_t width = lastX - startX + 1;
+    uint16_t height = lastY - startY + 1;
+
+    Mgpu_Color *sourceRowStart = texture->pixels + (startX - xPosition);
+    Mgpu_Color *targetRowStart = frameBuffer->pixels + startX;
+
+    for (int row = 0; row < height; height++) {
+        Mgpu_Color *source = sourceRowStart;
+        Mgpu_Color *target = targetRowStart;
+
+        for (int col = 0; col < width; col++) {
+            *target = *source;
+            target++;
+            source++;
+        }
+
+        sourceRowStart += texture->width;
+        targetRowStart += frameBuffer->width;
+    }
+}

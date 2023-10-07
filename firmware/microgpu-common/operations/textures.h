@@ -6,3 +6,7 @@
 void mgpu_exec_texture_define(Mgpu_TextureManager *textureManager, Mgpu_DefineTextureOperation *operation);
 
 void mgpu_exec_texture_append(Mgpu_TextureManager *textureManager, Mgpu_AppendTexturePixelOperation *operation);
+
+void mgpu_exec_texture_render(Mgpu_TextureManager *textureManager,
+                              Mgpu_FrameBuffer *frameBuffer,
+                              Mgpu_DrawTextureOperation *operation);

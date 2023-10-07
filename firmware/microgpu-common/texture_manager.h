@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "alloc.h"
 #include "color.h"
+#include "framebuffer.h"
 
 typedef struct {
     uint8_t id;
@@ -37,3 +38,12 @@ void mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureInfo *
  * Appends the pixels to a previously defined texture.
  */
 void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, Mgpu_Color *pixels);
+
+/*
+ * Draws the specified texture to the frame buffer
+ */
+void mgpu_texture_draw(Mgpu_TextureManager *textureManager,
+                       Mgpu_FrameBuffer *frameBuffer,
+                       uint16_t textureId,
+                       int16_t xPosition,
+                       int16_t yPosition);
