@@ -52,8 +52,8 @@ public class Gpu
 
         await communication.ResetAsync();
         var gpu = new Gpu(communication);
-        var status = await gpu.SendResponsiveOperationAsync(new GetStatusOperation());
-        gpu.ApplyStatusResponse(status);
+        // var status = await gpu.SendResponsiveOperationAsync(new GetStatusOperation());
+        // gpu.ApplyStatusResponse(status);
 
         return gpu;
     }
@@ -69,8 +69,12 @@ public class Gpu
         }
 
         await SendFireAndForgetAsync(new InitializeOperation { FrameBufferScale = framebufferScale });
-        var status = await SendResponsiveOperationAsync(new GetStatusOperation());
-        ApplyStatusResponse(status);
+        IsInitialized = true;
+        ColorMode = ColorMode.Rgb565;
+        DisplayResolution = new Vector2(320, 240);
+        FrameBufferResolution = new Vector2(320, 240);
+        // var status = await SendResponsiveOperationAsync(new GetStatusOperation());
+        // ApplyStatusResponse(status);
 
         if (!IsInitialized)
         {
@@ -106,6 +110,7 @@ public class Gpu
         await _communication.SendDataAsync(_writeBuffer.AsMemory(0, byteCount));
 
         byteCount = await _communication.ReadDataAsync(_readBuffer);
+        
         var response = new TResponse();
         response.Deserialize(_readBuffer.AsSpan(0, byteCount));
 

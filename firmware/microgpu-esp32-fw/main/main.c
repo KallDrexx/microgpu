@@ -106,6 +106,7 @@ bool wait_for_initialization(void) {
     while (true) {
         bool hasOperation = mgpu_databus_get_next_operation(databus, &operation);
         if (hasOperation) {
+            ESP_LOGI(LOG_TAG, "Operation received: %u", operation.type);
             if (operation.type == Mgpu_Operation_Initialize) {
                 break;
             }
@@ -120,6 +121,8 @@ bool wait_for_initialization(void) {
                     handleResponse(&response);
                 }
 #endif
+        } else {
+            ESP_LOGW(LOG_TAG, "Databus data received without a valid operation");
         }
     }
 

@@ -5,9 +5,12 @@ using Microgpu.Common.Comms;
 
 namespace Microgpu.Sample.Common;
 
-public static class SampleRunner
+public class SampleRunner
 {
-    public static async Task Run(SampleOptions options)
+    public bool RightPressed { get; set; }
+    public bool LeftPressed { get; set; }
+    
+    public async Task Run(SampleOptions options)
     {
         var frameTimes = new long[1000];
         var frameTimeIndex = 0;
@@ -48,7 +51,7 @@ public static class SampleRunner
             }
             
             var innerFrameTime = Stopwatch.StartNew();
-            await octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime));
+            await octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime), RightPressed, LeftPressed);
             innerFrameTime.Stop();
             
             var waitTime = options.MinTimeBetweenFrames - innerFrameTime.Elapsed;

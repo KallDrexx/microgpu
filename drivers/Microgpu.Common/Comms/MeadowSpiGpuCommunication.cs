@@ -54,7 +54,11 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
         _spiBus.Read(null, _readLengthBuffer);
 
         var responseLength = (ushort)((_readLengthBuffer[0] << 8) | _readLengthBuffer[1]);
-        _spiBus.Read(null, data.Span[..responseLength]);
+        if (responseLength > 0)
+        {
+            _spiBus.Read(null, data.Span[..responseLength]);
+        }
+
         _chipSelectPin.State = true;
 
         return responseLength;

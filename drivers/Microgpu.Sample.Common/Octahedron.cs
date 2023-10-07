@@ -5,13 +5,15 @@ namespace Microgpu.Sample.Common;
 
 public class Octahedron
 {
-    private const float RotationSpeed = 150;
-    
+    private const float RotationSpeed = 250;
+
     private readonly Gpu _gpu;
     private readonly Vector3 _light = new(1, 0, 3);
     private readonly BatchOperation _gpuBatch = new();
     private readonly Camera _camera = new();
-    private readonly Triangle[] _octahedron = {
+
+    private readonly Triangle[] _octahedron =
+    {
         new((1, 0, 0), (0, 1, 0), (0, 0, 1)),
         new((1, 0, 0), (0, 0, -1), (0, 1, 0)),
         new((1, 0, 0), (0, 0, 1), (0, -1, 0)),
@@ -28,14 +30,20 @@ public class Octahedron
     {
         _gpu = gpu;
     }
-    
-    public async Task RunNextFrame(TimeSpan timeSinceLastFrame)
+
+    public async Task RunNextFrame(TimeSpan timeSinceLastFrame, bool rightPressed, bool leftPressed)
     {
+        var yRotation = rightPressed ? RotationSpeed
+            : leftPressed ? -RotationSpeed
+            : 0f;
+
+        yRotation *= -(float)timeSinceLastFrame.TotalSeconds;
+
         _rotation = new Vector3(
             _rotation.X + RotationSpeed * (float)timeSinceLastFrame.TotalSeconds,
-            _rotation.Y + RotationSpeed * (float)timeSinceLastFrame.TotalSeconds,
+            _rotation.Y + yRotation, 
             _rotation.Z);
-        
+
         var lightUnitVector = _light.Unit;
         var rotatedOctahedron = _octahedron
             .Select(x =>
