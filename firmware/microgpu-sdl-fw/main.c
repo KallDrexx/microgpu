@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <SDL.h>
 #include "microgpu-common/alloc.h"
+#include "microgpu-common/messages.h"
 #include "microgpu-common/operations.h"
 #include "microgpu-common/operation_execution.h"
 #include "sdl_display.h"
@@ -100,8 +101,15 @@ int databus_loop(void *data) {
                 handleResponse(&response);
             }
 #endif
+
+            Mgpu_Message currentMessage = mgpu_message_get_latest();
+            if (currentMessage != NULL && strlen(currentMessage) > 0) {
+                SDL_Log("Message from operation: %s\n", currentMessage);
+            }
         } else {
+#ifdef DATABUS_TCP
             SDL_Log("Failed to deserialize data\n");
+#endif
         }
     }
 
@@ -208,6 +216,9 @@ void start_sdl_system(void) {
     SDL_Log("Finishing tear down\n");
     mgpu_framebuffer_free(framebuffer);
     framebuffer = NULL;
+
+    mgpu_texture_manager_free(textureManager);
+    textureManager = NULL;
 
     mgpu_display_free(display);
     display = NULL;

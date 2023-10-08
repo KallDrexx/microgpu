@@ -51,23 +51,32 @@ typedef enum {
     Mgpu_Operation_Batch = 7,
 
     /*
+     * Sets the number of textures that will be defined. Once set, texture ids
+     * 0 to N can be defined, where `N` is one less than the texture count specified.
+     *
+     * Any textures that have been previously defined are cleared on this operation's
+     * execution.
+     */
+    Mgpu_Operation_SetTextureCount = 8,
+
+    /*
      * Defines a texture the GPU should track. Gives the identifier and dimensions
      * of the texture. If called with an identifier that was previously defined,
      * the previous texture is cleared and a new one is started. If the new
      * width and height are zeros, then the texture is considered undefined.
      */
-    Mgpu_Operation_DefineTexture = 8,
+    Mgpu_Operation_DefineTexture = 9,
 
     /*
      * Appends bytes representing pixel color data to a defined texture's data. Bytes are
      * expected to be raw color data based on the firmware's active color mode.
      */
-    Mgpu_Operation_AppendTexturePixels = 9,
+    Mgpu_Operation_AppendTexturePixels = 10,
 
     /*
      * Renders a texture directly to the frame buffer.
      */
-    Mgpu_Operation_RenderTexture = 10,
+    Mgpu_Operation_RenderTexture = 11,
 
     /*
      * Requests the microgpu to initialize itself and fully reset itself.
@@ -101,6 +110,10 @@ typedef struct {
     uint16_t byteLength;
     const uint8_t *bytes;
 } Mgpu_BatchOperation;
+
+typedef struct {
+    uint8_t textureCount;
+} Mgpu_SetTextureCountOperation;
 
 typedef struct {
     uint8_t textureId;
@@ -139,8 +152,9 @@ typedef struct {
         Mgpu_DrawRectangleOperation drawRectangle;
         Mgpu_DrawTriangleOperation drawTriangle;
         Mgpu_BatchOperation batchOperation;
-        Mgpu_DefineTextureOperation defineTextureOperation;
-        Mgpu_AppendTexturePixelOperation appendTexturePixelOperation;
-        Mgpu_DrawTextureOperation drawTextureOperation;
+        Mgpu_SetTextureCountOperation setTextureCount;
+        Mgpu_DefineTextureOperation defineTexture;
+        Mgpu_AppendTexturePixelOperation appendTexturePixels;
+        Mgpu_DrawTextureOperation drawTexture;
     };
 } Mgpu_Operation;

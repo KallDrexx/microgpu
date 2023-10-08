@@ -27,6 +27,12 @@ Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator);
 void mgpu_texture_manager_free(Mgpu_TextureManager *textureManager);
 
 /*
+ * Sets the number of textures to be tracked. When called, all previously defined
+ * textures become cleared.
+ */
+void mgpu_texture_set_count(Mgpu_TextureManager *textureManager, uint8_t count);
+
+/*
  * Defines the properties for a specific texture. If a texture had already been defined
  * with the specified id, then the existing texture is cleared and a new one is allocated
  * in its place. If the width or height are zero, then the texture is cleared and no new

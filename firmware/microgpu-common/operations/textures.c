@@ -1,5 +1,12 @@
 #include "textures.h"
 
+void mgpu_exec_texture_count(Mgpu_TextureManager *textureManager, Mgpu_SetTextureCountOperation *operation) {
+    assert(textureManager != NULL);
+    assert(operation != NULL);
+
+    mgpu_texture_set_count(textureManager, operation->textureCount);
+}
+
 void mgpu_exec_texture_define(Mgpu_TextureManager *textureManager, Mgpu_DefineTextureOperation *operation) {
     assert(textureManager != NULL);
     assert(operation != NULL);

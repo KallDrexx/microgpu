@@ -10,8 +10,10 @@
 #include "common.h"
 
 #define BUFFER_SIZE 1024
-WORD_ALIGNED_ATTR uint8_t receiveBuffer[BUFFER_SIZE];
-WORD_ALIGNED_ATTR uint8_t sendBuffer[BUFFER_SIZE];
+WORD_ALIGNED_ATTR uint8_t
+receiveBuffer[BUFFER_SIZE];
+WORD_ALIGNED_ATTR uint8_t
+sendBuffer[BUFFER_SIZE];
 
 int handshakePin;
 

@@ -54,16 +54,20 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             mgpu_exec_reset(resetFlag);
             break;
 
+        case Mgpu_Operation_SetTextureCount:
+            mgpu_exec_texture_count(textureManager, &operation->setTextureCount);
+            break;
+
         case Mgpu_Operation_DefineTexture:
-            mgpu_exec_texture_define(textureManager, &operation->defineTextureOperation);
+            mgpu_exec_texture_define(textureManager, &operation->defineTexture);
             break;
 
         case Mgpu_Operation_AppendTexturePixels:
-            mgpu_exec_texture_append(textureManager, &operation->appendTexturePixelOperation);
+            mgpu_exec_texture_append(textureManager, &operation->appendTexturePixels);
             break;
 
         case Mgpu_Operation_RenderTexture:
-            mgpu_exec_texture_render(textureManager, frameBuffer, &operation->drawTextureOperation);
+            mgpu_exec_texture_render(textureManager, frameBuffer, &operation->drawTexture);
             break;
 
         default: {
