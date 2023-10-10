@@ -205,7 +205,10 @@ void mgpu_texture_draw(Mgpu_TextureManager *textureManager,
         Mgpu_Color *target = targetRowStart;
 
         for (int col = 0; col < width; col++) {
-            *target = *source;
+            if (*source != texture->transparentColor) {
+                *target = *source;
+            }
+
             target++;
             source++;
         }

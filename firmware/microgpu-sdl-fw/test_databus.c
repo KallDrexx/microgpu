@@ -141,7 +141,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawTriangle.y1 = 100;
             operation->drawTriangle.x2 = 90;
             operation->drawTriangle.y2 = 100;
-            operation->drawTriangle.color = mgpu_color_from_rgb888(0, 255, 0);
+            operation->drawTriangle.color = mgpu_color_from_rgb888(120, 120, 120);
             operationCount++;
             return true;
 
@@ -174,7 +174,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->defineTexture.textureId = 5;
             operation->defineTexture.width = TEST_TEXTURE_PIXEL_COUNT;
             operation->defineTexture.height = TEST_TEXTURE_PIXEL_COUNT;
-            operation->defineTexture.transparentColor = mgpu_color_from_rgb888(0, 0, 0);
+            operation->defineTexture.transparentColor = mgpu_color_from_rgb888(255, 255, 255);
             operationCount++;
             return true;
 
@@ -189,7 +189,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         case 14:
             operation->type = Mgpu_Operation_RenderTexture;
             operation->drawTexture.textureId = 5;
-            operation->drawTexture.xPosition = 100;
+            operation->drawTexture.xPosition = 50;
             operation->drawTexture.yPosition = 50;
             operationCount++;
             return true;
