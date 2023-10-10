@@ -2,6 +2,7 @@
 using System.Numerics;
 using Microgpu.Common;
 using Microgpu.Common.Comms;
+using Microgpu.Common.Operations;
 
 namespace Microgpu.Sample.Common;
 
@@ -32,6 +33,7 @@ public static class SampleRunner
             $"Framebuffer resolution: {gpu.FrameBufferResolution?.X ?? 0} x {gpu.FrameBufferResolution?.Y ?? 0}");
         Console.WriteLine($"Color mode: {gpu.ColorMode}");
 
+        var batch = new BatchOperation();
         var octahedron = new Octahedron(gpu);
         var timeSinceLastFrame = Stopwatch.StartNew();
         while (!options.CancellationToken.IsCancellationRequested)
@@ -48,7 +50,7 @@ public static class SampleRunner
             }
             
             var innerFrameTime = Stopwatch.StartNew();
-            await octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime));
+            await ExecuteFrameLogic(octahedron, frameTime, batch, gpu);
             innerFrameTime.Stop();
             
             var waitTime = options.MinTimeBetweenFrames - innerFrameTime.Elapsed;
@@ -61,6 +63,17 @@ public static class SampleRunner
 
             await Task.Delay(waitTime);
         }
+    }
+
+    private static async Task ExecuteFrameLogic(
+        Octahedron octahedron, 
+        long frameTime, 
+        BatchOperation batch,
+        Gpu gpu)
+    {
+        octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime), batch);
+        batch.AddOperation(new PresentFramebufferOperation());
+        await gpu.SendFireAndForgetAsync(batch);
     }
 
     public class SampleOptions
