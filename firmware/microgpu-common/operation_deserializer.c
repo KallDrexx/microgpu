@@ -133,9 +133,9 @@ bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operati
 
     operation->type = Mgpu_Operation_DefineTexture;
     operation->defineTexture.textureId = bytes[1];
-    operation->defineTexture.width = ((uint16_t) bytes[1] << 8) | bytes[2];
-    operation->defineTexture.height = ((uint16_t) bytes[3] << 8) | bytes[4];
-    operation->defineTexture.transparentColor = deserialize_color(bytes, 5);
+    operation->defineTexture.width = ((uint16_t) bytes[2] << 8) | bytes[3];
+    operation->defineTexture.height = ((uint16_t) bytes[4] << 8) | bytes[5];
+    operation->defineTexture.transparentColor = deserialize_color(bytes, 6);
 
     return true;
 }
