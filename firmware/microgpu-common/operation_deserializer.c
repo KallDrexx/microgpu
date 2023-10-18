@@ -116,7 +116,7 @@ bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
 }
 
 bool deserialize_set_texture_count(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < sizeof(Mgpu_SetTextureCountOperation) + 1) {
+    if (size < 2) {
         return false;
     }
 
@@ -127,7 +127,7 @@ bool deserialize_set_texture_count(const uint8_t bytes[], size_t size, Mgpu_Oper
 }
 
 bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < sizeof(Mgpu_DefineTextureOperation) + 1) {
+    if (size < 8) {
         return false;
     }
 
@@ -141,7 +141,7 @@ bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operati
 }
 
 bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < sizeof(Mgpu_AppendTexturePixelOperation) + 1) {
+    if (size < 4) {
         return false;
     }
 
@@ -171,7 +171,7 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
 }
 
 bool deserialize_draw_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < sizeof(Mgpu_DrawTextureOperation) + 1) {
+    if (size < 6) {
         return false;
     }
 

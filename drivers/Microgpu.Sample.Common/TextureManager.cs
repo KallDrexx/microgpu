@@ -10,8 +10,6 @@ public class TextureManager
     private readonly Gpu _gpu;
     private readonly BufferRgb565[] _textures = new BufferRgb565[1];
 
-    public int TreeTextureId { get; } = 0;
-
     public TextureManager(Gpu gpu)
     {
         _gpu = gpu;
@@ -27,6 +25,7 @@ public class TextureManager
 
         for (var x = 0; x < _textures.Length; x++)
         {
+            Console.WriteLine($"Sending texture {x} to the GPU");
             var textureId = (byte)x;
             var texture = _textures[x];
             await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
@@ -34,7 +33,7 @@ public class TextureManager
                 TextureId = textureId,
                 Width = (ushort)texture.Width,
                 Height = (ushort)texture.Height,
-                TransparentColor = ColorRgb565.FromRgb888(255, 0, 255),
+                TransparentColor = ColorRgb565.FromRgb888(0, 0, 255),
             });
 
             var bytesLeft = texture.Buffer.Length;
@@ -42,23 +41,34 @@ public class TextureManager
             {
                 var bytesToSend = Math.Min(bytesLeft, 512);
                 var startIndex = texture.Buffer.Length - bytesLeft;
-                var endIndex = startIndex + bytesToSend;
 
                 await _gpu.SendFireAndForgetAsync(new AppendTexturePixelsOperation
                 {
                     TextureId = textureId,
-                    Pixels = texture.Buffer.AsMemory(startIndex, endIndex),
+                    PixelBytes = texture.Buffer.AsMemory(startIndex, bytesToSend),
                 });
                 
                 bytesLeft -= bytesToSend;
             }
         }
+        
+        Console.WriteLine("All textures sent to GPU");
     }
 
     private static BufferRgb565 SubTexture(BufferRgb565 spriteSheet, int x, int y, int width, int height)
     {
         var imageBuffer = new BufferRgb565(width, height);
-        imageBuffer.WriteBuffer(x, y, spriteSheet);
+        for (var yIndex = 0; yIndex < height; yIndex++)
+        {
+            for (var xIndex = 0; xIndex < width; xIndex++)
+            {
+                var spriteSheetX = x + xIndex;
+                var spriteSheetY = y + yIndex;
+                var spriteSheetIndex = spriteSheetY * spriteSheet.Width + spriteSheetX;
+                var imageIndex = yIndex * width + xIndex;
+                imageBuffer.Buffer[imageIndex] = spriteSheet.Buffer[spriteSheetIndex];
+            }
+        }
 
         return imageBuffer;
     }
@@ -66,7 +76,7 @@ public class TextureManager
     private static BufferRgb565 LoadTexture()
     {
         var image = Image.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "spritesheet.bmp"));
-        var imageBuffer = new BufferRgb565(0, 0);
+        var imageBuffer = new BufferRgb565(image.Width, image.Height);
         imageBuffer.WriteBuffer(0, 0, image.DisplayBuffer);
 
         return imageBuffer;

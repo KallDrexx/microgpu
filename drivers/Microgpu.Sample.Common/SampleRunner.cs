@@ -13,6 +13,7 @@ public class SampleRunner
     private readonly CancellationToken _cancellationToken;
     private readonly BatchOperation _gpuBatch = new();
     private readonly Octahedron _octahedron;
+    private readonly BouncingTexture _bouncingTexture;
     private readonly long[] _frameTimes = new long[1000];
     private int _frameTimeIndex;
     
@@ -24,6 +25,7 @@ public class SampleRunner
         _minTimeBetweenFrames = minTimeBetweenFrames;
         _cancellationToken = cancellationToken ?? CancellationToken.None;
         _octahedron = new Octahedron(gpu);
+        _bouncingTexture = new BouncingTexture(_gpu, 0);
     }
     
     public async Task Run()
@@ -35,6 +37,9 @@ public class SampleRunner
             $"Framebuffer resolution: {_gpu.FrameBufferResolution?.X ?? 0} x {_gpu.FrameBufferResolution?.Y ?? 0}");
         Console.WriteLine($"Color mode: {_gpu.ColorMode}");
 
+        var textureManager = new TextureManager(_gpu);
+        await textureManager.SendTexturesToGpuAsync();
+        
         var timeSinceLastFrame = Stopwatch.StartNew();
         while (!_cancellationToken.IsCancellationRequested)
         {
@@ -48,9 +53,10 @@ public class SampleRunner
                 var average = _frameTimes.Average();
                 Console.WriteLine($"Average frame time: {average}ms ({_frameTimes.Length / average:0}fps)");
             }
+           
             
             var innerFrameTime = Stopwatch.StartNew();
-            await ExecuteFrameLogic(frameTime);
+            await ExecuteFrameLogic(TimeSpan.FromMilliseconds(frameTime));
             innerFrameTime.Stop();
             
             var waitTime = _minTimeBetweenFrames - innerFrameTime.Elapsed;
@@ -65,9 +71,11 @@ public class SampleRunner
         }
     }
 
-    private async Task ExecuteFrameLogic(long frameTime)
+    private async Task ExecuteFrameLogic(TimeSpan frameTime)
     {
-        _octahedron.RunNextFrame(TimeSpan.FromMilliseconds(frameTime), _gpuBatch);
+        await _bouncingTexture.RunNextFrameAsync(frameTime);
+        // _octahedron.RunNextFrame(frameTime, _gpuBatch);
+       
         _gpuBatch.AddOperation(new PresentFramebufferOperation());
         await _gpu.SendFireAndForgetAsync(_gpuBatch);
     }
