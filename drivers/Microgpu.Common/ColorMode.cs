@@ -1,8 +1,7 @@
-﻿namespace Microgpu.Common
+﻿namespace Microgpu.Common;
+
+public enum ColorMode
 {
-    public enum ColorMode
-    {
-        Unspecified = 0,
-        Rgb565 = 1,
-    }
+    Unspecified = 0,
+    Rgb565 = 1
 }

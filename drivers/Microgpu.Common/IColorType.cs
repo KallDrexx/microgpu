@@ -1,16 +1,15 @@
 ﻿using System;
 
-namespace Microgpu.Common
+namespace Microgpu.Common;
+
+/// <summary>
+///     Used to constrain generics to a color type
+/// </summary>
+public interface IColorType
 {
     /// <summary>
-    /// Used to constrain generics to a color type
+    ///     Writes the bytes for the color to the beginning of the provided byte span
     /// </summary>
-    public interface IColorType
-    {
-        /// <summary>
-        /// Writes the bytes for the color to the beginning of the provided byte span
-        /// </summary>
-        /// <returns>The number of bytes written to the span</returns>
-        int WriteBytes(Span<byte> bytes);
-    }
+    /// <returns>The number of bytes written to the span</returns>
+    int WriteBytes(Span<byte> bytes);
 }

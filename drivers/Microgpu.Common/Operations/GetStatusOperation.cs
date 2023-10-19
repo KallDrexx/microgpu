@@ -1,15 +1,14 @@
 ﻿using System;
 using Microgpu.Common.Responses;
 
-namespace Microgpu.Common.Operations
+namespace Microgpu.Common.Operations;
+
+public class GetStatusOperation : IResponsiveOperation<StatusResponse>
 {
-    public class GetStatusOperation : IResponsiveOperation<StatusResponse>
+    public int Serialize(Span<byte> bytes)
     {
-        public int Serialize(Span<byte> bytes)
-        {
-            bytes[0] = 4;
-            
-            return 1;
-        }
+        bytes[0] = 4;
+
+        return 1;
     }
 }

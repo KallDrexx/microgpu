@@ -4,16 +4,8 @@ namespace Microgpu.Common.Operations;
 
 public class BatchOperation : IFireAndForgetOperation
 {
-    private readonly byte[] _buffer = new byte[1020]; 
-    private int _offset = 0;
-    
-    public void AddOperation<T>(T operation) where T : IFireAndForgetOperation
-    {
-        var bytesAdded = operation.Serialize(_buffer.AsSpan(_offset + 2));
-        _buffer[_offset] = (byte)(bytesAdded >> 8);
-        _buffer[_offset + 1] = (byte)(bytesAdded & 0xFF);
-        _offset += bytesAdded + 2;
-    }
+    private readonly byte[] _buffer = new byte[1020];
+    private int _offset;
 
     public int Serialize(Span<byte> bytes)
     {
@@ -26,5 +18,13 @@ public class BatchOperation : IFireAndForgetOperation
         _offset = 0;
 
         return totalBytes;
+    }
+
+    public void AddOperation<T>(T operation) where T : IFireAndForgetOperation
+    {
+        var bytesAdded = operation.Serialize(_buffer.AsSpan(_offset + 2));
+        _buffer[_offset] = (byte)(bytesAdded >> 8);
+        _buffer[_offset + 1] = (byte)(bytesAdded & 0xFF);
+        _offset += bytesAdded + 2;
     }
 }

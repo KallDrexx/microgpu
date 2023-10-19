@@ -18,7 +18,7 @@ public class DefineTextureOperation<TColor> : IFireAndForgetOperation
         bytes[3] = (byte)(Width & 0xFF);
         bytes[4] = (byte)(Height >> 8);
         bytes[5] = (byte)(Height & 0xFF);
-        
+
         return 6 + TransparentColor.WriteBytes(bytes[6..]);
     }
 }

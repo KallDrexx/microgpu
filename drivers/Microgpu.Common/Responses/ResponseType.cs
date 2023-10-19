@@ -2,7 +2,7 @@
 
 public enum ResponseType
 {
-   Unspecified = 0,
-   Status = 1,
-   LastMessage = 2,
+    Unspecified = 0,
+    Status = 1,
+    LastMessage = 2
 }

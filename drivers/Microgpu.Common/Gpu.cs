@@ -10,29 +10,8 @@ namespace Microgpu.Common;
 public class Gpu
 {
     private readonly IGpuCommunication _communication;
-    private byte[] _writeBuffer = new byte[1024];
     private byte[] _readBuffer = new byte[1024];
-
-    /// <summary>
-    /// Indicates whether the GPU is initialized. If the GPU is not initialized
-    /// most operations sent to it will do nothing.
-    /// </summary>
-    public bool IsInitialized { get; private set; }
-
-    /// <summary>
-    /// What color mode the GPU is expecting color data in.
-    /// </summary>
-    public ColorMode ColorMode { get; private set; }
-
-    /// <summary>
-    /// The resolution of the display in pixels
-    /// </summary>
-    public Vector2 DisplayResolution { get; private set; }
-
-    /// <summary>
-    /// The resolution of the frame buffer in pixels. This will be null if the GPU is not initialized.
-    /// </summary>
-    public Vector2? FrameBufferResolution { get; private set; }
+    private byte[] _writeBuffer = new byte[1024];
 
     private Gpu(IGpuCommunication communication)
     {
@@ -40,15 +19,33 @@ public class Gpu
     }
 
     /// <summary>
-    /// Creates a new GPU instance and initializes it
+    ///     Indicates whether the GPU is initialized. If the GPU is not initialized
+    ///     most operations sent to it will do nothing.
+    /// </summary>
+    public bool IsInitialized { get; private set; }
+
+    /// <summary>
+    ///     What color mode the GPU is expecting color data in.
+    /// </summary>
+    public ColorMode ColorMode { get; private set; }
+
+    /// <summary>
+    ///     The resolution of the display in pixels
+    /// </summary>
+    public Vector2 DisplayResolution { get; private set; }
+
+    /// <summary>
+    ///     The resolution of the frame buffer in pixels. This will be null if the GPU is not initialized.
+    /// </summary>
+    public Vector2? FrameBufferResolution { get; private set; }
+
+    /// <summary>
+    ///     Creates a new GPU instance and initializes it
     /// </summary>
     /// <param name="communication">The communication protocol to use to talk to the GPU</param>
     public static async Task<Gpu> CreateAsync(IGpuCommunication communication)
     {
-        if (communication == null)
-        {
-            throw new ArgumentNullException(nameof(communication));
-        }
+        if (communication == null) throw new ArgumentNullException(nameof(communication));
 
         await communication.ResetAsync();
         var gpu = new Gpu(communication);
@@ -59,14 +56,11 @@ public class Gpu
     }
 
     /// <summary>
-    /// Initializes the GPU if it has not already been done.
+    ///     Initializes the GPU if it has not already been done.
     /// </summary>
     public async Task InitializeAsync(byte framebufferScale)
     {
-        if (IsInitialized)
-        {
-            return;
-        }
+        if (IsInitialized) return;
 
         await SendFireAndForgetAsync(new InitializeOperation { FrameBufferScale = framebufferScale });
         var status = await SendResponsiveOperationAsync(new GetStatusOperation());
@@ -80,11 +74,10 @@ public class Gpu
     }
 
     /// <summary>
-    /// Sends a fire and forget operation to the GPU.
-    ///
-    /// Initialization should not be performed manually by this method, and instead
-    /// should be done by calling <see cref="InitializeAsync"/>. Not using that method
-    /// will cause this GPU instance to be in an invalid state.
+    ///     Sends a fire and forget operation to the GPU.
+    ///     Initialization should not be performed manually by this method, and instead
+    ///     should be done by calling <see cref="InitializeAsync" />. Not using that method
+    ///     will cause this GPU instance to be in an invalid state.
     /// </summary>
     public async Task SendFireAndForgetAsync(IFireAndForgetOperation operation)
     {
@@ -95,7 +88,7 @@ public class Gpu
     }
 
     /// <summary>
-    /// Sends an operation to the GPU and deserializes the response.
+    ///     Sends an operation to the GPU and deserializes the response.
     /// </summary>
     public async Task<TResponse> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
         where TResponse : IResponse, new()
@@ -119,13 +112,9 @@ public class Gpu
         DisplayResolution = new Vector2(status.DisplayWidth, status.DisplayHeight);
 
         if (IsInitialized)
-        {
             FrameBufferResolution = new Vector2(status.FrameBufferWidth, status.FrameBufferHeight);
-        }
         else
-        {
             FrameBufferResolution = null;
-        }
 
         if (status.MaxBytes > 0)
         {

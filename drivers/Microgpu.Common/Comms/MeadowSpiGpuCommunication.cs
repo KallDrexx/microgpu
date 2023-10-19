@@ -6,11 +6,11 @@ namespace Microgpu.Common.Comms;
 
 public class MeadowSpiGpuCommunication : IGpuCommunication
 {
-    private readonly ISpiBus _spiBus;
-    private readonly IDigitalInputPort _handshakePin;
-    private readonly IDigitalOutputPort _resetPin;
     private readonly IDigitalOutputPort _chipSelectPin;
+    private readonly IDigitalInputPort _handshakePin;
     private readonly byte[] _readLengthBuffer = new byte[2];
+    private readonly IDigitalOutputPort _resetPin;
+    private readonly ISpiBus _spiBus;
 
     public MeadowSpiGpuCommunication(
         ISpiBus spiBus,
@@ -47,7 +47,7 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
     public async Task<int> ReadDataAsync(Memory<byte> data)
     {
         await WaitForHandshakeAsync();
-        
+
         // The first two bytes tells us how many bytes we need to read. We need to keep chip select
         // low in order to read the length without resetting the transaction
         _chipSelectPin.State = false;
@@ -66,9 +66,7 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
         while (!_handshakePin.State)
         {
             if (DateTime.Now - startedAt > TimeSpan.FromSeconds(5))
-            {
                 throw new TimeoutException("Timeout waiting for SPI handshake");
-            }
 
             await Task.Delay(1);
         }
