@@ -124,7 +124,7 @@ typedef struct {
 typedef struct {
     uint8_t textureId;
     uint16_t pixelCount;
-    Mgpu_Color *pixels;
+    const uint8_t *pixelBytes;
 } Mgpu_AppendTexturePixelOperation;
 
 typedef struct {

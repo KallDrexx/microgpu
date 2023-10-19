@@ -9,7 +9,7 @@ public class BouncingTexture
     private enum HorizontalDirection { Left, Right }
     private enum VerticalDirection { Up, Down }
 
-    private const int Speed = 0;
+    private const int Speed = 150;
 
     private readonly byte _textureId;
     private readonly Gpu _gpu;
@@ -24,8 +24,8 @@ public class BouncingTexture
 
         var random = new Random();
         _position = new Vector2(
-            1000,//(float)random.NextDouble() * gpu.FrameBufferResolution!.Value.X,
-            0); //(float)random.NextDouble() * gpu.FrameBufferResolution!.Value.Y);
+            (float)random.NextDouble() * gpu.FrameBufferResolution!.Value.X,
+            (float)random.NextDouble() * gpu.FrameBufferResolution!.Value.Y);
     }
     
     public async Task RunNextFrameAsync(TimeSpan frameTime)

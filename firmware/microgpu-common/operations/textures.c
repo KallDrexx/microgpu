@@ -25,7 +25,7 @@ void mgpu_exec_texture_append(Mgpu_TextureManager *textureManager, Mgpu_AppendTe
     assert(textureManager != NULL);
     assert(operation != NULL);
 
-    mgpu_texture_append(textureManager, operation->textureId, operation->pixelCount, operation->pixels);
+    mgpu_texture_append(textureManager, operation->textureId, operation->pixelCount, operation->pixelBytes);
 }
 
 void mgpu_exec_texture_render(Mgpu_TextureManager *textureManager,

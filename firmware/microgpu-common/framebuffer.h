@@ -12,7 +12,7 @@ typedef struct {
 } Mgpu_FrameBuffer;
 
 /*
- * Creates a new framebuffer based on the specified height and width (in pixels). The
+ * Creates a new framebuffer based on the specified height and width (in pixelBytes). The
  * frame buffer's width and height will be adjusted based on the passed in scale factor.
  * So if an original width and height of 320x240 is passed in with a scale factor of 2, then
  * the frame buffer will have a width and height 160x120.

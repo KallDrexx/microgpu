@@ -41,9 +41,10 @@ void mgpu_texture_set_count(Mgpu_TextureManager *textureManager, uint8_t count);
 void mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureInfo *info);
 
 /*
- * Appends the pixels to a previously defined texture.
+ * Appends the pixelBytes to a previously defined texture.
  */
-void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, Mgpu_Color *pixels);
+void
+mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, const uint8_t *pixelBytes);
 
 /*
  * Draws the specified texture to the frame buffer

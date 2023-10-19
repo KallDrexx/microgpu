@@ -4,22 +4,6 @@
 #include "color.h"
 #include "operation_deserializer.h"
 
-Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex);
-
-#ifdef MGPU_COLOR_MODE_USE_RGB565
-
-Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex) {
-    uint8_t red = (bytes[firstColorByteIndex] & 0xF8) >> 3;
-    uint8_t green = (bytes[firstColorByteIndex] & 0x07) << 3 | (bytes[firstColorByteIndex + 1] & 0xE0) >> 5;
-    uint8_t blue = bytes[firstColorByteIndex + 1] & 0x1F;
-
-    return mgpu_color_from_rgb565(red, green, blue);
-}
-
-#else
-#error "No color mode specified"
-#endif
-
 bool deserialize_status_op(Mgpu_Operation *operation) {
     operation->type = Mgpu_Operation_GetStatus;
     return true;
@@ -51,7 +35,9 @@ bool deserialize_draw_rectangle(const uint8_t bytes[], size_t size, Mgpu_Operati
     operation->drawRectangle.startY = ((uint16_t) bytes[3] << 8) | bytes[4];
     operation->drawRectangle.width = ((uint16_t) bytes[5] << 8) | bytes[6];
     operation->drawRectangle.height = ((uint16_t) bytes[7] << 8) | bytes[8];
-    operation->drawRectangle.color = deserialize_color(bytes, 9);
+
+    size_t nextByteIndex;
+    operation->drawRectangle.color = deserialize_color(bytes, 9, &nextByteIndex);
 
     return true;
 }
@@ -68,7 +54,9 @@ bool deserialize_draw_triangle(const uint8_t bytes[], size_t size, Mgpu_Operatio
     operation->drawTriangle.y1 = ((uint16_t) bytes[7] << 8) | bytes[8];
     operation->drawTriangle.x2 = ((uint16_t) bytes[9] << 8) | bytes[10];
     operation->drawTriangle.y2 = ((uint16_t) bytes[11] << 8) | bytes[12];
-    operation->drawTriangle.color = deserialize_color(bytes, 13);
+
+    size_t nextByteIndex;
+    operation->drawTriangle.color = deserialize_color(bytes, 13, &nextByteIndex);
 
     return true;
 }
@@ -135,7 +123,9 @@ bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operati
     operation->defineTexture.textureId = bytes[1];
     operation->defineTexture.width = ((uint16_t) bytes[2] << 8) | bytes[3];
     operation->defineTexture.height = ((uint16_t) bytes[4] << 8) | bytes[5];
-    operation->defineTexture.transparentColor = deserialize_color(bytes, 6);
+
+    size_t nextByteIndex;
+    operation->defineTexture.transparentColor = deserialize_color(bytes, 6, &nextByteIndex);
 
     return true;
 }
@@ -165,7 +155,7 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
 
     // This should be ok as the operation should not be used by the time
     // the next databus operation occurs.
-    operation->appendTexturePixels.pixels = (Mgpu_Color *) (bytes + 4);
+    operation->appendTexturePixels.pixelBytes = (bytes + 4);
 
     return true;
 }
@@ -180,8 +170,8 @@ bool deserialize_draw_texture(const uint8_t bytes[], size_t size, Mgpu_Operation
 
     // NOTE: This assumes all calling systems use the same negative number representation
     // (2's compliment??) as the GPU's architecture.
-    operation->drawTexture.xPosition = (int16_t) (((int16_t) bytes[2] >> 8) | bytes[3]);
-    operation->drawTexture.yPosition = (int16_t) (((int16_t) bytes[4] >> 8) | bytes[5]);
+    operation->drawTexture.xPosition = (int16_t) (((int16_t) bytes[2] << 8) | bytes[3]);
+    operation->drawTexture.yPosition = (int16_t) (((int16_t) bytes[4] << 8) | bytes[5]);
 
     return true;
 }

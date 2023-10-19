@@ -13,7 +13,7 @@ public class SampleRunner
     private readonly CancellationToken _cancellationToken;
     private readonly BatchOperation _gpuBatch = new();
     private readonly Octahedron _octahedron;
-    private readonly BouncingTexture _bouncingTexture;
+    private readonly BouncingTexture _bouncingTexture1;
     private readonly long[] _frameTimes = new long[1000];
     private int _frameTimeIndex;
     
@@ -25,7 +25,7 @@ public class SampleRunner
         _minTimeBetweenFrames = minTimeBetweenFrames;
         _cancellationToken = cancellationToken ?? CancellationToken.None;
         _octahedron = new Octahedron(gpu);
-        _bouncingTexture = new BouncingTexture(_gpu, 0);
+        _bouncingTexture1 = new BouncingTexture(_gpu, 0);
     }
     
     public async Task Run()
@@ -73,8 +73,8 @@ public class SampleRunner
 
     private async Task ExecuteFrameLogic(TimeSpan frameTime)
     {
-        await _bouncingTexture.RunNextFrameAsync(frameTime);
-        // _octahedron.RunNextFrame(frameTime, _gpuBatch);
+        await _bouncingTexture1.RunNextFrameAsync(frameTime);
+        _octahedron.RunNextFrame(frameTime, _gpuBatch);
        
         _gpuBatch.AddOperation(new PresentFramebufferOperation());
         await _gpu.SendFireAndForgetAsync(_gpuBatch);

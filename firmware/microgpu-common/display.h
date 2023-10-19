@@ -30,7 +30,7 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_Displ
 void mgpu_display_free(Mgpu_Display *display);
 
 /*
- * Gets the number of horizontal and vertical pixels on the display being used.
+ * Gets the number of horizontal and vertical pixelBytes on the display being used.
  */
 void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_t *height);
 
@@ -42,7 +42,7 @@ void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_
  * While some displays can have the frame buffer set directly to the display once and
  * be done (e.g. ili9341), other displays do not have built in frame buffers, and thus
  * the microgpu firmware controlling the display will be required to constantly feed
- * pixels every refresh cycle to the display.
+ * pixelBytes every refresh cycle to the display.
  *
  * Mutating the framebuffer while the display is using it can cause flickering and partial
  * pixel reads at a minimum.

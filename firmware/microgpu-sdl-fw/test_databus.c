@@ -11,7 +11,7 @@ bool hasResponse;
 Mgpu_Response lastSeenResponse;
 uint16_t operationCount;
 
-Mgpu_Color testTexturePixels[TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT];
+uint8_t testTexturePixels[TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * 2];
 
 Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
     assert(options != NULL);
@@ -30,30 +30,33 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
     // Generate the test texture values in columns of red->white->green->white->blue,
     // with a yellow top and purple bottom
 #define COL_WIDTH (TEST_TEXTURE_PIXEL_COUNT / 5)
-    Mgpu_Color *pixel = testTexturePixels;
+    uint8_t *pixelByte = testTexturePixels;
     for (int row = 0; row < TEST_TEXTURE_PIXEL_COUNT; row++) {
         for (int col = 0; col < TEST_TEXTURE_PIXEL_COUNT; col++) {
+            Mgpu_Color color;
             if (col == 0) {
-                *pixel = mgpu_color_from_rgb888(0, 255, 0);
+                color = mgpu_color_from_rgb888(0, 255, 0);
             } else if (col == TEST_TEXTURE_PIXEL_COUNT - 1) {
-                *pixel = mgpu_color_from_rgb565(0, 63, 30);
+                color = mgpu_color_from_rgb565(0, 63, 30);
             } else if (row == 0) {
-                *pixel = mgpu_color_from_rgb565(31, 62, 0);
+                color = mgpu_color_from_rgb565(31, 62, 0);
             } else if (row == TEST_TEXTURE_PIXEL_COUNT - 1) {
-                *pixel = mgpu_color_from_rgb565(30, 0, 31);
+                color = mgpu_color_from_rgb565(30, 0, 31);
             } else if (col < COL_WIDTH) {
-                *pixel = mgpu_color_from_rgb888(255, 0, 0);
+                color = mgpu_color_from_rgb888(255, 0, 0);
             } else if (col < COL_WIDTH * 2) {
-                *pixel = mgpu_color_from_rgb888(255, 255, 255);
+                color = mgpu_color_from_rgb888(255, 255, 255);
             } else if (col < COL_WIDTH * 3) {
-                *pixel = mgpu_color_from_rgb888(0, 255, 0);
+                color = mgpu_color_from_rgb888(0, 255, 0);
             } else if (col < COL_WIDTH * 4) {
-                *pixel = mgpu_color_from_rgb888(255, 255, 255);
+                color = mgpu_color_from_rgb888(255, 255, 255);
             } else {
-                *pixel = mgpu_color_from_rgb888(0, 0, 255);
+                color = mgpu_color_from_rgb888(0, 0, 255);
             }
 
-            pixel++;
+            *pixelByte = color >> 8;
+            *(pixelByte + 1) = color & 0xFF;
+            pixelByte += 2;
         }
     }
 
@@ -182,7 +185,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->type = Mgpu_Operation_AppendTexturePixels;
             operation->appendTexturePixels.textureId = 5;
             operation->appendTexturePixels.pixelCount = sizeof(testTexturePixels) / sizeof(Mgpu_Color);
-            operation->appendTexturePixels.pixels = testTexturePixels;
+            operation->appendTexturePixels.pixelBytes = testTexturePixels;
             operationCount++;
             return true;
 

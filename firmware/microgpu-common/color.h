@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef enum {
@@ -22,7 +23,6 @@ Mgpu_Color mgpu_color_from_rgb565(uint8_t red, uint8_t green, uint8_t blue);
  * in the RGB565 color space values.
  */
 void mgpu_color_get_rgb565(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8_t *blue);
-
 #else
 
 #error "No color mode specified"
@@ -46,3 +46,8 @@ Mgpu_Color mgpu_color_from_rgb888(uint8_t red, uint8_t green, uint8_t blue);
  */
 void mgpu_color_get_rgb888(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8_t *blue);
 
+/*
+ * Deserializes a single color from an array of bytes. The index of the byte after the last
+ * byte read is set in the `nextIndex` pointer
+ */
+Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex, size_t *nextIndex);

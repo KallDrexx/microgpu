@@ -146,15 +146,16 @@ void mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureInfo *
     }
 }
 
-void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, Mgpu_Color *pixels) {
+void
+mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, const uint8_t *pixelBytes) {
     assert(textureManager != NULL);
-    assert(pixels != NULL);
+    assert(pixelBytes != NULL);
 
     if (id >= textureManager->textureCount) {
         char msg[256];
         snprintf(msg,
                  sizeof(msg),
-                 "Can't add pixels to texture id %u, as that id is larger than the texture count of %u",
+                 "Can't add pixelBytes to texture id %u, as that id is larger than the texture count of %u",
                  id, textureManager->textureCount);
         mgpu_message_set(msg);
         return;
@@ -163,12 +164,18 @@ void mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16
     Texture *texture = &textureManager->textures[id];
     size_t pixelsLeft = (texture->width * texture->height) - texture->pixelsWritten;
     size_t pixelsToWrite = min(pixelsLeft, pixelCount);
-    if (pixelsToWrite == 0) {
-        return;
+
+    Mgpu_Color *pixel = texture->pixels + texture->pixelsWritten;
+    const uint8_t *byte = pixelBytes;
+    for (int x = 0; x < pixelsToWrite; x++) {
+        size_t nextByteIndex;
+        Mgpu_Color color = deserialize_color(byte, 0, &nextByteIndex);
+        *pixel = color;
+
+        byte += nextByteIndex;
+        pixel++;
     }
 
-    Mgpu_Color *startPos = texture->pixels + texture->pixelsWritten;
-    memcpy(startPos, pixels, pixelsToWrite * sizeof(Mgpu_Color));
     texture->pixelsWritten += pixelsToWrite;
 }
 
@@ -193,6 +200,13 @@ void mgpu_texture_draw(Mgpu_TextureManager *textureManager,
     uint16_t lastY = min(yPosition + texture->height, frameBuffer->height - 1);
     uint16_t width = lastX - startX;
     uint16_t height = lastY - startY;
+
+    if (startX >= frameBuffer->width ||
+        startY >= frameBuffer->height ||
+        width == 0 ||
+        height == 0) {
+        return;
+    }
 
     size_t sourceOffset = ((startY - yPosition) * texture->width) + (startX - xPosition);
     size_t targetOffset = (startY * frameBuffer->width) + startX;

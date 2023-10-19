@@ -33,8 +33,10 @@ public class TextureManager
                 TextureId = textureId,
                 Width = (ushort)texture.Width,
                 Height = (ushort)texture.Height,
-                TransparentColor = ColorRgb565.FromRgb888(0, 0, 255),
+                TransparentColor = ColorRgb565.FromRgb888(255, 0, 255),
             });
+            
+            var transparentColor = ColorRgb565.FromRgb888(255, 0, 255);
 
             var bytesLeft = texture.Buffer.Length;
             while (bytesLeft > 0)
@@ -64,9 +66,10 @@ public class TextureManager
             {
                 var spriteSheetX = x + xIndex;
                 var spriteSheetY = y + yIndex;
-                var spriteSheetIndex = spriteSheetY * spriteSheet.Width + spriteSheetX;
-                var imageIndex = yIndex * width + xIndex;
+                var spriteSheetIndex = spriteSheetY * (spriteSheet.Width * 2) + (spriteSheetX * 2);
+                var imageIndex = yIndex * (width * 2) + (xIndex * 2);
                 imageBuffer.Buffer[imageIndex] = spriteSheet.Buffer[spriteSheetIndex];
+                imageBuffer.Buffer[imageIndex + 1] = spriteSheet.Buffer[spriteSheetIndex + 1];
             }
         }
 
