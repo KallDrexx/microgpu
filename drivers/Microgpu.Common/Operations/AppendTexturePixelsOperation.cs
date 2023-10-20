@@ -10,7 +10,7 @@ public class AppendTexturePixelsOperation : IFireAndForgetOperation
     public int Serialize(Span<byte> bytes)
     {
         var bpp = 2; // TODO: this should be based on color mode
-        var pixelLength = PixelBytes.Length / 2;
+        var pixelLength = PixelBytes.Length / bpp;
 
         if (bytes.Length < 3 + PixelBytes.Length)
             throw new ArgumentException("Not enough space to serialize operation");
