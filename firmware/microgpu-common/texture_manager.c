@@ -194,12 +194,12 @@ void mgpu_texture_draw(Mgpu_TextureManager *textureManager,
 
     Texture *texture = &textureManager->textures[textureId];
 
-    uint16_t startX = max(xPosition, 0);
-    uint16_t startY = max(yPosition, 0);
-    uint16_t lastX = min(xPosition + texture->width, frameBuffer->width - 1);
-    uint16_t lastY = min(yPosition + texture->height, frameBuffer->height - 1);
-    uint16_t width = lastX - startX;
-    uint16_t height = lastY - startY;
+    int startX = max(xPosition, 0);
+    int startY = max(yPosition, 0);
+    int lastX = min(xPosition + texture->width, frameBuffer->width - 1);
+    int lastY = min(yPosition + texture->height, frameBuffer->height - 1);
+    int width = lastX - startX;
+    int height = lastY - startY;
 
     if (startX >= frameBuffer->width ||
         startY >= frameBuffer->height ||

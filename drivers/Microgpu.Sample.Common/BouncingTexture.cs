@@ -6,16 +6,13 @@ namespace Microgpu.Sample.Common;
 
 public class BouncingTexture
 {
-    private enum HorizontalDirection { Left, Right }
-    private enum VerticalDirection { Up, Down }
-
     private const int Speed = 150;
+    private readonly Gpu _gpu;
 
     private readonly byte _textureId;
-    private readonly Gpu _gpu;
+    private HorizontalDirection _horizontalDirection;
+    private VerticalDirection _verticalDirection;
     private Vector2 _position;
-    private HorizontalDirection _horizontalDirection = HorizontalDirection.Right;
-    private VerticalDirection _verticalDirection = VerticalDirection.Down;
 
     public BouncingTexture(Gpu gpu, byte textureId)
     {
@@ -26,22 +23,19 @@ public class BouncingTexture
         _position = new Vector2(
             (float)random.NextDouble() * gpu.FrameBufferResolution!.Value.X,
             (float)random.NextDouble() * gpu.FrameBufferResolution!.Value.Y);
+        
+        _horizontalDirection = random.Next(0, 2) == 0 ? HorizontalDirection.Left : HorizontalDirection.Right;
+        _verticalDirection = random.Next(0, 2) == 0 ? VerticalDirection.Up : VerticalDirection.Down;
     }
-    
-    public async Task RunNextFrameAsync(TimeSpan frameTime)
+
+    public void RunNextFrame(TimeSpan frameTime, BatchOperation batch)
     {
         var horizontalMovement = (float)(Speed * frameTime.TotalSeconds);
         var verticalMovement = (float)(Speed * frameTime.TotalSeconds);
 
-        if (_horizontalDirection == HorizontalDirection.Left)
-        {
-            horizontalMovement *= -1;
-        }
+        if (_horizontalDirection == HorizontalDirection.Left) horizontalMovement *= -1;
 
-        if (_verticalDirection == VerticalDirection.Up)
-        {
-            verticalMovement *= -1;
-        }
+        if (_verticalDirection == VerticalDirection.Up) verticalMovement *= -1;
 
         _position.X += horizontalMovement;
         _position.Y += verticalMovement;
@@ -67,12 +61,24 @@ public class BouncingTexture
             _position.Y = _gpu.FrameBufferResolution!.Value.Y;
             _verticalDirection = VerticalDirection.Up;
         }
-
-        await _gpu.SendFireAndForgetAsync(new DrawTextureOperation
+        
+        batch.AddOperation(new DrawTextureOperation
         {
             TextureId = _textureId,
             X = (short)_position.X,
-            Y = (short)_position.Y,
+            Y = (short)_position.Y
         });
+    }
+
+    private enum HorizontalDirection
+    {
+        Left,
+        Right
+    }
+
+    private enum VerticalDirection
+    {
+        Up,
+        Down
     }
 }

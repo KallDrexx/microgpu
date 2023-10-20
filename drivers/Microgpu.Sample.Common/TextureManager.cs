@@ -8,14 +8,15 @@ namespace Microgpu.Sample.Common;
 public class TextureManager
 {
     private readonly Gpu _gpu;
-    private readonly BufferRgb565[] _textures = new BufferRgb565[1];
+    private readonly BufferRgb565[] _textures = new BufferRgb565[2];
 
     public TextureManager(Gpu gpu)
     {
         _gpu = gpu;
         var texture = LoadTexture();
-        
+
         _textures[0] = SubTexture(texture, 69, 3, 23, 26); // tree
+        _textures[1] = SubTexture(texture, 0, 48, 16, 16); // sun
     }
 
     public async Task SendTexturesToGpuAsync()
@@ -33,10 +34,8 @@ public class TextureManager
                 TextureId = textureId,
                 Width = (ushort)texture.Width,
                 Height = (ushort)texture.Height,
-                TransparentColor = ColorRgb565.FromRgb888(255, 0, 255),
+                TransparentColor = ColorRgb565.FromRgb888(255, 0, 255)
             });
-            
-            var transparentColor = ColorRgb565.FromRgb888(255, 0, 255);
 
             var bytesLeft = texture.Buffer.Length;
             while (bytesLeft > 0)
@@ -47,13 +46,13 @@ public class TextureManager
                 await _gpu.SendFireAndForgetAsync(new AppendTexturePixelsOperation
                 {
                     TextureId = textureId,
-                    PixelBytes = texture.Buffer.AsMemory(startIndex, bytesToSend),
+                    PixelBytes = texture.Buffer.AsMemory(startIndex, bytesToSend)
                 });
-                
+
                 bytesLeft -= bytesToSend;
             }
         }
-        
+
         Console.WriteLine("All textures sent to GPU");
     }
 
@@ -61,21 +60,19 @@ public class TextureManager
     {
         var imageBuffer = new BufferRgb565(width, height);
         for (var yIndex = 0; yIndex < height; yIndex++)
+        for (var xIndex = 0; xIndex < width; xIndex++)
         {
-            for (var xIndex = 0; xIndex < width; xIndex++)
-            {
-                var spriteSheetX = x + xIndex;
-                var spriteSheetY = y + yIndex;
-                var spriteSheetIndex = spriteSheetY * (spriteSheet.Width * 2) + (spriteSheetX * 2);
-                var imageIndex = yIndex * (width * 2) + (xIndex * 2);
-                imageBuffer.Buffer[imageIndex] = spriteSheet.Buffer[spriteSheetIndex];
-                imageBuffer.Buffer[imageIndex + 1] = spriteSheet.Buffer[spriteSheetIndex + 1];
-            }
+            var spriteSheetX = x + xIndex;
+            var spriteSheetY = y + yIndex;
+            var spriteSheetIndex = spriteSheetY * spriteSheet.Width * 2 + spriteSheetX * 2;
+            var imageIndex = yIndex * width * 2 + xIndex * 2;
+            imageBuffer.Buffer[imageIndex] = spriteSheet.Buffer[spriteSheetIndex];
+            imageBuffer.Buffer[imageIndex + 1] = spriteSheet.Buffer[spriteSheetIndex + 1];
         }
 
         return imageBuffer;
     }
-    
+
     private static BufferRgb565 LoadTexture()
     {
         var image = Image.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "spritesheet.bmp"));
