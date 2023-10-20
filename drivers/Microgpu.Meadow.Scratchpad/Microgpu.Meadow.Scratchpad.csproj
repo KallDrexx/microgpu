@@ -9,17 +9,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Meadow.F7" Version="1.3.0" />
-      <PackageReference Include="Meadow.Foundation" Version="1.3.0" />
+        <PackageReference Include="Meadow.F7" Version="1.3.0"/>
+        <PackageReference Include="Meadow.Foundation" Version="1.3.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj" />
-      <ProjectReference Include="..\Microgpu.Sample.Common\Microgpu.Sample.Common.csproj" />
+        <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj"/>
+        <ProjectReference Include="..\Microgpu.Sample.Common\Microgpu.Sample.Common.csproj"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <None Update="meadow.config.yaml" CopyToOutputDirectory="Always" />
+        <None Update="meadow.config.yaml" CopyToOutputDirectory="Always"/>
     </ItemGroup>
 
 </Project>

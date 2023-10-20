@@ -7,7 +7,7 @@ public class DrawTextureOperation : IFireAndForgetOperation
     public required byte TextureId { get; init; }
     public required short X { get; init; }
     public required short Y { get; init; }
-    
+
     public int Serialize(Span<byte> bytes)
     {
         bytes[0] = 11;

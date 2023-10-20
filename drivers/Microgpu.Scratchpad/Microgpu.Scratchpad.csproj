@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj" />
-      <ProjectReference Include="..\Microgpu.Sample.Common\Microgpu.Sample.Common.csproj" />
+        <ProjectReference Include="..\Microgpu.Common\Microgpu.Common.csproj"/>
+        <ProjectReference Include="..\Microgpu.Sample.Common\Microgpu.Sample.Common.csproj"/>
     </ItemGroup>
 
 </Project>
