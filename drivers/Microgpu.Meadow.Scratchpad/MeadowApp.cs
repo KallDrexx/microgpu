@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Foundation.ICs.IOExpanders;
+using Meadow.Foundation.Sensors.Accelerometers;
 using Meadow.Hardware;
 using Meadow.Units;
 using Microgpu.Common;
@@ -14,6 +15,8 @@ namespace Microgpu.Meadow.Scratchpad
     public class MeadowApp : App<F7FeatherV2>
     {
         private Gpu _gpu = null!;
+        private Bmi270 _bmi270 = null!;
+        private SampleRunner _sampleRunner = null!;
         
         public override async Task Initialize()
         {
@@ -25,43 +28,44 @@ namespace Microgpu.Meadow.Scratchpad
             
             var reset = Device.CreateDigitalOutputPort(Device.Pins.D03, true);
             var handshake = mcp.CreateDigitalInputPort(mcp.Pins.GP6, ResistorMode.Disabled);
-            // var handshake = mcp.CreateDigitalInterruptPort(mcp.Pins.GP6);
             var chipSelect = mcp.CreateDigitalOutputPort(mcp.Pins.GP5, true);
-            
-            // handshake.Changed += (sender, args) =>
-            // {
-            //     Console.WriteLine($"Handshake changed: {args.New}");
-            // };
-
-
-            // var projectLab = ProjectLab.Create();
-            // var handshake = projectLab.MikroBus1.Pins.INT.CreateDigitalInputPort();
-            // var reset = projectLab.MikroBus1.Pins.RST.CreateDigitalOutputPort(true);
-            // var chipSelect = projectLab.MikroBus1.Pins.CS.CreateDigitalOutputPort(true);
-            
             
             var config = new SpiClockConfiguration(
                 new Frequency(10, Frequency.UnitType.Megahertz),
                 SpiClockConfiguration.Mode.Mode0);
             
-            // var spiBus = projectLab.SpiBus;
-            // spiBus.Configuration.Speed = new Frequency(10, Frequency.UnitType.Megahertz);
             var spiBus = Device.CreateSpiBus(Device.Pins.SCK, Device.Pins.COPI, Device.Pins.CIPO, config);
             
             Console.WriteLine("Initializing GPU");
             var gpuCommunication = new MeadowSpiGpuCommunication(spiBus, handshake, reset, chipSelect);
             _gpu = await Gpu.CreateAsync(gpuCommunication);
             await _gpu.InitializeAsync(1);
+            
+            Console.WriteLine("Initializing BMI270");
+            _bmi270 = new Bmi270(Device.CreateI2cBus());
+            _bmi270.Updated += HandleBmi270Reading;
+            _bmi270.StartUpdating(TimeSpan.FromMilliseconds(100));
+            
+            Console.WriteLine("Initializing sample runner");
+            _sampleRunner = new SampleRunner(_gpu, TimeSpan.FromMilliseconds(0));
         }
 
         public override async Task Run()
         {
-            var sampleRunner = new SampleRunner(_gpu, TimeSpan.FromMilliseconds(0));
-            await sampleRunner.Run();
-            // while (true)
-            // {
-            //     await Task.Delay(100);
-            // }
+            Console.WriteLine("Starting sample");
+            await _sampleRunner.Run();
+        }
+
+        private void HandleBmi270Reading(object sender,
+            IChangeResult<(Acceleration3D? Acceleration3D,
+                AngularVelocity3D? AngularVelocity3D,
+                Temperature? Temperature)> result)
+        {
+            if (result.New.AngularVelocity3D != null)
+                _sampleRunner.Octahedron.RotationDegreesPerSecond = new Octahedron.Vector3(
+                    (float)result.New.AngularVelocity3D.Value.X.DegreesPerSecond * 2,
+                    (float)result.New.AngularVelocity3D.Value.Y.DegreesPerSecond * 2,
+                    (float)result.New.AngularVelocity3D.Value.Z.DegreesPerSecond * 2);
         }
     }
 }

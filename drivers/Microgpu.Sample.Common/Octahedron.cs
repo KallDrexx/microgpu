@@ -22,6 +22,8 @@ public class Octahedron
         new((-1, 0, 0), (0, -1, 0), (0, 0, 1)),
         new((-1, 0, 0), (0, 0, -1), (0, -1, 0))
     };
+    
+    public Vector3 RotationDegreesPerSecond { get; set; }
 
     private Vector3 _rotation = new(0, 0, 0);
 
@@ -33,9 +35,9 @@ public class Octahedron
     public void RunNextFrame(TimeSpan timeSinceLastFrame, BatchOperation gpuBatch)
     {
         _rotation = new Vector3(
-            _rotation.X + RotationSpeed * (float)timeSinceLastFrame.TotalSeconds,
-            _rotation.Y + RotationSpeed * (float)timeSinceLastFrame.TotalSeconds,
-            _rotation.Z);
+            _rotation.X + RotationDegreesPerSecond.X * (float)timeSinceLastFrame.TotalSeconds,
+            _rotation.Y + RotationDegreesPerSecond.Y * (float)timeSinceLastFrame.TotalSeconds,
+            _rotation.Z + RotationDegreesPerSecond.Z * (float)timeSinceLastFrame.TotalSeconds);
 
         var lightUnitVector = _light.Unit;
         var rotatedOctahedron = _octahedron
@@ -49,9 +51,9 @@ public class Octahedron
 
         foreach (var triangle in rotatedOctahedron)
         {
-            var projectedTriangle = new Triangle(triangle.V1.ProjectTo2d(_camera),
-                triangle.V2.ProjectTo2d(_camera),
-                triangle.V3.ProjectTo2d(_camera));
+            var projectedTriangle = new Triangle(ProjectTo2d(triangle.V1, _camera),
+                ProjectTo2d(triangle.V2, _camera),
+                ProjectTo2d(triangle.V3,_camera));
 
             var normal = triangle.Normal.Unit;
 
@@ -90,7 +92,15 @@ public class Octahedron
         return (x, y);
     }
 
-    private readonly struct Vector3
+    private Vector3 ProjectTo2d(Vector3 vector, Camera camera)
+    {
+        var x = vector.Dot(camera.Right) / camera.Right.Length;
+        var y = vector.Dot(camera.Up) / camera.Up.Length;
+        return (x, y, 0);
+    }
+    
+
+    public readonly struct Vector3
     {
         public readonly float X, Y, Z;
 
@@ -119,7 +129,7 @@ public class Octahedron
             return new Vector3(vec.X * scalar, vec.Y * scalar, vec.Z * scalar);
         }
 
-        private float Length => (float)Math.Sqrt(X * X + Y * Y + Z * Z);
+        public float Length => (float)Math.Sqrt(X * X + Y * Y + Z * Z);
 
         public float Dot(Vector3 other)
         {
@@ -134,13 +144,6 @@ public class Octahedron
             var y = Z * other.X - X * other.Z;
             var z = X * other.Y - Y * other.X;
             return new Vector3(x, y, z);
-        }
-
-        public Vector3 ProjectTo2d(Camera camera)
-        {
-            var x = Dot(camera.Right) / camera.Right.Length;
-            var y = Dot(camera.Up) / camera.Up.Length;
-            return (x, y, 0);
         }
 
         public Vector3 RotateOnZ(float degrees)
