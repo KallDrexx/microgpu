@@ -1,0 +1,4 @@
+[submodule "drivers/Glade2d/engine"]
+	path = drivers/Glade2d/engine
+	url = https://github.com/KallDrexx/Glade2d
+	branch = microgpu_enhancements

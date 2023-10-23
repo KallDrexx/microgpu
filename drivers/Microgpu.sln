@@ -8,6 +8,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Meadow.Scratchpad"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microgpu.Sample.Common", "Microgpu.Sample.Common\Microgpu.Sample.Common.csproj", "{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Glade2d Support", "Glade2d Support", "{D297D103-38BD-463D-87D7-DC4538568ED3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glade2d", "Glade2d\engine\Glade2d\Glade2d.csproj", "{B4830C94-525F-4DD4-B979-7EE25C861E65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glade2d.Microgpu", "Glade2d\Glade2d.Microgpu\Glade2d.Microgpu.csproj", "{88023D45-4BFC-4F4D-81FA-64F5B6651CA5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glade2d.Microgpu.Sample.Desktop", "Glade2d\Glade2d.Microgpu.Sample.Desktop\Glade2d.Microgpu.Sample.Desktop.csproj", "{8D5147C4-07B8-40CC-975B-C34964A1BB46}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GladeSampleShared", "Glade2d\engine\Samples\GladeSampleShared\GladeSampleShared.csproj", "{48A1CE89-4F41-4092-970F-93B25D91E428}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Glade2d.Microgpu.Sample.ProjectLab", "Glade2d\Glade2d.Microgpu.Sample.ProjectLab\Glade2d.Microgpu.Sample.ProjectLab.csproj", "{5E2BF2B4-02FA-4421-8F5E-EA962230C0AD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +42,32 @@ Global
 		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0DB0A6A-F53E-4F9D-811D-60753C27E12C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4830C94-525F-4DD4-B979-7EE25C861E65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4830C94-525F-4DD4-B979-7EE25C861E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4830C94-525F-4DD4-B979-7EE25C861E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4830C94-525F-4DD4-B979-7EE25C861E65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88023D45-4BFC-4F4D-81FA-64F5B6651CA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88023D45-4BFC-4F4D-81FA-64F5B6651CA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88023D45-4BFC-4F4D-81FA-64F5B6651CA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88023D45-4BFC-4F4D-81FA-64F5B6651CA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D5147C4-07B8-40CC-975B-C34964A1BB46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D5147C4-07B8-40CC-975B-C34964A1BB46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D5147C4-07B8-40CC-975B-C34964A1BB46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D5147C4-07B8-40CC-975B-C34964A1BB46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48A1CE89-4F41-4092-970F-93B25D91E428}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48A1CE89-4F41-4092-970F-93B25D91E428}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48A1CE89-4F41-4092-970F-93B25D91E428}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48A1CE89-4F41-4092-970F-93B25D91E428}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E2BF2B4-02FA-4421-8F5E-EA962230C0AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E2BF2B4-02FA-4421-8F5E-EA962230C0AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E2BF2B4-02FA-4421-8F5E-EA962230C0AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E2BF2B4-02FA-4421-8F5E-EA962230C0AD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B4830C94-525F-4DD4-B979-7EE25C861E65} = {D297D103-38BD-463D-87D7-DC4538568ED3}
+		{88023D45-4BFC-4F4D-81FA-64F5B6651CA5} = {D297D103-38BD-463D-87D7-DC4538568ED3}
+		{8D5147C4-07B8-40CC-975B-C34964A1BB46} = {D297D103-38BD-463D-87D7-DC4538568ED3}
+		{48A1CE89-4F41-4092-970F-93B25D91E428} = {D297D103-38BD-463D-87D7-DC4538568ED3}
+		{5E2BF2B4-02FA-4421-8F5E-EA962230C0AD} = {D297D103-38BD-463D-87D7-DC4538568ED3}
 	EndGlobalSection
 EndGlobal

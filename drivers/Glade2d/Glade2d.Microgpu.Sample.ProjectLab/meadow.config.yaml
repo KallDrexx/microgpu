@@ -1,0 +1,11 @@
+﻿MonoControl:
+  Options: --jit
+
+Device:
+  Name: MicrogpuMeadowScratchpad
+  
+  #Coprocessor:
+  #  AutomaticallyStartNetwork: true
+  #  AutomaticallyReconnect: true
+  #  MaximumRetryCount: 7
+  
