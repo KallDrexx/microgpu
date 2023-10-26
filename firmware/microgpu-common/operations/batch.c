@@ -1,6 +1,8 @@
+#include <stdio.h>
 #include "microgpu-common/operation_execution.h"
 #include "microgpu-common/operation_deserializer.h"
 #include "batch.h"
+#include "microgpu-common/messages.h"
 
 void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
                      Mgpu_FrameBuffer *frameBuffer,
@@ -21,7 +23,9 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
 
         // sanity check
         if (innerSize > outerBytesLeft - 2) {
-            // TODO: Raise error message
+            char msg[MESSAGE_MAX_LEN] = {0};
+            snprintf(msg, MESSAGE_MAX_LEN, "Batch had inner size of %u but only %u bytes left", innerSize, outerBytesLeft);
+            mgpu_message_set(msg);
             return;
         }
 

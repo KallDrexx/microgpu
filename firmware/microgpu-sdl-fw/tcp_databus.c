@@ -14,6 +14,7 @@
 #define BYTE_QUEUE_MAX_SIZE 20000
 uint8_t *globalByteQueue;
 size_t globalByteQueueSize; // How many bytes we've pushed into the byte queue
+uint8_t operationBytes[1024];
 
 int initSockets(void) {
 #ifdef _WIN32
@@ -55,7 +56,7 @@ int closeSocket(SOCKET sock) {
 }
 
 bool readBytes(Mgpu_Databus *databus, char *buffer, size_t bufferSize, int *bytesRead) {
-    *bytesRead = recv(databus->clientSocket, buffer, sizeof(buffer), 0);
+    *bytesRead = recv(databus->clientSocket, buffer, (int)bufferSize, 0);
     if (*bytesRead == -1) {
         fprintf(stderr, "Failed to read from client socket\n");
         closeSocket(databus->clientSocket);
@@ -95,7 +96,12 @@ void readPacketFromQueue(Mgpu_Databus *databus,
         // Do we have at enough bytes in the queue for how big of a packet we were told to expect
         if (globalByteQueueSize >= packetSize + 2) {
             uint8_t *startPoint = globalByteQueue + 2;
-            bool deserializeSuccess = mgpu_operation_deserialize(startPoint, packetSize, operation);
+
+            // Copy the payload into it's own buffer so moving the queue down doesn't clobber it
+            memset(operationBytes, 0, sizeof(operationBytes));
+            memcpy_s(operationBytes, sizeof(operationBytes), startPoint, packetSize);
+
+            bool deserializeSuccess = mgpu_operation_deserialize(operationBytes, packetSize, operation);
 
             // Shift the remaining contents over
             size_t remainingSize = globalByteQueueSize - packetSize - 2;
@@ -245,6 +251,6 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
 
 uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
     assert(databus != NULL);
-    return 0;
+    return 1024;
 }
 
