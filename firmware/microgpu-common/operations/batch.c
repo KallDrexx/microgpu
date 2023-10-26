@@ -35,5 +35,6 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
                                textureManager);
 
         buffer += innerSize + 2;
+        outerBytesLeft -= innerSize + 2;
     }
 }
