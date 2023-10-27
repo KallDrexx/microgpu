@@ -169,7 +169,7 @@ mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pi
     const uint8_t *byte = pixelBytes;
     for (int x = 0; x < pixelsToWrite; x++) {
         size_t nextByteIndex;
-        Mgpu_Color color = deserialize_color(byte, 0, &nextByteIndex);
+        Mgpu_Color color = mgpu_color_deserialize(byte, 0, &nextByteIndex);
         *pixel = color;
 
         byte += nextByteIndex;

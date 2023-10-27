@@ -26,7 +26,7 @@ bool deserialize_initialize_op(const uint8_t bytes[], size_t size, Mgpu_Operatio
 }
 
 bool deserialize_draw_rectangle(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < sizeof(Mgpu_DrawRectangleOperation) + 1) {
+    if (size < 9 + mgpu_color_bytes_per_pixel()) {
         return false;
     }
 
@@ -37,13 +37,13 @@ bool deserialize_draw_rectangle(const uint8_t bytes[], size_t size, Mgpu_Operati
     operation->drawRectangle.height = ((uint16_t) bytes[7] << 8) | bytes[8];
 
     size_t nextByteIndex;
-    operation->drawRectangle.color = deserialize_color(bytes, 9, &nextByteIndex);
+    operation->drawRectangle.color = mgpu_color_deserialize(bytes, 9, &nextByteIndex);
 
     return true;
 }
 
 bool deserialize_draw_triangle(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < sizeof(Mgpu_DrawTriangleOperation) + 1) {
+    if (size < 13 + mgpu_color_bytes_per_pixel()) {
         return false;
     }
 
@@ -56,7 +56,7 @@ bool deserialize_draw_triangle(const uint8_t bytes[], size_t size, Mgpu_Operatio
     operation->drawTriangle.y2 = ((uint16_t) bytes[11] << 8) | bytes[12];
 
     size_t nextByteIndex;
-    operation->drawTriangle.color = deserialize_color(bytes, 13, &nextByteIndex);
+    operation->drawTriangle.color = mgpu_color_deserialize(bytes, 13, &nextByteIndex);
 
     return true;
 }
@@ -125,7 +125,7 @@ bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operati
     operation->defineTexture.height = ((uint16_t) bytes[4] << 8) | bytes[5];
 
     size_t nextByteIndex;
-    operation->defineTexture.transparentColor = deserialize_color(bytes, 6, &nextByteIndex);
+    operation->defineTexture.transparentColor = mgpu_color_deserialize(bytes, 6, &nextByteIndex);
 
     return true;
 }
@@ -140,7 +140,7 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
     operation->appendTexturePixels.pixelCount = ((uint16_t) bytes[2] << 8) | bytes[3];
 
     // Make sure the size is within bounds of the byte array
-    size_t bytesNeededForPixels = sizeof(Mgpu_Color) * operation->appendTexturePixels.pixelCount;
+    size_t bytesNeededForPixels = mgpu_color_bytes_per_pixel() * operation->appendTexturePixels.pixelCount;
     if (bytesNeededForPixels > size - 4) {
         char msg[MESSAGE_MAX_LEN] = {0};
         snprintf(msg,

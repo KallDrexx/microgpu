@@ -50,4 +50,9 @@ void mgpu_color_get_rgb888(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8
  * Deserializes a single color from an array of bytes. The index of the byte after the last
  * byte read is set in the `nextIndex` pointer
  */
-Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex, size_t *nextIndex);
+Mgpu_Color mgpu_color_deserialize(const uint8_t bytes[], size_t firstColorByteIndex, size_t *nextIndex);
+
+/*
+ * Returns how many bytes is expected for each pixel when deserializing from a byte stream.
+ */
+size_t mgpu_color_bytes_per_pixel();

@@ -46,11 +46,15 @@ void mgpu_color_get_rgb888(Mgpu_Color color, uint8_t *red, uint8_t *green, uint8
     *blue = tempBlue;
 }
 
-Mgpu_Color deserialize_color(const uint8_t bytes[], size_t firstColorByteIndex, size_t *nextByteIndex) {
+Mgpu_Color mgpu_color_deserialize(const uint8_t bytes[], size_t firstColorByteIndex, size_t *nextIndex) {
     uint8_t red = (bytes[firstColorByteIndex] & 0xF8) >> 3;
     uint8_t green = (bytes[firstColorByteIndex] & 0x07) << 3 | (bytes[firstColorByteIndex + 1] & 0xE0) >> 5;
     uint8_t blue = bytes[firstColorByteIndex + 1] & 0x1F;
 
-    *nextByteIndex = firstColorByteIndex + 2;
+    *nextIndex = firstColorByteIndex + 2;
     return mgpu_color_from_rgb565(red, green, blue);
+}
+
+size_t mgpu_color_bytes_per_pixel() {
+    return 2;
 }
