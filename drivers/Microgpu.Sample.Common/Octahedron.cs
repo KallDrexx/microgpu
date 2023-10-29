@@ -73,6 +73,7 @@ public class Octahedron
 
                 gpuBatch.AddOperation(new DrawTriangleOperation<ColorRgb565>
                 {
+                    TextureId = 0,
                     X0 = x0,
                     Y0 = y0,
                     X1 = x1,

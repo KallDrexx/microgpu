@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include "microgpu-common/common.h"
+#include "microgpu-common/messages.h"
 #include "triangle.h"
 
 typedef struct {
@@ -50,7 +52,9 @@ void make_point_pair(PointPair *pair, Point p0, Point p1) {
     pair->slope = (float) pair->deltaX / (float) pair->deltaY;
 }
 
-void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBuffer, Mgpu_Color color) {
+void draw_triangle(Point top, Point mid, Point bottom, Mgpu_Texture *texture, Mgpu_Color color) {
+    assert(texture != NULL);
+
     // Iterate through the triangle from top to bottom one y value at a time.
     // TODO: Swap out for bresenham at some point.
 
@@ -65,7 +69,7 @@ void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBu
     float longX = top.x;
 
     for (uint16_t y = top.y; y <= bottom.y; y++) {
-        if (y >= frameBuffer->height) {
+        if (y >= texture->height) {
             break;
         }
 
@@ -77,12 +81,12 @@ void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBu
 
         // Draw the row
         int16_t startCol = min(shortX, longX);
-        if (startCol < frameBuffer->width) {
+        if (startCol < texture->width) {
             uint16_t diff = longX > shortX ? (int32_t) (longX - shortX) : (int32_t) (shortX - longX);
-            int16_t endCol = min(startCol + diff, frameBuffer->width - 1);
+            int16_t endCol = min(startCol + diff, texture->width - 1);
             diff = endCol - startCol;
 
-            Mgpu_Color *pixel = frameBuffer->pixels + (y * frameBuffer->width) + startCol;
+            Mgpu_Color *pixel = texture->pixels + (y * texture->width) + startCol;
             for (int x = 0; x <= diff; x++) {
                 *pixel = color;
                 pixel++;
@@ -95,7 +99,19 @@ void draw_triangle(Point top, Point mid, Point bottom, Mgpu_FrameBuffer *frameBu
     }
 }
 
-void mgpu_draw_triangle(Mgpu_DrawTriangleOperation *operation, Mgpu_FrameBuffer *frameBuffer) {
+void mgpu_draw_triangle(Mgpu_DrawTriangleOperation *operation, Mgpu_TextureManager *textureManager) {
+    assert(textureManager != NULL);
+
+    Mgpu_Texture *texture = mgpu_texture_get(textureManager, operation->textureId);
+    if (texture == NULL) {
+        char msg[256];
+        snprintf(msg,
+                 sizeof(msg),
+                 "Failed to draw rectangle: Target texture with id %u is not defined",
+                 operation->textureId);
+        return;
+    }
+
     Triangle triangle = get_sorted_points(operation);
-    draw_triangle(triangle.p0, triangle.p1, triangle.p2, frameBuffer, operation->color);
+    draw_triangle(triangle.p0, triangle.p1, triangle.p2, texture, operation->color);
 }

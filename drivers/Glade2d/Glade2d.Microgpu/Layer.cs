@@ -88,6 +88,7 @@ internal class Layer : ILayer
         
         await gpu.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
         {
+            TextureId = 0,
             StartX = (ushort)startX,
             StartY = (ushort)startY,
             Width = (ushort)width,
@@ -99,8 +100,8 @@ internal class Layer : ILayer
         var countInBatch = 0;
         foreach (var drawCommand in _drawCommands)
         {
-            var textureId = _textureManager.GetTextureId(drawCommand.TextureName);
-            if (textureId == null)
+            var textureInfo = _textureManager.GetTextureInfo(drawCommand.TextureName);
+            if (textureInfo == null)
             {
                 var message = $"Texture {drawCommand.TextureName} not loaded";
                 throw new InvalidOperationException(message);
@@ -130,9 +131,15 @@ internal class Layer : ILayer
             
             batch.AddOperation(new DrawTextureOperation
             {
-                TextureId = (byte)textureId.Value,
-                X = (short)(shiftedX + CameraOffset.X),
-                Y = (short)(shiftedY + CameraOffset.Y),
+                SourceTextureId = textureInfo.TextureId,
+                TargetTextureId = 0,
+                SourceStartX = 0,
+                SourceStartY = 0,
+                SourceWidth = (ushort) textureInfo.Width,
+                SourceHeight = (ushort) textureInfo.Height,
+                TargetStartX = (short)(shiftedX + CameraOffset.X),
+                TargetStartY = (short)(shiftedY + CameraOffset.Y),
+                IgnoreTransparency = false,
             });
 
             countInBatch++;

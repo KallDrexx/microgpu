@@ -1,6 +1,5 @@
 set(MICROGPU_COMMON_SOURCES
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/alloc.h
-        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/framebuffer.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/messages.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operation_deserializer.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operation_execution.c

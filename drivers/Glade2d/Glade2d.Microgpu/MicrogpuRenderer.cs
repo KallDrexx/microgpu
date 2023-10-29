@@ -65,6 +65,7 @@ public class MicrogpuRenderer : IRenderer
         // Clear the screen
         await _gpu.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
         {
+            TextureId = 0,
             StartX = 0,
             StartY = 0,
             Width = (ushort)Width,
@@ -88,8 +89,8 @@ public class MicrogpuRenderer : IRenderer
         var countInBatch = 0;
         foreach (var sprite in sprites)
         {
-            var textureId = _textureManager.GetTextureId(sprite.CurrentFrame);
-            if (textureId == null)
+            var textureInfo = _textureManager.GetTextureInfo(sprite.CurrentFrame);
+            if (textureInfo == null)
             {
                 var message = $"Texture {sprite.CurrentFrame.TextureName} not loaded";
                 throw new InvalidOperationException(message);
@@ -97,9 +98,14 @@ public class MicrogpuRenderer : IRenderer
             
             _activeBatch.AddOperation(new DrawTextureOperation
             {
-                TextureId = (byte)textureId.Value,
-                X = (short)sprite.X,
-                Y = (short)sprite.Y,
+                SourceTextureId = textureInfo.TextureId,
+                TargetTextureId = 0,
+                SourceStartX = 0,
+                SourceStartY = 0,
+                SourceWidth = textureInfo.Width,
+                SourceHeight = textureInfo.Height,
+                TargetStartX = (short) sprite.X,
+                TargetStartY = (short) sprite.Y,
             });
 
             countInBatch++;

@@ -28,3 +28,9 @@ Mgpu_Message mgpu_message_get_latest(void);
  * from the same thread.
  */
 void mgpu_message_set(const char *message);
+
+/*
+ * Gets the latest message only if it has changed since the last time this
+ * function was called. If the message is the same then it returns NULL.
+ */
+Mgpu_Message mgpu_message_get_latest_if_changed(void);

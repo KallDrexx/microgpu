@@ -13,6 +13,7 @@ public class SampleRunner
     private readonly TimeSpan _minTimeBetweenFrames;
     private readonly BouncingTexture _bouncingTexture1;
     private readonly BouncingTexture _bouncingTexture2;
+    private readonly TextureManager _textureManager;
     private int _frameTimeIndex;
     
     public Octahedron Octahedron { get; }
@@ -22,11 +23,12 @@ public class SampleRunner
         CancellationToken? cancellationToken = null)
     {
         _gpu = gpu ?? throw new ArgumentNullException(nameof(gpu));
+        _textureManager = new TextureManager(_gpu);
         _minTimeBetweenFrames = minTimeBetweenFrames;
         _cancellationToken = cancellationToken ?? CancellationToken.None;
         Octahedron = new Octahedron(gpu);
-        _bouncingTexture1 = new BouncingTexture(_gpu, 0);
-        _bouncingTexture2 = new BouncingTexture(_gpu, 1);
+        _bouncingTexture1 = new BouncingTexture(_gpu, _textureManager.Textures[0]);
+        _bouncingTexture2 = new BouncingTexture(_gpu, _textureManager.Textures[1]);
     }
 
     public async Task Run()
@@ -38,9 +40,8 @@ public class SampleRunner
             $"Framebuffer resolution: {_gpu.FrameBufferResolution?.X ?? 0} x {_gpu.FrameBufferResolution?.Y ?? 0}");
         Console.WriteLine($"Color mode: {_gpu.ColorMode}");
 
-        var textureManager = new TextureManager(_gpu);
-        await textureManager.SendTexturesToGpuAsync();
-
+        await _textureManager.SendTexturesToGpuAsync();
+        
         var timeSinceLastFrame = Stopwatch.StartNew();
         while (!_cancellationToken.IsCancellationRequested)
         {

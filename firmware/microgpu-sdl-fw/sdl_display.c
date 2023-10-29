@@ -3,7 +3,12 @@
 #include "sdl_display.h"
 #include "microgpu-common/display.h"
 
-void transfer_framebuffer(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
+void transfer_framebuffer(Mgpu_Display *display, Mgpu_TextureManager *textureManager) {
+    Mgpu_Texture *frameBuffer = mgpu_texture_get(textureManager, 0);
+    assert(frameBuffer != NULL);
+    assert(frameBuffer->width != 0);
+    assert(frameBuffer->height != 0);
+
     Mgpu_Color *source = frameBuffer->pixels;
     uint32_t *target = display->pixelBuffer;
     uint16_t colPadding = display->width - (frameBuffer->width * frameBuffer->scale);
@@ -133,13 +138,11 @@ void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_
     *width = display->width;
 }
 
-Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
+void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureManager) {
     assert(display != NULL);
-    assert(frameBuffer != NULL);
-    assert(frameBuffer->width > 0);
-    assert(frameBuffer->height > 0);
+    assert(textureManager != NULL);
 
-    transfer_framebuffer(display, frameBuffer);
+    transfer_framebuffer(display, textureManager);
 
     // Push the pixel buffer to the screen
     SDL_UpdateTexture(
@@ -150,8 +153,4 @@ Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *f
 
     SDL_RenderCopy(display->renderer, display->texture, NULL, NULL);
     SDL_RenderPresent(display->renderer);
-
-    // Since we copied the frame buffer to a texture, and that texture is used for
-    // SDL's window refresh cycle, we can immediately release the frame buffer
-    return frameBuffer;
 }

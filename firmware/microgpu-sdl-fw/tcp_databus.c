@@ -56,7 +56,7 @@ int closeSocket(SOCKET sock) {
 }
 
 bool readBytes(Mgpu_Databus *databus, char *buffer, size_t bufferSize, int *bytesRead) {
-    *bytesRead = recv(databus->clientSocket, buffer, (int)bufferSize, 0);
+    *bytesRead = recv(databus->clientSocket, buffer, (int) bufferSize, 0);
     if (*bytesRead == -1) {
         fprintf(stderr, "Failed to read from client socket\n");
         closeSocket(databus->clientSocket);

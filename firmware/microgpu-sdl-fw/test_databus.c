@@ -96,6 +96,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawRectangle.width = 50;
             operation->drawRectangle.height = 20;
             operation->drawRectangle.color = mgpu_color_from_rgb888(255, 0, 0);
+            operation->drawRectangle.textureId = 0;
             operationCount++;
             return true;
 
@@ -108,6 +109,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawTriangle.x2 = 90;
             operation->drawTriangle.y2 = 100;
             operation->drawTriangle.color = mgpu_color_from_rgb888(0, 255, 0);
+            operation->drawTriangle.textureId = 0;
             operationCount++;
             return true;
 
@@ -133,6 +135,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawRectangle.width = 50;
             operation->drawRectangle.height = 20;
             operation->drawRectangle.color = mgpu_color_from_rgb888(0, 0, 255);
+            operation->drawRectangle.textureId = 0;
             operationCount++;
             return true;
 
@@ -145,21 +148,22 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawTriangle.x2 = 90;
             operation->drawTriangle.y2 = 100;
             operation->drawTriangle.color = mgpu_color_from_rgb888(120, 120, 120);
+            operation->drawTriangle.textureId = 0;
             operationCount++;
             return true;
 
         case 10: {
-            // Two triangles side by side
+            // Two rectangles side by side using a batch
             uint8_t bytes[] = {
-                    0x00, 0x0b, 0x02, 0x00, 0xc8, 0x00, 0xc8, 0x00, 0x32, 0x00, 0x14, 0xf8, 0x00,
-                    0x00, 0x0b, 0x02, 0x01, 0x90, 0x00, 0xc8, 0x00, 0x32, 0x00, 0x14, 0x07, 0xe0,
+                    0x00, 0x0c, 0x02, 0x00, 0x00, 0xc8, 0x00, 0xc8, 0x00, 0x32, 0x00, 0x14, 0xf8, 0x00,
+                    0x00, 0x0c, 0x02, 0x00, 0x01, 0x90, 0x00, 0xc8, 0x00, 0x32, 0x00, 0x14, 0x07, 0xe0,
             };
 
             uint8_t *buffer = malloc(26);
             memmove(buffer, bytes, 26);
 
             operation->type = Mgpu_Operation_Batch;
-            operation->batchOperation.byteLength = 26;
+            operation->batchOperation.byteLength = 28;
             operation->batchOperation.bytes = buffer;
 
             operationCount++;
@@ -167,12 +171,6 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
         }
 
         case 11:
-            operation->type = Mgpu_Operation_SetTextureCount;
-            operation->setTextureCount.textureCount = 10;
-            operationCount++;
-            return true;
-
-        case 12:
             operation->type = Mgpu_Operation_DefineTexture;
             operation->defineTexture.textureId = 5;
             operation->defineTexture.width = TEST_TEXTURE_PIXEL_COUNT;
@@ -181,7 +179,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operationCount++;
             return true;
 
-        case 13:
+        case 12:
             operation->type = Mgpu_Operation_AppendTexturePixels;
             operation->appendTexturePixels.textureId = 5;
             operation->appendTexturePixels.pixelCount = sizeof(testTexturePixels) / sizeof(Mgpu_Color);
@@ -189,15 +187,21 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operationCount++;
             return true;
 
-        case 14:
-            operation->type = Mgpu_Operation_RenderTexture;
-            operation->drawTexture.textureId = 5;
-            operation->drawTexture.xPosition = 50;
-            operation->drawTexture.yPosition = 50;
+        case 13:
+            operation->type = Mgpu_Operation_DrawTexture;
+            operation->drawTexture.sourceTextureId = 5;
+            operation->drawTexture.targetTextureId = 0;
+            operation->drawTexture.sourceStartX = 0;
+            operation->drawTexture.sourceStartY = 0;
+            operation->drawTexture.sourceWidth = TEST_TEXTURE_PIXEL_COUNT;
+            operation->drawTexture.sourceHeight = TEST_TEXTURE_PIXEL_COUNT;
+            operation->drawTexture.targetStartX = 50;
+            operation->drawTexture.targetStartY = 50;
+
             operationCount++;
             return true;
 
-        case 15:
+        case 14:
             operation->type = Mgpu_Operation_PresentFramebuffer;
             operationCount++;
             return true;

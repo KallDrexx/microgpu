@@ -1,8 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "color.h"
-#include "framebuffer.h"
 #include "display.h"
 
 /*
@@ -51,19 +51,14 @@ typedef enum {
     Mgpu_Operation_Batch = 7,
 
     /*
-     * Sets the number of textures that will be defined. Once set, texture ids
-     * 0 to N can be defined, where `N` is one less than the texture count specified.
-     *
-     * Any textures that have been previously defined are cleared on this operation's
-     * execution.
-     */
-    Mgpu_Operation_SetTextureCount = 8,
-
-    /*
      * Defines a texture the GPU should track. Gives the identifier and dimensions
      * of the texture. If called with an identifier that was previously defined,
      * the previous texture is cleared and a new one is started. If the new
      * width and height are zeros, then the texture is considered undefined.
+     *
+     * Only texture ids 1-230 are allowed to be defined externally, the rest of them
+     * are reserved for internal usage. Texture id 0 is always the currently active
+     * frame buffer.
      */
     Mgpu_Operation_DefineTexture = 9,
 
@@ -74,9 +69,9 @@ typedef enum {
     Mgpu_Operation_AppendTexturePixels = 10,
 
     /*
-     * Renders a texture directly to the frame buffer.
+     * Draws a portion of one texture onto another
      */
-    Mgpu_Operation_RenderTexture = 11,
+    Mgpu_Operation_DrawTexture = 11,
 
     /*
      * Requests the microgpu to initialize itself and fully reset itself.
@@ -99,21 +94,19 @@ typedef struct {
 typedef struct {
     uint16_t startX, startY, width, height;
     Mgpu_Color color;
+    uint8_t textureId;
 } Mgpu_DrawRectangleOperation;
 
 typedef struct {
     uint16_t x0, y0, x1, y1, x2, y2;
     Mgpu_Color color;
+    uint8_t textureId;
 } Mgpu_DrawTriangleOperation;
 
 typedef struct {
     uint16_t byteLength;
     const uint8_t *bytes;
 } Mgpu_BatchOperation;
-
-typedef struct {
-    uint8_t textureCount;
-} Mgpu_SetTextureCountOperation;
 
 typedef struct {
     uint8_t textureId;
@@ -128,17 +121,53 @@ typedef struct {
 } Mgpu_AppendTexturePixelOperation;
 
 typedef struct {
-    uint8_t textureId;
+    /*
+     * The texture to pull pixels from
+     */
+    uint8_t sourceTextureId;
 
     /*
-     * The x position to display the top left corner of the texture
+     * The texture to draw pixels to. Specifying texture id 0 means to draw to
+     * the active frame buffer.
      */
-    int16_t xPosition;
+    uint8_t targetTextureId;
 
     /*
-     * The y position to display the top left corner of the texture
+     * If true, any of the pixels from the source texture that have the same color
+     * as the source texture's transparency color will not be drawn to the target
+     * texture.
      */
-    int16_t yPosition;
+    bool ignoreTransparency;
+
+    /*
+     * The X position to start pulling pixels from on the source texture
+     */
+    uint16_t sourceStartX;
+
+    /*
+     * The Y position to start pulling pixels from on the source texture
+     */
+    uint16_t sourceStartY;
+
+    /*
+     * How many pixels per row to pull from the source texture
+     */
+    uint16_t sourceWidth;
+
+    /*
+     * How many pixels per column to pull from the source texture
+     */
+    uint16_t sourceHeight;
+
+    /*
+     * The X position on the target texture to start drawing
+     */
+    int16_t targetStartX;
+
+    /*
+     * The Y position on the target texture to start drawing
+     */
+    int16_t targetStartY;
 } Mgpu_DrawTextureOperation;
 
 /*
@@ -152,7 +181,6 @@ typedef struct {
         Mgpu_DrawRectangleOperation drawRectangle;
         Mgpu_DrawTriangleOperation drawTriangle;
         Mgpu_BatchOperation batchOperation;
-        Mgpu_SetTextureCountOperation setTextureCount;
         Mgpu_DefineTextureOperation defineTexture;
         Mgpu_AppendTexturePixelOperation appendTexturePixels;
         Mgpu_DrawTextureOperation drawTexture;

@@ -10,9 +10,7 @@
  * initialization being an exception.
  */
 void mgpu_execute_operation(Mgpu_Operation *operation,
-                            Mgpu_FrameBuffer *frameBuffer,
                             Mgpu_Display *display,
                             Mgpu_Databus *databus,
                             bool *resetFlag,
-                            Mgpu_FrameBuffer **releasedFrameBuffer,
                             Mgpu_TextureManager *textureManager);

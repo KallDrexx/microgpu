@@ -5,15 +5,13 @@
 #include "microgpu-common/messages.h"
 
 void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
-                     Mgpu_FrameBuffer *frameBuffer,
                      Mgpu_Display *display,
                      Mgpu_Databus *databus,
                      bool *resetFlag,
-                     Mgpu_FrameBuffer **releasedFrameBuffer,
                      Mgpu_TextureManager *textureManager) {
     assert(batchOperation != NULL);
-    assert(frameBuffer != NULL);
     assert(databus != NULL);
+    assert(textureManager != NULL);
 
     uint16_t outerBytesLeft = batchOperation->byteLength;
     const uint8_t *buffer = batchOperation->bytes;
@@ -24,7 +22,8 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
         // sanity check
         if (innerSize > outerBytesLeft - 2) {
             char msg[MESSAGE_MAX_LEN] = {0};
-            snprintf(msg, MESSAGE_MAX_LEN, "Batch had inner size of %u but only %u bytes left", innerSize, outerBytesLeft);
+            snprintf(msg, MESSAGE_MAX_LEN, "Batch had inner size of %u but only %u bytes left", innerSize,
+                     outerBytesLeft - 2);
             mgpu_message_set(msg);
             return;
         }
@@ -35,8 +34,7 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
             return;
         }
 
-        mgpu_execute_operation(&operation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer,
-                               textureManager);
+        mgpu_execute_operation(&operation, display, databus, resetFlag, textureManager);
 
         buffer += innerSize + 2;
         outerBytesLeft -= innerSize + 2;

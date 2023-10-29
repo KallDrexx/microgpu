@@ -12,12 +12,15 @@
 #include "microgpu-common/operations/textures.h"
 
 void mgpu_execute_operation(Mgpu_Operation *operation,
-                            Mgpu_FrameBuffer *frameBuffer,
                             Mgpu_Display *display,
                             Mgpu_Databus *databus,
                             bool *resetFlag,
-                            Mgpu_FrameBuffer **releasedFrameBuffer,
                             Mgpu_TextureManager *textureManager) {
+    assert(operation != NULL);
+    assert(display != NULL);
+    assert(databus != NULL);
+    assert(textureManager != NULL);
+
     // Don't clear the last operation's message if the next operation
     // being requested is to get the latest message
     if (operation->type != Mgpu_Operation_GetLastMessage) {
@@ -26,15 +29,15 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
 
     switch (operation->type) {
         case Mgpu_Operation_DrawRectangle:
-            mgpu_draw_rectangle(&operation->drawRectangle, frameBuffer);
+            mgpu_draw_rectangle(&operation->drawRectangle, textureManager);
             break;
 
         case Mgpu_Operation_DrawTriangle:
-            mgpu_draw_triangle(&operation->drawTriangle, frameBuffer);
+            mgpu_draw_triangle(&operation->drawTriangle, textureManager);
             break;
 
         case Mgpu_Operation_GetStatus:
-            mgpu_exec_status_op(display, frameBuffer, databus);
+            mgpu_exec_status_op(display, textureManager, databus);
             break;
 
         case Mgpu_Operation_GetLastMessage:
@@ -42,20 +45,19 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             break;
 
         case Mgpu_Operation_PresentFramebuffer:
-            mgpu_exec_present_framebuffer(display, frameBuffer, releasedFrameBuffer);
+            mgpu_exec_present_framebuffer(display, textureManager);
             break;
 
         case Mgpu_Operation_Batch:
-            mgpu_exec_batch(&operation->batchOperation, frameBuffer, display, databus, resetFlag, releasedFrameBuffer,
+            mgpu_exec_batch(&operation->batchOperation,
+                            display,
+                            databus,
+                            resetFlag,
                             textureManager);
             break;
 
         case Mgpu_Operation_Reset:
             mgpu_exec_reset(resetFlag);
-            break;
-
-        case Mgpu_Operation_SetTextureCount:
-            mgpu_exec_texture_count(textureManager, &operation->setTextureCount);
             break;
 
         case Mgpu_Operation_DefineTexture:
@@ -66,8 +68,8 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             mgpu_exec_texture_append(textureManager, &operation->appendTexturePixels);
             break;
 
-        case Mgpu_Operation_RenderTexture:
-            mgpu_exec_texture_render(textureManager, frameBuffer, &operation->drawTexture);
+        case Mgpu_Operation_DrawTexture:
+            mgpu_exec_texture_draw(textureManager, &operation->drawTexture);
             break;
 
         default: {

@@ -26,37 +26,39 @@ bool deserialize_initialize_op(const uint8_t bytes[], size_t size, Mgpu_Operatio
 }
 
 bool deserialize_draw_rectangle(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < 9 + mgpu_color_bytes_per_pixel()) {
+    if (size < 10 + mgpu_color_bytes_per_pixel()) {
         return false;
     }
 
     operation->type = Mgpu_Operation_DrawRectangle;
-    operation->drawRectangle.startX = ((uint16_t) bytes[1] << 8) | bytes[2];
-    operation->drawRectangle.startY = ((uint16_t) bytes[3] << 8) | bytes[4];
-    operation->drawRectangle.width = ((uint16_t) bytes[5] << 8) | bytes[6];
-    operation->drawRectangle.height = ((uint16_t) bytes[7] << 8) | bytes[8];
+    operation->drawRectangle.textureId = bytes[1];
+    operation->drawRectangle.startX = ((uint16_t) bytes[2] << 8) | bytes[3];
+    operation->drawRectangle.startY = ((uint16_t) bytes[4] << 8) | bytes[5];
+    operation->drawRectangle.width = ((uint16_t) bytes[6] << 8) | bytes[7];
+    operation->drawRectangle.height = ((uint16_t) bytes[8] << 8) | bytes[9];
 
     size_t nextByteIndex;
-    operation->drawRectangle.color = mgpu_color_deserialize(bytes, 9, &nextByteIndex);
+    operation->drawRectangle.color = mgpu_color_deserialize(bytes, 10, &nextByteIndex);
 
     return true;
 }
 
 bool deserialize_draw_triangle(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < 13 + mgpu_color_bytes_per_pixel()) {
+    if (size < 14 + mgpu_color_bytes_per_pixel()) {
         return false;
     }
 
     operation->type = Mgpu_Operation_DrawTriangle;
-    operation->drawTriangle.x0 = ((uint16_t) bytes[1] << 8) | bytes[2];
-    operation->drawTriangle.y0 = ((uint16_t) bytes[3] << 8) | bytes[4];
-    operation->drawTriangle.x1 = ((uint16_t) bytes[5] << 8) | bytes[6];
-    operation->drawTriangle.y1 = ((uint16_t) bytes[7] << 8) | bytes[8];
-    operation->drawTriangle.x2 = ((uint16_t) bytes[9] << 8) | bytes[10];
-    operation->drawTriangle.y2 = ((uint16_t) bytes[11] << 8) | bytes[12];
+    operation->drawTriangle.textureId = bytes[1];
+    operation->drawTriangle.x0 = ((uint16_t) bytes[2] << 8) | bytes[3];
+    operation->drawTriangle.y0 = ((uint16_t) bytes[4] << 8) | bytes[5];
+    operation->drawTriangle.x1 = ((uint16_t) bytes[6] << 8) | bytes[7];
+    operation->drawTriangle.y1 = ((uint16_t) bytes[8] << 8) | bytes[9];
+    operation->drawTriangle.x2 = ((uint16_t) bytes[10] << 8) | bytes[11];
+    operation->drawTriangle.y2 = ((uint16_t) bytes[12] << 8) | bytes[13];
 
     size_t nextByteIndex;
-    operation->drawTriangle.color = mgpu_color_deserialize(bytes, 13, &nextByteIndex);
+    operation->drawTriangle.color = mgpu_color_deserialize(bytes, 14, &nextByteIndex);
 
     return true;
 }
@@ -103,19 +105,8 @@ bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
     return true;
 }
 
-bool deserialize_set_texture_count(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < 2) {
-        return false;
-    }
-
-    operation->type = Mgpu_Operation_SetTextureCount;
-    operation->setTextureCount.textureCount = bytes[1];
-
-    return true;
-}
-
 bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < 8) {
+    if (size < 6 + mgpu_color_bytes_per_pixel()) {
         return false;
     }
 
@@ -161,17 +152,25 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
 }
 
 bool deserialize_draw_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < 6) {
+    if (size < 16) {
         return false;
     }
 
-    operation->type = Mgpu_Operation_RenderTexture;
-    operation->drawTexture.textureId = bytes[1];
+    operation->type = Mgpu_Operation_DrawTexture;
+    operation->drawTexture.sourceTextureId = bytes[1];
+    operation->drawTexture.targetTextureId = bytes[2];
+    operation->drawTexture.sourceStartX = ((uint16_t) bytes[3] << 8) | bytes[4];
+    operation->drawTexture.sourceStartY = ((uint16_t) bytes[5] << 8) | bytes[6];
+    operation->drawTexture.sourceWidth = ((uint16_t) bytes[7] << 8) | bytes[8];
+    operation->drawTexture.sourceHeight = ((uint16_t) bytes[9] << 8) | bytes[10];
 
     // NOTE: This assumes all calling systems use the same negative number representation
     // (2's compliment??) as the GPU's architecture.
-    operation->drawTexture.xPosition = (int16_t) (((int16_t) bytes[2] << 8) | bytes[3]);
-    operation->drawTexture.yPosition = (int16_t) (((int16_t) bytes[4] << 8) | bytes[5]);
+    operation->drawTexture.targetStartX = (int16_t) (((int16_t) bytes[11] << 8) | bytes[12]);
+    operation->drawTexture.targetStartY = (int16_t) (((int16_t) bytes[13] << 8) | bytes[14]);
+
+    // Flags
+    operation->drawTexture.ignoreTransparency = bytes[15] & 0x01;
 
     return true;
 }
@@ -210,19 +209,19 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
         case Mgpu_Operation_Reset:
             return deserialize_reset(bytes, size, operation);
 
-        case Mgpu_Operation_SetTextureCount:
-            return deserialize_set_texture_count(bytes, size, operation);
-
         case Mgpu_Operation_DefineTexture:
             return deserialize_define_texture(bytes, size, operation);
 
         case Mgpu_Operation_AppendTexturePixels:
             return deserialize_append_pixels(bytes, size, operation);
 
-        case Mgpu_Operation_RenderTexture:
+        case Mgpu_Operation_DrawTexture:
             return deserialize_draw_texture(bytes, size, operation);
 
         default:
+            char msg[MESSAGE_MAX_LEN] = {0};
+            snprintf(msg, MESSAGE_MAX_LEN, "Operation id %u is not a known operation id", bytes[0]);
+            mgpu_message_set(msg);
             return false;
     }
 }

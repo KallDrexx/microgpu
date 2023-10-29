@@ -1,15 +1,28 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "alloc.h"
 #include "color.h"
-#include "framebuffer.h"
 
 typedef struct {
     uint8_t id;
     uint16_t width, height;
     Mgpu_Color transparentColor;
-} Mgpu_TextureInfo;
+} Mgpu_TextureDefinition;
+
+typedef struct {
+    uint16_t width, height;
+    Mgpu_Color transparencyColor;
+
+    /*
+     * Declares how the texture is scaled when drawn. Mostly used for the frame buffer to be
+     * scaled when drawn to the display
+     */
+    uint8_t scale;
+    size_t pixelsWritten;
+    Mgpu_Color pixels[];
+} Mgpu_Texture;
 
 typedef struct Mgpu_TextureManager Mgpu_TextureManager;
 
@@ -27,30 +40,16 @@ Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator);
 void mgpu_texture_manager_free(Mgpu_TextureManager *textureManager);
 
 /*
- * Sets the number of textures to be tracked. When called, all previously defined
- * textures become cleared.
- */
-void mgpu_texture_set_count(Mgpu_TextureManager *textureManager, uint8_t count);
-
-/*
  * Defines the properties for a specific texture. If a texture had already been defined
  * with the specified id, then the existing texture is cleared and a new one is allocated
  * in its place. If the width or height are zero, then the texture is cleared and no new
  * one is allocated.
+ *
+ * Returns false if a texture could not be defined for any reason.
  */
-void mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureInfo *info);
+bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefinition *info, uint8_t scale);
 
 /*
- * Appends the pixelBytes to a previously defined texture.
+ * Retrieves the texture with the specified id.
  */
-void
-mgpu_texture_append(Mgpu_TextureManager *textureManager, uint8_t id, uint16_t pixelCount, const uint8_t *pixelBytes);
-
-/*
- * Draws the specified texture to the frame buffer
- */
-void mgpu_texture_draw(Mgpu_TextureManager *textureManager,
-                       Mgpu_FrameBuffer *frameBuffer,
-                       uint16_t textureId,
-                       int16_t xPosition,
-                       int16_t yPosition);
+Mgpu_Texture *mgpu_texture_get(Mgpu_TextureManager *textureManager, uint8_t id);

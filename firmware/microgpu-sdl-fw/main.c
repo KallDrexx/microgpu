@@ -31,7 +31,6 @@ bool isRunning, resetRequested;
 Mgpu_Display *display;
 Mgpu_Databus *databus;
 uint16_t width, height;
-Mgpu_FrameBuffer *framebuffer;
 Mgpu_TextureManager *textureManager;
 Mgpu_DatabusOptions dataBusOptions;
 Mgpu_DisplayOptions displayOptions = {
@@ -89,29 +88,16 @@ int databus_loop(void *data) {
     Mgpu_Operation operation;
     while (isRunning) {
         if (mgpu_databus_get_next_operation(databus, &operation)) {
-            Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
-            mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, &releasedFrameBuffer,
-                                   textureManager);
-
-            if (operation.type == Mgpu_Operation_PresentFramebuffer) {
-                assert(releasedFrameBuffer == framebuffer);
-            }
-
-#ifdef DATABUS_BASIC
-            Mgpu_Response response;
-            if (mgpu_test_databus_get_last_response(databus, &response)) {
-                handleResponse(&response);
-            }
-#endif
-
-            Mgpu_Message currentMessage = mgpu_message_get_latest();
-            if (currentMessage != NULL && strlen(currentMessage) > 0) {
-                SDL_Log("Message from operation: %s\n", currentMessage);
-            }
+            mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
         } else {
 #ifdef DATABUS_TCP
             SDL_Log("Failed to deserialize data\n");
 #endif
+        }
+
+        Mgpu_Message currentMessage = mgpu_message_get_latest();
+        if (currentMessage != NULL && strlen(currentMessage) > 0) {
+            SDL_Log("Message from operation: %s\n", currentMessage);
         }
     }
 
@@ -134,8 +120,7 @@ void wait_for_init_op() {
 
             if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
                 // Can't respond to other operations before initialization
-                mgpu_execute_operation(&operation, framebuffer, display, databus, &resetRequested, NULL,
-                                       textureManager);
+                mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
 #ifdef DATABUS_BASIC
                 if (mgpu_test_databus_get_last_response(databus, &response)) {
                     handleResponse(&response);
@@ -146,10 +131,18 @@ void wait_for_init_op() {
     }
 
     mgpu_display_get_dimensions(display, &width, &height);
-    framebuffer = mgpu_framebuffer_new(width, height, operation.initialize.frameBufferScale, &basicAllocator);
-    if (framebuffer == NULL) {
-        fprintf(stderr, "Framebuffer failed to be created\n");
-        exit(1);
+
+    // Create the active frame buffer
+    Mgpu_TextureDefinition frameBufferSpecs = {
+            .width = width,
+            .height = height,
+            .id = 0,
+            .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
+    };
+
+    if (!mgpu_texture_define(textureManager, &frameBufferSpecs, operation.initialize.frameBufferScale)) {
+        SDL_Log("Initialization failed: framebuffer texture could not be defined");
+        abort();
     }
 
     SDL_Log("Initialization operation applied\n");
@@ -216,8 +209,6 @@ void start_sdl_system(void) {
     SDL_WaitThread(databusThread, NULL);
 
     SDL_Log("Finishing tear down\n");
-    mgpu_framebuffer_free(framebuffer);
-    framebuffer = NULL;
 
     mgpu_texture_manager_free(textureManager);
     textureManager = NULL;

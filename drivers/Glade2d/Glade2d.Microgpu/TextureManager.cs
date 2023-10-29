@@ -13,14 +13,16 @@ namespace Glade2d.Microgpu;
 
 internal class TextureManager
 {
+    public record TextureInfo(byte TextureId, ushort Width, ushort Height);
     private record Texture(string Name, BufferRgb565 Buffer);
    
     private readonly Gpu _gpu;
-    private readonly List<Texture> _textures = new();
+    private readonly Dictionary<byte, Texture> _textures = new();
     private readonly Dictionary<string, BufferRgb565> _spriteSheets = new();
-    private readonly Dictionary<string, int> _textureLookup = new();
+    private readonly Dictionary<string, byte> _textureLookup = new();
     private readonly string _contentRoot;
-    private bool _textureSetChanged;
+    private readonly Queue<byte> _addedTextures = new();
+    private readonly Queue<byte> _removedTextures = new();
     
     public TextureManager(string contentRoot, Gpu gpu)
     {
@@ -37,9 +39,10 @@ internal class TextureManager
 
         var buffer = LoadBitmapFile(textureName);
         var texture = new Texture(textureName, buffer);
-        _textures.Add(texture);
-        _textureLookup.Add(textureName, _textures.Count - 1);
-        _textureSetChanged = true;
+        var textureId = GetNextFreeTextureId();
+        _textures.Add(textureId, texture);
+        _textureLookup.Add(textureName, textureId);
+        _addedTextures.Enqueue(textureId);
     }
 
     public void Unload(string textureName)
@@ -49,16 +52,10 @@ internal class TextureManager
             return;
         }
         
-        var index = _textureLookup[textureName];
-        _textures.RemoveAt(index);
+        var id = _textureLookup[textureName];
+        _textures.Remove(id);
         _textureLookup.Remove(textureName);
-        _textureSetChanged = true;
-        
-        // Update all the indexes of the remaining textures
-        for (var x = 0; x < _textures.Count; x++)
-        {
-            _textureLookup[_textures[x].Name] = x;
-        }
+        _removedTextures.Enqueue(id);
     }
 
     public string LoadSubTexture(Frame frame)
@@ -88,9 +85,10 @@ internal class TextureManager
         }
         
         var texture = new Texture(subTextureName, subBuffer);
-        _textures.Add(texture);
-        _textureLookup.Add(subTextureName, _textures.Count - 1);
-        _textureSetChanged = true;
+        var textureId = GetNextFreeTextureId();
+        _textures.Add(textureId, texture);
+        _textureLookup.Add(subTextureName, textureId);
+        _addedTextures.Enqueue(textureId);
 
         return subTextureName;
     }
@@ -100,20 +98,23 @@ internal class TextureManager
     /// </summary>
     public async ValueTask ApplyTextureChanges()
     {
-        if (!_textureSetChanged)
+        while (_removedTextures.TryDequeue(out var textureId))
         {
-            return;
+            Console.WriteLine($"Removing texture {textureId} from the GPU");
+            await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>()
+            {
+                TextureId = textureId,
+                Width = 0,
+                Height = 0,
+                TransparentColor = ColorRgb565.FromRgb888(0, 0, 0),
+            });
         }
-       
-        Console.WriteLine("Texture set changed, sending textures to GPU");
-        var operation = new SetTextureCountOperation { TextureCount = (byte)_textures.Count };
-        await _gpu.SendFireAndForgetAsync(operation);
 
-        for (var x = 0; x < _textures.Count; x++)
+        while (_addedTextures.TryDequeue(out var textureId))
         {
-            Console.WriteLine($"Sending texture {x} to the GPU");
-            var textureId = (byte)x;
-            var texture = _textures[x];
+            Console.WriteLine($"Adding texture {textureId} to the GPU");
+            var texture = _textures[textureId];
+            
             await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
             {
                 TextureId = textureId,
@@ -137,30 +138,43 @@ internal class TextureManager
                 bytesLeft -= bytesToSend;
             }
         }
-
-        _textureSetChanged = false;
-    }
-
-    public int? GetTextureId(string textureName)
-    {
-        return _textureLookup.TryGetValue(textureName, out var value) ? value : null;
     }
     
-    public int? GetTextureId(Frame frame)
+    public TextureInfo? GetTextureInfo(string textureName)
     {
-        var textureName = FormSubTextureName(frame);
         if (!_textureLookup.ContainsKey(textureName))
         {
             return null;
         }
 
-        return _textureLookup[textureName];
+        var textureId = _textureLookup[textureName];
+        var texture = _textures[textureId];
+        return new TextureInfo(textureId, (ushort) texture.Buffer.Width, (ushort) texture.Buffer.Height);
+    }
+
+    public TextureInfo? GetTextureInfo(Frame frame)
+    {
+        var textureName = FormSubTextureName(frame);
+        return GetTextureInfo(textureName);
     }
 
     private static string FormSubTextureName(Frame frame)
     {
         var subTextureName = $"{frame.TextureName}___{frame.X}_{frame.Y}_{frame.Width}_{frame.Height}";
         return subTextureName;
+    }
+
+    private byte GetNextFreeTextureId()
+    {
+        for (byte x = 1; x < 231; x++)
+        {
+            if (!_textures.ContainsKey(x))
+            {
+                return x;
+            }
+        }
+
+        throw new InvalidOperationException("All user defined texture slots are in use");
     }
 
     private void LoadSpriteSheet(string textureName)

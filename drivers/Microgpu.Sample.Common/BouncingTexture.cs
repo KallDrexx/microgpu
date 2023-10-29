@@ -9,14 +9,14 @@ public class BouncingTexture
     private const int Speed = 150;
     private readonly Gpu _gpu;
 
-    private readonly byte _textureId;
+    private readonly TextureManager.Texture _texture;
     private HorizontalDirection _horizontalDirection;
     private VerticalDirection _verticalDirection;
     private Vector2 _position;
 
-    public BouncingTexture(Gpu gpu, byte textureId)
+    public BouncingTexture(Gpu gpu, TextureManager.Texture texture)
     {
-        _textureId = textureId;
+        _texture = texture;
         _gpu = gpu;
 
         var random = new Random();
@@ -64,9 +64,15 @@ public class BouncingTexture
         
         batch.AddOperation(new DrawTextureOperation
         {
-            TextureId = _textureId,
-            X = (short)_position.X,
-            Y = (short)_position.Y
+            SourceTextureId = _texture.Id,
+            TargetTextureId = 0,
+            SourceStartX = 0,
+            SourceStartY = 0,
+            SourceWidth = _texture.Width,
+            SourceHeight = _texture.Height,
+            TargetStartX = (short)_position.X,
+            TargetStartY = (short)_position.Y,
+            IgnoreTransparency = false,
         });
     }
 

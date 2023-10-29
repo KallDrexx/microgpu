@@ -7,46 +7,43 @@ namespace Microgpu.Sample.Common;
 
 public class TextureManager
 {
+    public record Texture(byte Id, ushort Width, ushort Height, BufferRgb565 Buffer);
     private readonly Gpu _gpu;
-    private readonly BufferRgb565[] _textures = new BufferRgb565[2];
+    
+    public Texture[] Textures { get; } = new Texture[2];
 
     public TextureManager(Gpu gpu)
     {
         _gpu = gpu;
         var texture = LoadTexture();
-
-        _textures[0] = SubTexture(texture, 69, 3, 23, 26); // tree
-        _textures[1] = SubTexture(texture, 0, 48, 16, 16); // sun
+        
+        Textures[0] = new Texture(1, 23, 26, SubTexture(texture, 69, 3, 23, 26)); // tree
+        Textures[1] = new Texture(2, 16, 16, SubTexture(texture, 0, 48, 16, 16)); // sun
     }
 
     public async Task SendTexturesToGpuAsync()
     {
-        var operation = new SetTextureCountOperation { TextureCount = (byte)_textures.Length };
-        await _gpu.SendFireAndForgetAsync(operation);
-
-        for (var x = 0; x < _textures.Length; x++)
+        foreach (var texture in Textures)
         {
-            Console.WriteLine($"Sending texture {x} to the GPU");
-            var textureId = (byte)x;
-            var texture = _textures[x];
+            Console.WriteLine($"Sending texture {texture.Id} to the GPU");
             await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
             {
-                TextureId = textureId,
-                Width = (ushort)texture.Width,
-                Height = (ushort)texture.Height,
+                TextureId = texture.Id,
+                Width = texture.Width,
+                Height = texture.Height,
                 TransparentColor = ColorRgb565.FromRgb888(255, 0, 255)
             });
 
-            var bytesLeft = texture.Buffer.Length;
+            var bytesLeft = texture.Buffer.Buffer.Length;
             while (bytesLeft > 0)
             {
                 var bytesToSend = Math.Min(bytesLeft, 512);
-                var startIndex = texture.Buffer.Length - bytesLeft;
+                var startIndex = texture.Buffer.Buffer.Length - bytesLeft;
 
                 await _gpu.SendFireAndForgetAsync(new AppendTexturePixelsOperation
                 {
-                    TextureId = textureId,
-                    PixelBytes = texture.Buffer.AsMemory(startIndex, bytesToSend)
+                    TextureId = texture.Id,
+                    PixelBytes = texture.Buffer.Buffer.AsMemory(startIndex, bytesToSend)
                 });
 
                 bytesLeft -= bytesToSend;

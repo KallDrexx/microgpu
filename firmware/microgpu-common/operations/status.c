@@ -1,8 +1,9 @@
 #include "status.h"
 
-void mgpu_exec_status_op(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer, Mgpu_Databus *databus) {
+void mgpu_exec_status_op(Mgpu_Display *display, Mgpu_TextureManager *textureManager, Mgpu_Databus *databus) {
     assert(display != NULL);
     assert(databus != NULL);
+    assert(textureManager != NULL);
 
     uint16_t width, height;
     mgpu_display_get_dimensions(display, &width, &height);
@@ -15,6 +16,7 @@ void mgpu_exec_status_op(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer, M
     };
 
     // We know we aren't initialized if we don't have a frame buffer yet
+    Mgpu_Texture *frameBuffer = mgpu_texture_get(textureManager, 0);
     if (frameBuffer != NULL) {
         status.frameBufferWidth = frameBuffer->width;
         status.frameBufferHeight = frameBuffer->height;
