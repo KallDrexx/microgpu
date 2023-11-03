@@ -137,7 +137,7 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_Displ
     display->panel = panel_handle;
     display->pixelWidth = options->pixelWidth;
     display->pixelHeight = options->pixelHeight;
-    display->linesPerBuffer = calc_buffer_line_height(options);
+    display->linesPerBuffer = (int) calc_buffer_line_height(options);
 
     size_t bufferBytes = options->pixelWidth * display->linesPerBuffer * sizeof(Mgpu_Color);
     display->buffer1 = heap_caps_malloc(bufferBytes, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
@@ -161,8 +161,11 @@ void mgpu_display_get_dimensions(Mgpu_Display *display, uint16_t *width, uint16_
     *height = display->pixelHeight;
 }
 
-Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *frameBuffer) {
+void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureManager) {
     assert(display != NULL);
+    assert(textureManager != NULL);
+
+    Mgpu_Texture *frameBuffer = mgpu_texture_get(textureManager, 0);
     assert(frameBuffer != NULL);
 
     uint16_t *currentBuffer = display->buffer2;
@@ -198,8 +201,5 @@ Mgpu_FrameBuffer *mgpu_display_render(Mgpu_Display *display, Mgpu_FrameBuffer *f
             }
         }
     }
-
-    // Release the frame buffer back. This *may* not be valid as draw might be async via dma??
-    return frameBuffer;
 }
 

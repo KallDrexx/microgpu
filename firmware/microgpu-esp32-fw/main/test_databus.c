@@ -54,6 +54,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
         case 3:
             operation->type = Mgpu_Operation_DrawRectangle;
+            operation->drawRectangle.textureId = 0;
             operation->drawRectangle.startX = 10;
             operation->drawRectangle.startY = 20;
             operation->drawRectangle.width = 50;
@@ -64,6 +65,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
         case 4:
             operation->type = Mgpu_Operation_DrawTriangle;
+            operation->drawTriangle.textureId = 0;
             operation->drawTriangle.x0 = 60;
             operation->drawTriangle.y0 = 10;
             operation->drawTriangle.x1 = 30;
@@ -91,6 +93,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
         case 8:
             operation->type = Mgpu_Operation_DrawRectangle;
+            operation->drawRectangle.textureId = 0;
             operation->drawRectangle.startX = 100;
             operation->drawRectangle.startY = 200;
             operation->drawRectangle.width = 50;
@@ -101,6 +104,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
         case 9:
             operation->type = Mgpu_Operation_DrawTriangle;
+            operation->drawTriangle.textureId = 0;
             operation->drawTriangle.x0 = 60;
             operation->drawTriangle.y0 = 10;
             operation->drawTriangle.x1 = 30;

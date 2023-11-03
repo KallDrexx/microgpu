@@ -1,10 +1,11 @@
 #include <stdbool.h>
-#include <microgpu-common/operations/drawing/triangle.h>
+#include <string.h>
 #include "esp_log.h"
+#include "microgpu-common/operations/drawing/triangle.h"
+#include "microgpu-common/messages.h"
 #include "microgpu-common/alloc.h"
 #include "microgpu-common/databus.h"
 #include "microgpu-common/display.h"
-#include "microgpu-common/framebuffer.h"
 #include "microgpu-common/operation_execution.h"
 #include "common.h"
 #include "displays/i80_display.h"
@@ -19,7 +20,6 @@
 #error "No databus set"
 #endif
 
-Mgpu_FrameBuffer *frameBuffer;
 Mgpu_Display *display;
 Mgpu_DisplayOptions displayOptions;
 Mgpu_Databus *databus;
@@ -124,20 +124,27 @@ bool wait_for_initialization(void) {
 
         // Before initialization, we can only respond to get status and get last message
         if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
-            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, NULL, textureManager);
-#ifdef DATABUS_TEST
-            Mgpu_Response response;
-            if (mgpu_test_databus_get_last_response(databus, &response)) {
-                    handleResponse(&response);
-                }
-#endif
+            mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
+
+            Mgpu_Message currentMessage = mgpu_message_get_latest();
+            if (currentMessage != NULL && strlen(currentMessage) > 0) {
+                ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
+            }
         }
     }
 
     uint16_t width, height;
     mgpu_display_get_dimensions(display, &width, &height);
-    frameBuffer = mgpu_framebuffer_new(width, height, operation.initialize.frameBufferScale, &standardAllocator);
-    if (frameBuffer == NULL) {
+
+    // Create the active frame buffer
+    Mgpu_TextureDefinition frameBufferSpecs = {
+            .width = width,
+            .height = height,
+            .id = 0,
+            .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
+    };
+
+    if (!mgpu_texture_define(textureManager, &frameBufferSpecs, operation.initialize.frameBufferScale)) {
         ESP_LOGE(LOG_TAG, "Framebuffer could not be created");
         return false;
     }
@@ -166,15 +173,12 @@ void app_main(void) {
         }
 
         if (mgpu_databus_get_next_operation(databus, &operation)) {
-            Mgpu_FrameBuffer *releasedFrameBuffer = NULL;
-            mgpu_execute_operation(&operation, frameBuffer, display, databus, &resetRequested, &releasedFrameBuffer,
-                                   textureManager);
-#ifdef DATABUS_TEST
-            Mgpu_Response response;
-            if (mgpu_test_databus_get_last_response(databus, &response)) {
-                handleResponse(&response);
-            }
-#endif
+            mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
+        }
+
+        Mgpu_Message currentMessage = mgpu_message_get_latest();
+        if (currentMessage != NULL && strlen(currentMessage) > 0) {
+            ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
         }
     }
 }

@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <vcruntime_string.h>
+#include <string.h>
 #include "present_framebuffer.h"
 
 void mgpu_exec_present_framebuffer(Mgpu_Display *display, Mgpu_TextureManager *textureManager) {
