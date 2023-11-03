@@ -30,34 +30,6 @@ internal class TextureManager
         _gpu = gpu;
     }
     
-    public void Load(string textureName)
-    {
-        if (_textureLookup.ContainsKey(textureName))
-        {
-            return;
-        }
-
-        var buffer = LoadBitmapFile(textureName);
-        var texture = new Texture(textureName, buffer);
-        var textureId = GetNextFreeTextureId();
-        _textures.Add(textureId, texture);
-        _textureLookup.Add(textureName, textureId);
-        _addedTextures.Enqueue(textureId);
-    }
-
-    public void Unload(string textureName)
-    {
-        if (!_textureLookup.ContainsKey(textureName))
-        {
-            return;
-        }
-        
-        var id = _textureLookup[textureName];
-        _textures.Remove(id);
-        _textureLookup.Remove(textureName);
-        _removedTextures.Enqueue(id);
-    }
-
     public string LoadSubTexture(Frame frame)
     {
         var subTextureName = FormSubTextureName(frame);
@@ -91,6 +63,24 @@ internal class TextureManager
         _addedTextures.Enqueue(textureId);
 
         return subTextureName;
+    }
+
+    public string CreateLayerTexture(int width, int height)
+    {
+        var textureName = $"LayerTexture_{width}_{height}_{Guid.NewGuid()}";
+        if (_textureLookup.ContainsKey(textureName))
+        {
+            throw new InvalidOperationException($"Unexpected guid collision");
+        }
+        
+        var buffer = new BufferRgb565(width, height);
+        var texture = new Texture(textureName, buffer);
+        var textureId = GetNextFreeTextureId();
+        _textures.Add(textureId, texture);
+        _textureLookup.Add(textureName, textureId);
+        _addedTextures.Enqueue(textureId);
+
+        return textureName;
     }
 
     /// <summary>

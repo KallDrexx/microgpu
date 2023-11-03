@@ -109,7 +109,7 @@ public class MicrogpuRenderer : IRenderer
             });
 
             countInBatch++;
-            if (countInBatch > 100)
+            if (countInBatch > 20)
             {
                 await _gpu.SendFireAndForgetAsync(_activeBatch);
                 countInBatch = 0;

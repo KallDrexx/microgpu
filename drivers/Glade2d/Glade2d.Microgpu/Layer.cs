@@ -14,34 +14,42 @@ namespace Glade2d.Microgpu;
 internal class Layer : ILayer
 {
     private readonly record struct DrawCommand(string TextureName, Point TopLeftOnLayer);
+    
     private readonly TextureManager _textureManager;
-    private readonly List<DrawCommand> _drawCommands = new();
-    private Vector2 _shiftAmount;
+    private readonly TextureManager.TextureInfo _textureInfo;
+    private readonly List<DrawCommand> _pendingDrawCommands = new();
+    private Vector2 _internalOrigin = Vector2.Zero;
+    private bool _clearPending = true;
 
     public Point CameraOffset { get; set; }
     public Color BackgroundColor { get; set; }
     public Color TransparentColor { get; set; } = Color.Magenta;
     public bool DrawLayerWithTransparency { get; set; } // Has no effect for microgpu
-    public int Width { get; private set; }
-    public int Height { get; private set; }
-    public IFont DefaultFont { get; set; } = new Font4x6();
+    public int Width { get; }
+    public int Height { get; }
+    public IFont DefaultFont { get; } = new Font4x6();
 
     public Layer(TextureManager textureManager, int width, int height)
     {
         _textureManager = textureManager;
         Width = width;
         Height = height;
+
+        var textureName = _textureManager.CreateLayerTexture(width, height);
+        _textureInfo = _textureManager.GetTextureInfo(textureName)
+                       ?? throw new InvalidOperationException("Layer texture not created");
     }
 
     public void Clear()
     {
-        _drawCommands.Clear();
+        _pendingDrawCommands.Clear();
+        _clearPending = true;
     }
 
     public void DrawTexture(Frame frame, Point topLeftOnLayer)
     {
         var subTextureName = _textureManager.LoadSubTexture(frame);
-        _drawCommands.Add(new DrawCommand(subTextureName, topLeftOnLayer));
+        _pendingDrawCommands.Add(new DrawCommand(subTextureName, topLeftOnLayer));
     }
 
     public void DrawTexture(BufferRgb565 texture, Point topLeftOnTexture, Point topLeftOnLayer, Dimensions drawSize,
@@ -52,26 +60,14 @@ internal class Layer : ILayer
 
     public void Shift(Vector2 shiftAmount)
     {
-        _shiftAmount += shiftAmount;
-        while (_shiftAmount.X >= Width)
-        {
-            _shiftAmount.X -= Width;
-        }
-
-        while (_shiftAmount.X <= -Width)
-        {
-            _shiftAmount.X += Width;
-        }
-
-        while (_shiftAmount.Y >= Height)
-        {
-            _shiftAmount.Y -= Height;
-        }
-
-        while (_shiftAmount.Y <= -Height)
-        {
-            _shiftAmount.Y += Height;
-        }
+        _internalOrigin -= shiftAmount;
+        
+        // Normalize the origin so it's always somewhere within the bounds
+        // of the layer.
+        while (_internalOrigin.X < 0) _internalOrigin.X += Width;
+        while (_internalOrigin.X >= Width) _internalOrigin.X -= Width;
+        while (_internalOrigin.Y < 0) _internalOrigin.Y += Height;
+        while (_internalOrigin.Y >= Height) _internalOrigin.Y -= Height;
     }
 
     public void DrawText(Point position, string text, IFont? font = null, Color? color = null)
@@ -81,69 +77,118 @@ internal class Layer : ILayer
 
     public async Task CreateDrawOperations(Gpu gpu)
     {
-        var startX = Math.Max(CameraOffset.X, 0);
-        var startY = Math.Max(CameraOffset.Y, 0);
-        var width = Width - (startX - CameraOffset.X);
-        var height = Height - (startY - CameraOffset.Y);
+        await HandlePendingDrawCommands(gpu);
+        await DrawLayerToFrameBuffer(gpu);
+    }
+
+    private async Task DrawLayerToFrameBuffer(Gpu gpu)
+    {
+        // Draw the layer to the frame buffer in 4 parts to handle the horizontal origin
+        // being shifted around.
+        var batch = new BatchOperation();
         
-        await gpu.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
+        // Bottom Right
+        batch.AddOperation(new DrawTextureOperation
         {
-            TextureId = 0,
-            StartX = (ushort)startX,
-            StartY = (ushort)startY,
-            Width = (ushort)width,
-            Height = (ushort)height,
-            Color = BackgroundColor.ToColorRgb565(),
+            SourceTextureId = _textureInfo.TextureId,
+            TargetTextureId = 0,
+            SourceStartX = (ushort)_internalOrigin.X,
+            SourceStartY = (ushort)_internalOrigin.Y,
+            SourceWidth = (ushort)(Width - _internalOrigin.X),
+            SourceHeight = (ushort)(Height - _internalOrigin.Y),
+            TargetStartX = (short)CameraOffset.X,
+            TargetStartY = (short)CameraOffset.Y,
+            IgnoreTransparency = false,
         });
+        
+        // Bottom Left
+        batch.AddOperation(new DrawTextureOperation
+        {
+            SourceTextureId = _textureInfo.TextureId,
+            TargetTextureId = 0,
+            SourceStartX = 0,
+            SourceStartY = (ushort)_internalOrigin.Y,
+            SourceWidth = (ushort)_internalOrigin.X,
+            SourceHeight = (ushort)(Height - _internalOrigin.Y),
+            TargetStartX = (short)(CameraOffset.X + (Width - _internalOrigin.X)),
+            TargetStartY = (short)CameraOffset.Y,
+            IgnoreTransparency = false,
+        });
+        
+        // Top Right
+        batch.AddOperation(new DrawTextureOperation
+        {
+            SourceTextureId = _textureInfo.TextureId,
+            TargetTextureId = 0,
+            SourceStartX = (ushort)_internalOrigin.X,
+            SourceStartY = 0,
+            SourceWidth = (ushort)(Width - _internalOrigin.X),
+            SourceHeight = (ushort)_internalOrigin.Y,
+            TargetStartX = (short)CameraOffset.X,
+            TargetStartY = (short)(CameraOffset.Y + (Height - _internalOrigin.Y)),
+            IgnoreTransparency = false,
+        });
+        
+        // Top Left
+        batch.AddOperation(new DrawTextureOperation
+        {
+            SourceTextureId = _textureInfo.TextureId,
+            TargetTextureId = 0,
+            SourceStartX = 0,
+            SourceStartY = 0,
+            SourceWidth = (ushort)_internalOrigin.X,
+            SourceHeight = (ushort)_internalOrigin.Y,
+            TargetStartX = (short)(CameraOffset.X + (Width - _internalOrigin.X)),
+            TargetStartY = (short)(CameraOffset.Y + (Height - _internalOrigin.Y)),
+            IgnoreTransparency = false,
+        });
+        
+        await gpu.SendFireAndForgetAsync(batch);
+    }
+    
+    private async Task HandlePendingDrawCommands(Gpu gpu)
+    {
+        if (_clearPending)
+        {
+            await gpu.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
+            {
+                TextureId = _textureInfo.TextureId,
+                StartX = 0,
+                StartY = 0,
+                Width = (ushort)Width,
+                Height = (ushort)Height,
+                Color = BackgroundColor.ToColorRgb565(),
+            });
+
+            _clearPending = false;
+        }
 
         var batch = new BatchOperation();
         var countInBatch = 0;
-        foreach (var drawCommand in _drawCommands)
+        foreach (var drawCommand in _pendingDrawCommands)
         {
-            var textureInfo = _textureManager.GetTextureInfo(drawCommand.TextureName);
-            if (textureInfo == null)
+            var drawingTexture = _textureManager.GetTextureInfo(drawCommand.TextureName);
+            if (drawingTexture == null)
             {
                 var message = $"Texture {drawCommand.TextureName} not loaded";
                 throw new InvalidOperationException(message);
             }
 
-            var shiftedX = drawCommand.TopLeftOnLayer.X + _shiftAmount.X;
-            var shiftedY = drawCommand.TopLeftOnLayer.Y + _shiftAmount.Y;
-            if (shiftedX < 0)
-            {
-                shiftedX += Width;
-            }
-
-            if (shiftedX >= Width)
-            {
-                shiftedX -= Width;
-            }
-
-            if (shiftedY < 0)
-            {
-                shiftedY += Height;
-            }
-
-            if (shiftedY >= Height)
-            {
-                shiftedY -= Height;
-            }
-            
             batch.AddOperation(new DrawTextureOperation
             {
-                SourceTextureId = textureInfo.TextureId,
-                TargetTextureId = 0,
+                SourceTextureId = drawingTexture.TextureId,
+                TargetTextureId = _textureInfo.TextureId,
                 SourceStartX = 0,
                 SourceStartY = 0,
-                SourceWidth = (ushort) textureInfo.Width,
-                SourceHeight = (ushort) textureInfo.Height,
-                TargetStartX = (short)(shiftedX + CameraOffset.X),
-                TargetStartY = (short)(shiftedY + CameraOffset.Y),
+                SourceWidth = drawingTexture.Width,
+                SourceHeight = drawingTexture.Height,
+                TargetStartX = (short)drawCommand.TopLeftOnLayer.X,
+                TargetStartY = (short)drawCommand.TopLeftOnLayer.Y,
                 IgnoreTransparency = false,
             });
 
             countInBatch++;
-            if (countInBatch > 100)
+            if (countInBatch > 20)
             {
                 await gpu.SendFireAndForgetAsync(batch);
                 countInBatch = 0;
@@ -154,5 +199,7 @@ internal class Layer : ILayer
         {
             await gpu.SendFireAndForgetAsync(batch);
         }
+
+        _pendingDrawCommands.Clear();
     }
 }
