@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Meadow.Hardware;
 
@@ -68,7 +69,7 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
             if (DateTime.Now - startedAt > TimeSpan.FromSeconds(5))
                 throw new TimeoutException("Timeout waiting for SPI handshake");
 
-            await Task.Delay(1);
+            await Task.Yield();
         }
     }
 }

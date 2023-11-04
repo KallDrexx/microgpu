@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "microgpu-common/common.h"
 #include "textures.h"
 #include "microgpu-common/messages.h"
@@ -124,18 +125,21 @@ void mgpu_exec_texture_draw(Mgpu_TextureManager *textureManager, Mgpu_DrawTextur
     Mgpu_Color *sourceRowStart = sourceTexture->pixels + sourceOffset;
     Mgpu_Color *targetRowStart = targetTexture->pixels + targetOffset;
 
-    // TODO: handle ignored transparency calls, probably with mem copy.
     for (int row = 0; row < height; row++) {
         Mgpu_Color *source = sourceRowStart;
         Mgpu_Color *target = targetRowStart;
 
-        for (int col = 0; col < width; col++) {
-            if (*source != sourceTexture->transparencyColor) {
-                *target = *source;
-            }
+        if (operation->ignoreTransparency) {
+            memcpy(target, source, width * sizeof(Mgpu_Color));
+        } else {
+            for (int col = 0; col < width; col++) {
+                if (*source != sourceTexture->transparencyColor) {
+                    *target = *source;
+                }
 
-            target++;
-            source++;
+                target++;
+                source++;
+            }
         }
 
         sourceRowStart += sourceTexture->width;

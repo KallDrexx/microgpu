@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using Glade2d.Graphics;
+using Glade2d.Services;
 using Meadow.Foundation;
 using Meadow.Foundation.Graphics;
 using Meadow.Foundation.Graphics.Buffers;
@@ -98,7 +99,7 @@ internal class Layer : ILayer
             SourceHeight = (ushort)(Height - _internalOrigin.Y),
             TargetStartX = (short)CameraOffset.X,
             TargetStartY = (short)CameraOffset.Y,
-            IgnoreTransparency = false,
+            IgnoreTransparency = !DrawLayerWithTransparency,
         });
         
         // Bottom Left
@@ -112,7 +113,7 @@ internal class Layer : ILayer
             SourceHeight = (ushort)(Height - _internalOrigin.Y),
             TargetStartX = (short)(CameraOffset.X + (Width - _internalOrigin.X)),
             TargetStartY = (short)CameraOffset.Y,
-            IgnoreTransparency = false,
+            IgnoreTransparency = !DrawLayerWithTransparency,
         });
         
         // Top Right
@@ -126,7 +127,7 @@ internal class Layer : ILayer
             SourceHeight = (ushort)_internalOrigin.Y,
             TargetStartX = (short)CameraOffset.X,
             TargetStartY = (short)(CameraOffset.Y + (Height - _internalOrigin.Y)),
-            IgnoreTransparency = false,
+            IgnoreTransparency = !DrawLayerWithTransparency,
         });
         
         // Top Left
@@ -140,7 +141,7 @@ internal class Layer : ILayer
             SourceHeight = (ushort)_internalOrigin.Y,
             TargetStartX = (short)(CameraOffset.X + (Width - _internalOrigin.X)),
             TargetStartY = (short)(CameraOffset.Y + (Height - _internalOrigin.Y)),
-            IgnoreTransparency = false,
+            IgnoreTransparency = !DrawLayerWithTransparency,
         });
         
         await gpu.SendFireAndForgetAsync(batch);
