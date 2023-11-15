@@ -1,5 +1,7 @@
 #include <stdbool.h>
 #include <string.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include "esp_log.h"
 #include "microgpu-common/operations/drawing/triangle.h"
 #include "microgpu-common/messages.h"
@@ -16,6 +18,11 @@
 
 #elif defined(DATABUS_TEST)
 #include "test_databus.h"
+
+#elif defined(DATABUS_BENCHMARK)
+
+#include "benchmark_databus.h"
+
 #else
 #error "No databus set"
 #endif
@@ -55,6 +62,32 @@ void handleResponse(Mgpu_Response *response) {
             ESP_LOGI(LOG_TAG, "Status received");
             ESP_LOGI(LOG_TAG, "Display: %ux%u", response->status.displayWidth, response->status.displayHeight);
             ESP_LOGI(LOG_TAG, "Framebuffer: %ux%u", response->status.frameBufferWidth, response->status.frameBufferHeight);
+            ESP_LOGI(LOG_TAG, "Color mode: %u", response->status.colorMode);
+            ESP_LOGI(LOG_TAG, "Is Initialized: %u", response->status.isInitialized);
+            break;
+
+        case Mgpu_Response_LastMessage:
+            ESP_LOGI(LOG_TAG, "GetLastMessage response received: %s", response->lastMessage.message);
+            break;
+
+        default:
+            break;
+    }
+}
+
+#elif defined(DATABUS_BENCHMARK)
+
+void init_databus_options() {
+    ESP_LOGI(LOG_TAG, "Initializing benchmark databus");
+}
+
+void handleResponse(Mgpu_Response *response) {
+    switch (response->type) {
+        case Mgpu_Response_Status:
+            ESP_LOGI(LOG_TAG, "Status received");
+            ESP_LOGI(LOG_TAG, "Display: %ux%u", response->status.displayWidth, response->status.displayHeight);
+            ESP_LOGI(LOG_TAG, "Framebuffer: %ux%u", response->status.frameBufferWidth,
+                     response->status.frameBufferHeight);
             ESP_LOGI(LOG_TAG, "Color mode: %u", response->status.colorMode);
             ESP_LOGI(LOG_TAG, "Is Initialized: %u", response->status.isInitialized);
             break;
