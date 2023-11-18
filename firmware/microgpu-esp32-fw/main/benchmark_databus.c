@@ -22,7 +22,8 @@ bool hasResponse;
 bool hasFinished = false;
 Mgpu_Response lastSeenResponse;
 OperationInfo operations[OP_COUNT];
-uint8_t testTexturePixels[TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * 2];
+uint8_t *testTexturePixels;
+size_t lastFreeHeapSize, lastFreeStackSize;
 
 void setup_operations(void) {
     int index = 0;
@@ -47,11 +48,22 @@ void setup_operations(void) {
     operations[index].operation.defineTexture.transparentColor = mgpu_color_from_rgb888(255, 255, 255);
 
     index++;
-    snprintf(operations[index].name, NAME_SIZE, "Append texture pixels");
+    snprintf(operations[index].name, NAME_SIZE, "Append texture pixels 1");
     operations[index].operation.type = Mgpu_Operation_AppendTexturePixels;
     operations[index].operation.appendTexturePixels.textureId = 5;
-    operations[index].operation.appendTexturePixels.pixelCount = sizeof(testTexturePixels) / sizeof(Mgpu_Color);
+    operations[index].operation.appendTexturePixels.pixelCount =
+            (TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT) / 2;
     operations[index].operation.appendTexturePixels.pixelBytes = testTexturePixels;
+
+    index++;
+    snprintf(operations[index].name, NAME_SIZE, "Append texture pixels 2");
+    operations[index].operation.type = Mgpu_Operation_AppendTexturePixels;
+    operations[index].operation.appendTexturePixels.textureId = 5;
+    operations[index].operation.appendTexturePixels.pixelCount =
+            (TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT) / 2;
+    operations[index].operation.appendTexturePixels.pixelBytes = testTexturePixels +
+                                                                 ((TEST_TEXTURE_PIXEL_COUNT *
+                                                                   TEST_TEXTURE_PIXEL_COUNT) / 2 * sizeof(Mgpu_Color));
 
     index++;
     snprintf(operations[index].name, NAME_SIZE, "Draw 50x20 rectangle");
@@ -120,7 +132,7 @@ void setup_operations(void) {
     operations[index].operation.drawTriangle.color = mgpu_color_from_rgb888(0, 255, 0);
 
     index++;
-    snprintf(operations[index].name, NAME_SIZE, "Draw 150x150 texture w/transparency");
+    snprintf(operations[index].name, NAME_SIZE, "Draw full size texture w/transparency");
     operations[index].operation.type = Mgpu_Operation_DrawTexture;
     operations[index].operation.drawTexture.sourceTextureId = 5;
     operations[index].operation.drawTexture.targetTextureId = 0;
@@ -128,12 +140,12 @@ void setup_operations(void) {
     operations[index].operation.drawTexture.sourceStartY = 0;
     operations[index].operation.drawTexture.sourceWidth = TEST_TEXTURE_PIXEL_COUNT;
     operations[index].operation.drawTexture.sourceHeight = TEST_TEXTURE_PIXEL_COUNT;
-    operations[index].operation.drawTexture.targetStartX = 50;
-    operations[index].operation.drawTexture.targetStartY = 50;
+    operations[index].operation.drawTexture.targetStartX = 0;
+    operations[index].operation.drawTexture.targetStartY = 0;
     operations[index].operation.drawTexture.ignoreTransparency = false;
 
     index++;
-    snprintf(operations[index].name, NAME_SIZE, "Draw 150x150 texture no transparency");
+    snprintf(operations[index].name, NAME_SIZE, "Draw full size texture no transparency");
     operations[index].operation.type = Mgpu_Operation_DrawTexture;
     operations[index].operation.drawTexture.sourceTextureId = 5;
     operations[index].operation.drawTexture.targetTextureId = 0;
@@ -141,8 +153,8 @@ void setup_operations(void) {
     operations[index].operation.drawTexture.sourceStartY = 0;
     operations[index].operation.drawTexture.sourceWidth = TEST_TEXTURE_PIXEL_COUNT;
     operations[index].operation.drawTexture.sourceHeight = TEST_TEXTURE_PIXEL_COUNT;
-    operations[index].operation.drawTexture.targetStartX = 50;
-    operations[index].operation.drawTexture.targetStartY = 50;
+    operations[index].operation.drawTexture.targetStartX = 0;
+    operations[index].operation.drawTexture.targetStartY = 0;
     operations[index].operation.drawTexture.ignoreTransparency = true;
 
     index++;
@@ -164,12 +176,17 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
     assert(options != NULL);
     assert(allocator != NULL);
 
+    size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    ESP_LOGI(LOG_TAG, "Free heap before databus creation: %u", freeHeap);
+
     Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
 
     if (databus == NULL) {
         return NULL;
     }
+
+    testTexturePixels = allocator->AllocateFn(TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * sizeof(Mgpu_Color));
 
     operationCount = 0;
     setup_operations();
@@ -207,6 +224,11 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
         }
     }
 
+    size_t freeHeap2 = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    ESP_LOGI(LOG_TAG, "Free heap after databus creation: %u (diff: %d)", freeHeap2, freeHeap - freeHeap2);
+
+    lastFreeHeapSize = freeHeap2;
+    lastFreeStackSize = uxTaskGetStackHighWaterMark(NULL);
     return databus;
 }
 
@@ -222,13 +244,23 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
     if (hadPreviousOperation) {
         int64_t now = esp_timer_get_time();
-        int stackSpace = (int) uxTaskGetStackHighWaterMark(NULL);
+        size_t freeStack = uxTaskGetStackHighWaterMark(NULL);
+        size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        int stackDiff = (int) freeStack - (int) lastFreeStackSize;
+        int heapDiff = (int) freeHeap - (int) lastFreeHeapSize;
+
         ESP_LOGI(LOG_TAG,
-                 "Operation #%u (%s) took %lld microseconds (stack size: %u)",
+                 "Operation #%u (%s) took %lld microseconds, free stack/heap: %u (%d) /  %u (%d)",
                  operationCount - 1,
                  operations[operationCount - 1].name,
                  now - prevOperationStartedAt,
-                 stackSpace);
+                 freeStack,
+                 stackDiff,
+                 freeHeap,
+                 heapDiff);
+
+        lastFreeStackSize = freeStack;
+        lastFreeHeapSize = freeHeap;
     }
 
     bool result = get_operation(operation);
