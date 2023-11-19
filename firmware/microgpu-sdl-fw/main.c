@@ -95,7 +95,7 @@ int databus_loop(void *data) {
 #endif
         }
 
-        Mgpu_Message currentMessage = mgpu_message_get_latest();
+        char *currentMessage = mgpu_message_get_pointer();
         if (currentMessage != NULL && strlen(currentMessage) > 0) {
             SDL_Log("Message from operation: %s\n", currentMessage);
         }

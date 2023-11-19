@@ -8,13 +8,13 @@ void mgpu_draw_rectangle(Mgpu_DrawRectangleOperation *drawRectangle, Mgpu_Textur
 
     Mgpu_Texture *texture = mgpu_texture_get(textureManager, drawRectangle->textureId);
     if (texture == NULL) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Failed to draw rectangle: Target texture with id of %u is not defined",
                  drawRectangle->textureId);
 
-        mgpu_message_set(msg);
         return;
     }
 

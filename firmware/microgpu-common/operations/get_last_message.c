@@ -3,7 +3,7 @@
 
 void mgpu_exec_get_last_message(Mgpu_Databus *databus) {
     Mgpu_Response response = {.type = Mgpu_Response_LastMessage};
-    response.lastMessage.message = mgpu_message_get_latest();
+    response.lastMessage.message = mgpu_message_get_pointer();
 
     mgpu_databus_send_response(databus, &response);
 }

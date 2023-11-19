@@ -21,10 +21,14 @@ void mgpu_exec_batch(Mgpu_BatchOperation *batchOperation,
 
         // sanity check
         if (innerSize > outerBytesLeft - 2) {
-            char msg[MESSAGE_MAX_LEN] = {0};
-            snprintf(msg, MESSAGE_MAX_LEN, "Batch had inner size of %u but only %u bytes left", innerSize,
+            char *msg = mgpu_message_get_pointer();
+            assert(msg != NULL);
+            snprintf(msg,
+                     MESSAGE_MAX_LEN,
+                     "Batch had inner size of %u but only %u bytes left",
+                     innerSize,
                      outerBytesLeft - 2);
-            mgpu_message_set(msg);
+
             return;
         }
 

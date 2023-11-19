@@ -25,14 +25,20 @@ Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator) {
 
     Mgpu_TextureManager *manager = allocator->AllocateFn(sizeof(Mgpu_TextureManager));
     if (manager == NULL) {
-        mgpu_message_set("Failed to allocate texture manager");
+        char *message = mgpu_message_get_pointer();
+        assert(message != NULL);
+
+        strncpy(message, "Failed to allocate texture manager", MESSAGE_MAX_LEN);
 
         return NULL;
     }
 
     manager->textures = allocator->AllocateFn(sizeof(Mgpu_Texture *) * NUM_TEXTURES);
     if (manager->textures == NULL) {
-        mgpu_message_set("Failed to allocate texture manager array");
+        char *message = mgpu_message_get_pointer();
+        assert(message != NULL);
+
+        strncpy(message, "Failed to allocate texture manager array", MESSAGE_MAX_LEN);
         mgpu_texture_manager_free(manager);
 
         return NULL;
@@ -68,12 +74,14 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
     assert(info != NULL);
 
     if (info->id >= NUM_TEXTURES) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Defining texture id %u failed as id larger than set count of %u",
                  info->id, NUM_TEXTURES);
-        mgpu_message_set(msg);
+
         return false;
     }
 
@@ -91,12 +99,12 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
     if (pixelCount > 0) {
         texture = textureManager->allocator->AllocateFn(sizeof(Mgpu_Texture) + pixelCount * sizeof(Mgpu_Color));
         if (texture == NULL) {
-            char msg[256];
+            char *msg = mgpu_message_get_pointer();
             snprintf(msg,
-                     sizeof(msg),
+                     MESSAGE_MAX_LEN,
                      "Defining texture id %u failed: could not allocate texture space",
                      info->id);
-            mgpu_message_set(msg);
+
             return false;
         }
 
@@ -119,12 +127,13 @@ Mgpu_Texture *mgpu_texture_get(Mgpu_TextureManager *textureManager, uint8_t id) 
     assert(textureManager->textures != NULL);
 
     if (id >= NUM_TEXTURES) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Can't get texture id %u, as that id is larger than the texture count of %u",
                  id, NUM_TEXTURES);
-        mgpu_message_set(msg);
+
         return NULL;
     }
 

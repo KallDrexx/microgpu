@@ -159,7 +159,7 @@ bool wait_for_initialization(void) {
         if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
             mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
 
-            Mgpu_Message currentMessage = mgpu_message_get_latest();
+            char *currentMessage = mgpu_message_get_pointer();
             if (currentMessage != NULL && strlen(currentMessage) > 0) {
                 ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
             }
@@ -209,7 +209,7 @@ void app_main(void) {
             mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
         }
 
-        Mgpu_Message currentMessage = mgpu_message_get_latest();
+        char *currentMessage = mgpu_message_get_pointer();
         if (currentMessage != NULL && strlen(currentMessage) > 0) {
             ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
         }

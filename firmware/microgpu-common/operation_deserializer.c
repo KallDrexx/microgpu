@@ -81,17 +81,19 @@ bool deserialize_reset(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
 
 bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     if (size < 3) {
-        char msg[MESSAGE_MAX_LEN] = {0};
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg, MESSAGE_MAX_LEN, "Batch message had too few characters (size %zu)", size);
-        mgpu_message_set(msg);
         return false;
     }
 
     uint16_t innerSize = (bytes[1] << 8) | bytes[2];
     if (innerSize > size - 3) {
-        char msg[MESSAGE_MAX_LEN] = {0};
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg, MESSAGE_MAX_LEN, "Batch message inner size too large (size %zu, innerSize %u)", size, innerSize);
-        mgpu_message_set(msg);
         return false;
     }
 
@@ -133,14 +135,15 @@ bool deserialize_append_pixels(const uint8_t bytes[], size_t size, Mgpu_Operatio
     // Make sure the size is within bounds of the byte array
     size_t bytesNeededForPixels = mgpu_color_bytes_per_pixel() * operation->appendTexturePixels.pixelCount;
     if (bytesNeededForPixels > size - 4) {
-        char msg[MESSAGE_MAX_LEN] = {0};
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg,
                  MESSAGE_MAX_LEN,
                  "Append to texture op had a pixel size of %u, but only %u bytes were provided",
                  operation->appendTexturePixels.pixelCount,
                  (int) (size - 4));
 
-        mgpu_message_set(msg);
         return false;
     }
 
@@ -218,10 +221,12 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
         case Mgpu_Operation_DrawTexture:
             return deserialize_draw_texture(bytes, size, operation);
 
-        default:
-            char msg[MESSAGE_MAX_LEN] = {0};
+        default: {
+            char *msg = mgpu_message_get_pointer();
+            assert(msg != NULL);
+
             snprintf(msg, MESSAGE_MAX_LEN, "Operation id %u is not a known operation id", bytes[0]);
-            mgpu_message_set(msg);
             return false;
+        }
     }
 }

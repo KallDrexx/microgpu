@@ -23,7 +23,9 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
     // Don't clear the last operation's message if the next operation
     // being requested is to get the latest message
     if (operation->type != Mgpu_Operation_GetLastMessage) {
-        mgpu_message_set(NULL);
+        char *message = mgpu_message_get_pointer();
+        assert(message != NULL);
+        message[0] = '\0';
     }
 
     switch (operation->type) {
@@ -72,9 +74,10 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
             break;
 
         default: {
-            char buffer[MESSAGE_MAX_LEN];
-            snprintf(buffer, MESSAGE_MAX_LEN, "Cannot execute operation of type %u", operation->type);
-            mgpu_message_set(buffer);
+            char *message = mgpu_message_get_pointer();
+            assert(message != NULL);
+            snprintf(message, MESSAGE_MAX_LEN, "Cannot execute operation of type %u", operation->type);
+
             break;
         }
     }

@@ -5,32 +5,16 @@
 #define MESSAGE_MAX_LEN 1023
 
 /*
- * A lastMessage that the microgpu system is communicating back to the
- * controlling device. The lastMessage is usually relevant to the last
- * operation performed, and may be cleared after the next operation.
- */
-typedef char *Mgpu_Message;
-
-/*
- * Gets the latest lastMessage set if one exists.
+ * Gets the pointer to the message buffer.
  *
- * The lastMessage points to a static and re-used lastMessage buffer. If
- * the lastMessage needs to last longer the consumer must copy it into
- * its own buffer. `mgpu_message_get_latest()` and `mgpu_message_set()`
- * must be called from the same thread.
+ * The pointer points to a static and re-used lastMessage buffer. If
+ * the consumer needs the message to last longer the consumer must copy it into
+ * its own buffer.
  */
-Mgpu_Message mgpu_message_get_latest(void);
+char *mgpu_message_get_pointer(void);
 
 /*
- * Sets the latest lastMessage to the one provided. If an empty string
- * was provided, or a `NULL` pointer, then the lastMessage is cleared.
- * `mgpu_message_get_latest()` and `mgpu_message_set()` must be called
- * from the same thread.
- */
-void mgpu_message_set(const char *message);
-
-/*
- * Gets the latest message only if it has changed since the last time this
+ * Gets the pointer to the message only if it has changed since the last time this
  * function was called. If the message is the same then it returns NULL.
  */
-Mgpu_Message mgpu_message_get_latest_if_changed(void);
+char *mgpu_message_get_latest_if_changed(void);

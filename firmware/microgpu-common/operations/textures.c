@@ -9,13 +9,14 @@ void mgpu_exec_texture_define(Mgpu_TextureManager *textureManager, Mgpu_DefineTe
     assert(operation != NULL);
 
     if (operation->textureId == 0 || operation->textureId > 200) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Cannot define texture id %u, as its reserved for internal usage",
                  operation->textureId);
 
-        mgpu_message_set(msg);
         return;
     }
 
@@ -36,12 +37,14 @@ void mgpu_exec_texture_append(Mgpu_TextureManager *textureManager, Mgpu_AppendTe
 
     Mgpu_Texture *texture = mgpu_texture_get(textureManager, operation->textureId);
     if (texture == NULL) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Append to texture %u failed: texture not defined",
                  operation->textureId);
-        mgpu_message_set(msg);
+
         return;
     }
 
@@ -73,33 +76,45 @@ void mgpu_exec_texture_draw(Mgpu_TextureManager *textureManager, Mgpu_DrawTextur
 
     Mgpu_Texture *sourceTexture = mgpu_texture_get(textureManager, operation->sourceTextureId);
     if (sourceTexture == NULL) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Attempted to draw from source texture id %u, but that texture is not defined",
                  operation->sourceTextureId);
-        mgpu_message_set(msg);
+
         return;
     }
 
     Mgpu_Texture *targetTexture = mgpu_texture_get(textureManager, operation->targetTextureId);
     if (targetTexture == NULL) {
-        char msg[256];
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
         snprintf(msg,
-                 sizeof(msg),
+                 MESSAGE_MAX_LEN,
                  "Texture draw error: Attempted to draw to target texture id %u, but that texture is not defined",
                  operation->targetTextureId);
-        mgpu_message_set(msg);
+
         return;
     }
 
     if (operation->sourceWidth + operation->sourceStartX > sourceTexture->width) {
-        mgpu_message_set("Texture draw error: Drawing more horizontal pixels than source texture contains");
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
+        strncpy(msg, "Texture draw error: Drawing more horizontal pixels than source texture contains",
+                MESSAGE_MAX_LEN);
         return;
     }
 
     if (operation->sourceHeight + operation->sourceStartY > sourceTexture->height) {
-        mgpu_message_set("Texture draw error: Drawing more horizontal pixels than source texture contains");
+        char *msg = mgpu_message_get_pointer();
+        assert(msg != NULL);
+
+        strncpy(msg, "Texture draw error: Drawing more horizontal pixels than source texture contains",
+                MESSAGE_MAX_LEN);
         return;
     }
 
