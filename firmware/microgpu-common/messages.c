@@ -1,18 +1,14 @@
 #include <stdlib.h>
 #include "messages.h"
 
-char lastMessage[MESSAGE_MAX_LEN + 1] = {'\0'};
-bool messageIsDirty = false;
+char *currentMessage = NULL;
 
 char *mgpu_message_get_pointer(void) {
-    return lastMessage;
-}
-
-char *mgpu_message_get_latest_if_changed(void) {
-    if (messageIsDirty) {
-        messageIsDirty = false;
-        return lastMessage;
+    if (currentMessage == NULL) {
+        // Eventually this needs to use the mgpu_allocator mechanism for creation, but right now
+        // I just want to get it out of the stack.
+        currentMessage = calloc(MESSAGE_MAX_LEN + 1, sizeof(char));
     }
 
-    return NULL;
+    return currentMessage;
 }
