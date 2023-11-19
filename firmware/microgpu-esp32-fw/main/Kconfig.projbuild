@@ -1,0 +1,151 @@
+menu "Microgpu Config"
+
+    choice MICROGPU_BOARD_TYPE
+        prompt "Board Type"
+        help
+            Select the type of board being used
+
+        config MICROGPU_BOARD_ESP32S3_DEVKIT
+            bool "ESP32-S3 Devkit"
+
+        config MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            bool "ESP32-S3 Prototype Devkit"
+
+    endchoice
+
+    choice MICROGPU_DATABUS_TYPE
+        prompt "Databus type"
+        default MICROGPU_DATABUS_SPI
+        help
+            Select the type of databus to use
+
+        config MICROGPU_DATABUS_BENCHMARK
+            bool "Benchmark"
+
+        config MICROGPU_DATABUS_SPI
+            bool "SPI"
+    endchoice
+
+    choice MICROGPU_DISPLAY_TYPE
+        prompt "Display type"
+        default MICROGPU_DISPLAY_I80_8BIT_ILI9341
+
+        config MICROGPU_DISPLAY_I80_8BIT_ILI9341
+            bool "8-Bit parallel 8088 Ili9341"
+    endchoice
+
+    menu "SPI Databus Pins"
+        depends on MICROGPU_DATABUS_SPI
+
+        config MICROGPU_DATABUS_SPI_SCK
+            int "SCK pin #"
+            default 16 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 16
+            help
+                GPIO pin for the SPI SCK line
+
+        config MICROGPU_DATABUS_SPI_COPI
+            int "COPI pin #"
+            default 14 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 14
+            help
+                GPIO pin number for the SPI COPI line
+
+        config MICROGPU_DATABUS_SPI_CIPO
+            int "CIPO pin #"
+            default 15 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 15
+            help
+                GPIO pin number for the SPI CIPO line
+
+        config MICROGPU_DATABUS_SPI_CS
+            int "SPI chip select pin #"
+            default 17 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 17
+            help
+                GPIO pin number for the SPI chip select line
+
+        config MICROGPU_DATABUS_SPI_HANDSHAKE
+            int "SPI ready / handshake pin #"
+            default 18 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 18
+            help
+                GPIO pin number used to signal that the Microgpu device is
+                ready to receive SPI transactions
+
+    endmenu
+
+    menu "Display Options"
+        config MICROGPU_DISPLAY_WIDTH
+            int "Pixel width"
+            default 320 if MICROGPU_DISPLAY_I80_8BIT_ILI9341
+            default 320
+
+        config MICROGPU_DISPLAY_HEIGHT
+            int "Pixel height"
+            default 240 if MICROGPU_DISPLAY_I80_8BIT_ILI9341
+            default 240
+
+        config MICROGPU_DISPLAY_RESET_PIN
+            int "Reset pin #"
+            default 2 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 2
+
+        config MICROGPU_DISPLAY_CS_PIN
+            int "Display chip select pin #"
+            default 3 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 3
+
+        config MICROGPU_DISPLAY_DC_PIN
+            int "Data/Command pin #"
+            default 4 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 4
+
+        config MICROGPU_DISPLAY_WR_PIN
+            int "Write clock pin #"
+            default 5 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 5
+
+        config MICROGPU_DISPLAY_DATA_0
+            int "Data 0 pin #"
+            default 6 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 6
+
+        config MICROGPU_DISPLAY_DATA_1
+            int "Data 1 pin #"
+            default 7 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 7
+
+        config MICROGPU_DISPLAY_DATA_2
+            int "Data 2 pin #"
+            default 8 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 8
+
+        config MICROGPU_DISPLAY_DATA_3
+            int "Data 3 pin #"
+            default 9 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 9
+
+        config MICROGPU_DISPLAY_DATA_4
+            int "Data 4 pin #"
+            default 10 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 10
+
+        config MICROGPU_DISPLAY_DATA_5
+            int "Data 5 pin #"
+            default 11 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 11
+
+        config MICROGPU_DISPLAY_DATA_6
+            int "Data 6 pin #"
+            default 12 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 12
+
+        config MICROGPU_DISPLAY_DATA_7
+            int "Data 7 pin #"
+            default 13 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 13
+
+    endmenu
+
+endmenu

@@ -302,3 +302,7 @@ uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
 
     return 0;
 }
+
+void init_databus_options(Mgpu_DatabusOptions *options) {
+    ESP_LOGI(LOG_TAG, "Initializing benchmarking databus");
+}

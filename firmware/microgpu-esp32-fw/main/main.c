@@ -12,19 +12,12 @@
 #include "common.h"
 #include "displays/i80_display.h"
 
-#ifdef DATABUS_SPI
-
+#if defined(CONFIG_MICROGPU_DATABUS_SPI)
 #include "spi_databus.h"
-
-#elif defined(DATABUS_TEST)
-#include "test_databus.h"
-
-#elif defined(DATABUS_BENCHMARK)
-
+#elif defined(CONFIG_MICROGPU_DATABUS_BENCHMARK)
 #include "benchmark_databus.h"
-
-#else
-#error "No databus set"
+#elif
+#error "No databus defined"
 #endif
 
 Mgpu_Display *display;
@@ -39,87 +32,24 @@ static const Mgpu_Allocator standardAllocator = {
         .FreeFn = free,
 };
 
-#ifdef DATABUS_SPI
-
-void init_databus_options() {
-    ESP_LOGI(LOG_TAG, "Initializing SPI databus");
-    databusOptions.copiPin = 14;
-    databusOptions.cipoPin = 15;
-    databusOptions.sclkPin = 16;
-    databusOptions.csPin = 17;
-    databusOptions.handshakePin = 18;
-    databusOptions.spiHost = SPI2_HOST;
-}
-
-#elif defined(DATABUS_TEST)
-void init_databus_options() {
-    ESP_LOGI(LOG_TAG, "Initializing test databus");
-}
-
-void handleResponse(Mgpu_Response *response) {
-    switch (response->type) {
-        case Mgpu_Response_Status:
-            ESP_LOGI(LOG_TAG, "Status received");
-            ESP_LOGI(LOG_TAG, "Display: %ux%u", response->status.displayWidth, response->status.displayHeight);
-            ESP_LOGI(LOG_TAG, "Framebuffer: %ux%u", response->status.frameBufferWidth, response->status.frameBufferHeight);
-            ESP_LOGI(LOG_TAG, "Color mode: %u", response->status.colorMode);
-            ESP_LOGI(LOG_TAG, "Is Initialized: %u", response->status.isInitialized);
-            break;
-
-        case Mgpu_Response_LastMessage:
-            ESP_LOGI(LOG_TAG, "GetLastMessage response received: %s", response->lastMessage.message);
-            break;
-
-        default:
-            break;
-    }
-}
-
-#elif defined(DATABUS_BENCHMARK)
-
-void init_databus_options() {
-    ESP_LOGI(LOG_TAG, "Initializing benchmark databus");
-}
-
-void handleResponse(Mgpu_Response *response) {
-    switch (response->type) {
-        case Mgpu_Response_Status:
-            ESP_LOGI(LOG_TAG, "Status received");
-            ESP_LOGI(LOG_TAG, "Display: %ux%u", response->status.displayWidth, response->status.displayHeight);
-            ESP_LOGI(LOG_TAG, "Framebuffer: %ux%u", response->status.frameBufferWidth,
-                     response->status.frameBufferHeight);
-            ESP_LOGI(LOG_TAG, "Color mode: %u", response->status.colorMode);
-            ESP_LOGI(LOG_TAG, "Is Initialized: %u", response->status.isInitialized);
-            break;
-
-        case Mgpu_Response_LastMessage:
-            ESP_LOGI(LOG_TAG, "GetLastMessage response received: %s", response->lastMessage.message);
-            break;
-
-        default:
-            break;
-    }
-}
-#endif
-
 bool setup(void) {
     ESP_LOGI(LOG_TAG, "Initializing display");
 
     // TODO: Make most of this settable in config options
-    displayOptions.pixelWidth = 320;
-    displayOptions.pixelHeight = 240;
-    displayOptions.controlPins.reset = 2;
-    displayOptions.controlPins.chipSelect = 3;
-    displayOptions.controlPins.dataCommand = 4;
-    displayOptions.controlPins.writeClock = 5;
-    displayOptions.dataPins.data0 = 6;
-    displayOptions.dataPins.data1 = 7;
-    displayOptions.dataPins.data2 = 8;
-    displayOptions.dataPins.data3 = 9;
-    displayOptions.dataPins.data4 = 10;
-    displayOptions.dataPins.data5 = 11;
-    displayOptions.dataPins.data6 = 12;
-    displayOptions.dataPins.data7 = 13;
+    displayOptions.pixelWidth = CONFIG_MICROGPU_DISPLAY_WIDTH;
+    displayOptions.pixelHeight = CONFIG_MICROGPU_DISPLAY_HEIGHT;
+    displayOptions.controlPins.reset = CONFIG_MICROGPU_DISPLAY_RESET_PIN;
+    displayOptions.controlPins.chipSelect = CONFIG_MICROGPU_DISPLAY_CS_PIN;
+    displayOptions.controlPins.dataCommand = CONFIG_MICROGPU_DISPLAY_DC_PIN;
+    displayOptions.controlPins.writeClock = CONFIG_MICROGPU_DISPLAY_WR_PIN;
+    displayOptions.dataPins.data0 = CONFIG_MICROGPU_DISPLAY_DATA_0;
+    displayOptions.dataPins.data1 = CONFIG_MICROGPU_DISPLAY_DATA_1;
+    displayOptions.dataPins.data2 = CONFIG_MICROGPU_DISPLAY_DATA_2;
+    displayOptions.dataPins.data3 = CONFIG_MICROGPU_DISPLAY_DATA_3;
+    displayOptions.dataPins.data4 = CONFIG_MICROGPU_DISPLAY_DATA_4;
+    displayOptions.dataPins.data5 = CONFIG_MICROGPU_DISPLAY_DATA_5;
+    displayOptions.dataPins.data6 = CONFIG_MICROGPU_DISPLAY_DATA_6;
+    displayOptions.dataPins.data7 = CONFIG_MICROGPU_DISPLAY_DATA_7;
 
     display = mgpu_display_new(&standardAllocator, &displayOptions);
     if (display == NULL) {
@@ -127,7 +57,7 @@ bool setup(void) {
         return false;
     }
 
-    init_databus_options();
+    init_databus_options(&databusOptions);
     databus = mgpu_databus_new(&databusOptions, &standardAllocator);
     if (databus == NULL) {
         ESP_LOGE(LOG_TAG, "Databus could not be created");

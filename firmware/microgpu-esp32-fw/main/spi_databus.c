@@ -170,3 +170,14 @@ uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
 
     return BUFFER_SIZE;
 }
+
+void init_databus_options(Mgpu_DatabusOptions *options) {
+    assert(options != NULL);
+    ESP_LOGI(LOG_TAG, "Initializing SPI databus");
+    options->copiPin = CONFIG_MICROGPU_DATABUS_SPI_COPI;
+    options->cipoPin = CONFIG_MICROGPU_DATABUS_SPI_CIPO;
+    options->sclkPin = CONFIG_MICROGPU_DATABUS_SPI_SCK;
+    options->csPin = CONFIG_MICROGPU_DATABUS_SPI_CS;
+    options->handshakePin = CONFIG_MICROGPU_DATABUS_SPI_HANDSHAKE;
+    options->spiHost = SPI2_HOST;
+}

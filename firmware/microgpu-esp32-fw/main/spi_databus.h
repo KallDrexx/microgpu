@@ -12,3 +12,5 @@ struct Mgpu_Databus {
     const Mgpu_Allocator *allocator;
     spi_host_device_t spiHost;
 };
+
+void init_databus_options(Mgpu_DatabusOptions *options);

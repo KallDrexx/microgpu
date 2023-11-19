@@ -10,3 +10,5 @@ struct Mgpu_DatabusOptions {
     void *nothing;
 };
 
+
+void init_databus_options(Mgpu_DatabusOptions *options);
