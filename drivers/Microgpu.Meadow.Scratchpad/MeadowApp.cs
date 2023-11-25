@@ -26,8 +26,12 @@ namespace Microgpu.Meadow.Scratchpad
                 ResistorMode.Disabled);
             var mcp = new Mcp23008(Device.CreateI2cBus(), 0x21, mcpIn);
             
-            var reset = Device.CreateDigitalOutputPort(Device.Pins.D03, true);
-            var handshake = mcp.CreateDigitalInputPort(mcp.Pins.GP6, ResistorMode.Disabled);
+            // var reset = Device.CreateDigitalOutputPort(Device.Pins.D03, true);
+            // var handshake = mcp.CreateDigitalInputPort(mcp.Pins.GP6, ResistorMode.Disabled);
+            // var chipSelect = mcp.CreateDigitalOutputPort(mcp.Pins.GP5, true);
+
+            var reset = mcp.CreateDigitalOutputPort(mcp.Pins.GP4, true);
+            var handshake = Device.CreateDigitalInputPort(Device.Pins.D03, ResistorMode.Disabled);
             var chipSelect = mcp.CreateDigitalOutputPort(mcp.Pins.GP5, true);
             
             var config = new SpiClockConfiguration(
@@ -61,11 +65,18 @@ namespace Microgpu.Meadow.Scratchpad
                 AngularVelocity3D? AngularVelocity3D,
                 Temperature? Temperature)> result)
         {
-            if (result.New.AngularVelocity3D != null)
-                _sampleRunner.Octahedron.RotationDegreesPerSecond = new Octahedron.Vector3(
-                    (float)result.New.AngularVelocity3D.Value.X.DegreesPerSecond * 2,
-                    (float)result.New.AngularVelocity3D.Value.Y.DegreesPerSecond * 2,
-                    (float)result.New.AngularVelocity3D.Value.Z.DegreesPerSecond * 2);
+            try
+            {
+                if (result?.New.AngularVelocity3D != null)
+                    _sampleRunner.Octahedron.RotationDegreesPerSecond = new Octahedron.Vector3(
+                        (float)result.New.AngularVelocity3D.Value.X.DegreesPerSecond * 2,
+                        (float)result.New.AngularVelocity3D.Value.Y.DegreesPerSecond * 2,
+                        (float)result.New.AngularVelocity3D.Value.Z.DegreesPerSecond * 2);
+            }
+            catch (NullReferenceException)
+            {
+                
+            }
         }
     }
 }

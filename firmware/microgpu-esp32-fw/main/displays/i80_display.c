@@ -3,6 +3,7 @@
 #include <esp_lcd_panel_vendor.h>
 #include <esp_lcd_panel_ops.h>
 #include <esp_heap_caps.h>
+#include <driver/gpio.h>
 #include "microgpu-common/color.h"
 #include "microgpu-common/display.h"
 #include "../common.h"
@@ -37,6 +38,19 @@ void init_ili9341_panel(esp_lcd_panel_io_handle_t io_handle,
 
     esp_lcd_panel_reset(panel_handle);
     esp_lcd_panel_init(panel_handle);
+
+    // TODO: add RD pin to menuconfig
+    gpio_config_t rd_conf = {
+            .intr_type = GPIO_INTR_DISABLE,
+            .mode = GPIO_MODE_OUTPUT,
+            .pin_bit_mask = 1ull << 8,
+            .pull_up_en = 1,
+            .pull_down_en = 0,
+    };
+
+    gpio_config(&rd_conf);
+    gpio_set_level(8, 1);
+
 
     // Set inversion, x/y coordinate order, x/y mirror according to your LCD module spec
     // the gap is LCD panel specific, even panels with the same driver IC, can have different gap value
