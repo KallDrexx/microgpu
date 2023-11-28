@@ -39,18 +39,18 @@ void init_ili9341_panel(esp_lcd_panel_io_handle_t io_handle,
     esp_lcd_panel_reset(panel_handle);
     esp_lcd_panel_init(panel_handle);
 
-    // TODO: add RD pin to menuconfig
+#ifdef CONFIG_MICROGPU_DISPLAY_HAS_RD_PIN
     gpio_config_t rd_conf = {
             .intr_type = GPIO_INTR_DISABLE,
             .mode = GPIO_MODE_OUTPUT,
-            .pin_bit_mask = 1ull << 8,
+            .pin_bit_mask = 1ull << CONFIG_MICROGPU_DISPLAY_HAS_RD_PIN,
             .pull_up_en = 1,
             .pull_down_en = 0,
     };
 
     gpio_config(&rd_conf);
-    gpio_set_level(8, 1);
-
+    gpio_set_level(CONFIG_MICROGPU_DISPLAY_HAS_RD_PIN, 1);
+#endif
 
     // Set inversion, x/y coordinate order, x/y mirror according to your LCD module spec
     // the gap is LCD panel specific, even panels with the same driver IC, can have different gap value
