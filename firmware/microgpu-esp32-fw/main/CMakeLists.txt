@@ -5,7 +5,7 @@ set(SOURCES
         displays/i80_display.c
         main.c
         ${MICROGPU_COMMON_SOURCES}
-        ../../microgpu-common/color_rgb565.c
+        ../../microgpu-common/colors/color_rgb565.c
 )
 
 if (CONFIG_MICROGPU_DATABUS_SPI)

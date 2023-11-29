@@ -17,7 +17,7 @@ function(create_sdl_target)
             sdl_display.c
             ${ARGV0}_databus.c
             ${MICROGPU_COMMON_SOURCES}
-            ../microgpu-common/color_rgb565.c
+            ../microgpu-common/colors/color_rgb565.c
     )
 
     target_compile_definitions(microgpu_sdl_fw_${ARGV0} PUBLIC MGPU_COLOR_MODE_USE_RGB565)

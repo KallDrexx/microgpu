@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "messages.h"
+#include "microgpu-common/messages.h"
 #include "operations.h"
-#include "microgpu-common/operations/batch.h"
-#include "microgpu-common/operations/drawing/rectangle.h"
-#include "microgpu-common/operations/drawing/triangle.h"
-#include "microgpu-common/operations/get_last_message.h"
-#include "microgpu-common/operations/present_framebuffer.h"
-#include "microgpu-common/operations/reset.h"
-#include "microgpu-common/operations/status.h"
-#include "microgpu-common/operations/textures.h"
+#include "microgpu-common/operations/execution/batch.h"
+#include "microgpu-common/operations/execution//drawing/rectangle.h"
+#include "microgpu-common/operations/execution//drawing/triangle.h"
+#include "microgpu-common/operations/execution/get_last_message.h"
+#include "microgpu-common/operations/execution/present_framebuffer.h"
+#include "microgpu-common/operations/execution/reset.h"
+#include "microgpu-common/operations/execution//status.h"
+#include "microgpu-common/operations/execution/textures.h"
 
 void mgpu_execute_operation(Mgpu_Operation *operation,
                             Mgpu_Display *display,

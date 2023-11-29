@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "color.h"
+#include "microgpu-common/colors/color.h"
 
 /*
  * The type of responses that can be sent to over the databus

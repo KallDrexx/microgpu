@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "alloc.h"
-#include "color.h"
+#include "microgpu-common/colors/color.h"
 
 typedef struct {
     uint8_t id;

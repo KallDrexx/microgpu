@@ -4,8 +4,8 @@
 #include "esp_log.h"
 #include "microgpu-common/common.h"
 #include "microgpu-common/databus.h"
-#include "microgpu-common/operation_deserializer.h"
-#include "microgpu-common/response_serializer.h"
+#include "microgpu-common/operations/operation_deserializer.h"
+#include "microgpu-common/responses/response_serializer.h"
 #include "spi_databus.h"
 #include "common.h"
 

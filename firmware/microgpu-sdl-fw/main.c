@@ -5,8 +5,8 @@
 #include <SDL.h>
 #include "microgpu-common/alloc.h"
 #include "microgpu-common/messages.h"
-#include "microgpu-common/operations.h"
-#include "microgpu-common/operation_execution.h"
+#include "microgpu-common/operations/operations.h"
+#include "microgpu-common/operations/operation_execution.h"
 #include "sdl_display.h"
 
 #if defined(DATABUS_BASIC)

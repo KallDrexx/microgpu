@@ -4,7 +4,7 @@
 #include <esp_lcd_panel_ops.h>
 #include <esp_heap_caps.h>
 #include <driver/gpio.h>
-#include "microgpu-common/color.h"
+#include "microgpu-common/colors/color.h"
 #include "microgpu-common/display.h"
 #include "../common.h"
 #include "i80_display.h"

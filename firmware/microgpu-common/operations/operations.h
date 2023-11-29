@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "color.h"
-#include "display.h"
+#include "microgpu-common/colors/color.h"
+#include "microgpu-common/display.h"
 
 /*
  * What type of operations are supported

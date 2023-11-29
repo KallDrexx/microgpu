@@ -1,14 +1,12 @@
 #include <stdbool.h>
 #include <string.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
 #include "esp_log.h"
-#include "microgpu-common/operations/drawing/triangle.h"
+#include "microgpu-common/operations/execution//drawing/triangle.h"
 #include "microgpu-common/messages.h"
 #include "microgpu-common/alloc.h"
 #include "microgpu-common/databus.h"
 #include "microgpu-common/display.h"
-#include "microgpu-common/operation_execution.h"
+#include "microgpu-common/operations/operation_execution.h"
 #include "common.h"
 #include "displays/i80_display.h"
 

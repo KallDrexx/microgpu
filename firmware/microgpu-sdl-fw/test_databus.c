@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <SDL.h>
-#include "microgpu-common/operation_deserializer.h"
+#include "microgpu-common/operations/operation_deserializer.h"
 #include "test_databus.h"
 
 #define RESET_OPERATION_ID 250

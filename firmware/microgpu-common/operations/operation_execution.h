@@ -1,9 +1,9 @@
 #pragma once
 
-#include "display.h"
+#include "microgpu-common/display.h"
 #include "operations.h"
-#include "databus.h"
-#include "texture_manager.h"
+#include "microgpu-common/databus.h"
+#include "microgpu-common/texture_manager.h"
 
 /*
  * Attempts to execute the specified operation if supported. Most operations are supported, with

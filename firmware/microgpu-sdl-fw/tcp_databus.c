@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <SDL.h>
 #include "microgpu-common/databus.h"
-#include "microgpu-common/operation_deserializer.h"
-#include "microgpu-common/response_serializer.h"
+#include "microgpu-common/operations/operation_deserializer.h"
+#include "microgpu-common/responses/response_serializer.h"
 #include "tcp_databus.h"
 
 #ifndef INVALID_SOCKET

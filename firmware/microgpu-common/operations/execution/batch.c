@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "microgpu-common/operation_execution.h"
-#include "microgpu-common/operation_deserializer.h"
+#include "microgpu-common/operations/operation_execution.h"
+#include "microgpu-common/operations/operation_deserializer.h"
 #include "batch.h"
 #include "microgpu-common/messages.h"
 

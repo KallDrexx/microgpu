@@ -1,6 +1,6 @@
 #pragma once
 
-#include "microgpu-common/operations.h"
+#include "microgpu-common/operations/operations.h"
 #include "microgpu-common/texture_manager.h"
 
 void mgpu_exec_texture_define(Mgpu_TextureManager *textureManager, Mgpu_DefineTextureOperation *operation);

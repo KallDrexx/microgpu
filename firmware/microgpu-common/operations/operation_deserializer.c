@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "microgpu-common/messages.h"
-#include "color.h"
+#include "microgpu-common/colors/color.h"
 #include "operation_deserializer.h"
 
 bool deserialize_status_op(Mgpu_Operation *operation) {

@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "alloc.h"
-#include "operations.h"
-#include "responses.h"
+#include "microgpu-common/operations/operations.h"
+#include "microgpu-common/responses/responses.h"
 
 /*
  * The accessible interface to the databus. The microgpu databus is
