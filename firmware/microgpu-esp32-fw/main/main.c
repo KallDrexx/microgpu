@@ -118,6 +118,7 @@ bool wait_for_initialization(void) {
 
 void app_main(void) {
     ESP_LOGI(LOG_TAG, "Starting Microgpu");
+    ESP_LOGI(LOG_TAG, "Version: %s", MGPU_VERSION);
     if (!setup()) {
         ESP_LOGE(LOG_TAG, "Setup failed, exiting");
         return;

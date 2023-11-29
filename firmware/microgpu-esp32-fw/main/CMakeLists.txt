@@ -19,4 +19,4 @@ idf_component_register(SRCS ${SOURCES}
 
 target_compile_definitions(${COMPONENT_LIB} PUBLIC MGPU_COLOR_MODE_USE_RGB565)
 target_compile_definitions(${COMPONENT_LIB} PUBLIC ${DATABUS_DEFINE})
-
+target_compile_definitions(${COMPONENT_LIB} PUBLIC MGPU_VERSION="${PROJECT_VER}")
