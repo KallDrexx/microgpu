@@ -2,8 +2,9 @@
 #include "microgpu-common/messages.h"
 #include "operations.h"
 #include "microgpu-common/operations/execution/batch.h"
-#include "microgpu-common/operations/execution//drawing/rectangle.h"
-#include "microgpu-common/operations/execution//drawing/triangle.h"
+#include "microgpu-common/operations/execution/drawing/rectangle.h"
+#include "microgpu-common/operations/execution/drawing/triangle.h"
+#include "microgpu-common/operations/execution/fonts.h"
 #include "microgpu-common/operations/execution/get_last_message.h"
 #include "microgpu-common/operations/execution/present_framebuffer.h"
 #include "microgpu-common/operations/execution/reset.h"
@@ -71,6 +72,10 @@ void mgpu_execute_operation(Mgpu_Operation *operation,
 
         case Mgpu_Operation_DrawTexture:
             mgpu_exec_texture_draw(textureManager, &operation->drawTexture);
+            break;
+
+        case Mgpu_Operation_DrawChars:
+            mgpu_exec_font_draw(textureManager, &operation->drawChars);
             break;
 
         default: {

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <SDL.h>
 #include "microgpu-common/operations/operation_deserializer.h"
+#include "microgpu-common/fonts/fonts.h"
 #include "test_databus.h"
 
 #define RESET_OPERATION_ID 250
@@ -10,6 +11,7 @@
 bool hasResponse;
 Mgpu_Response lastSeenResponse;
 uint16_t operationCount;
+char testString[] = "Hello world!";
 
 uint8_t testTexturePixels[TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * 2];
 
@@ -202,6 +204,19 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             return true;
 
         case 14:
+            operation->type = Mgpu_Operation_DrawChars;
+            operation->drawChars.fontId = Mgpu_Font_Font8x12;
+            operation->drawChars.textureId = 0;
+            operation->drawChars.color = mgpu_color_from_rgb888(255, 255, 255);
+            operation->drawChars.startX = 100;
+            operation->drawChars.startY = 300;
+            operation->drawChars.numCharacters = strlen(testString);
+            operation->drawChars.characters = testString;
+
+            operationCount++;
+            return true;
+
+        case 15:
             operation->type = Mgpu_Operation_PresentFramebuffer;
             operationCount++;
             return true;

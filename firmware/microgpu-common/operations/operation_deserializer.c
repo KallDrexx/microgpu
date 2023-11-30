@@ -178,6 +178,25 @@ bool deserialize_draw_texture(const uint8_t bytes[], size_t size, Mgpu_Operation
     return true;
 }
 
+bool deserialize_draw_chars(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
+    if (size < 6 + mgpu_color_bytes_per_pixel()) {
+        return false;
+    }
+
+    operation->type = Mgpu_Operation_DrawChars;
+    operation->drawChars.fontId = bytes[1];
+    operation->drawChars.textureId = bytes[2];
+
+    size_t nextByteIndex;
+    operation->drawChars.color = mgpu_color_deserialize(bytes, 3, &nextByteIndex);
+    operation->drawChars.startX = ((uint16_t) bytes[nextByteIndex + 0] << 8) | bytes[nextByteIndex + 1];
+    operation->drawChars.startY = ((uint16_t) bytes[nextByteIndex + 2] << 8) | bytes[nextByteIndex + 3];
+    operation->drawChars.numCharacters = bytes[nextByteIndex + 4];
+    operation->drawChars.characters = bytes + nextByteIndex + 5;
+
+    return true;
+}
+
 bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
     assert(bytes != NULL);
     assert(operation != NULL);
@@ -220,6 +239,9 @@ bool mgpu_operation_deserialize(const uint8_t bytes[], size_t size, Mgpu_Operati
 
         case Mgpu_Operation_DrawTexture:
             return deserialize_draw_texture(bytes, size, operation);
+
+        case Mgpu_Operation_DrawChars:
+            return deserialize_draw_chars(bytes, size, operation);
 
         default: {
             char *msg = mgpu_message_get_pointer();

@@ -1,9 +1,12 @@
 set(MICROGPU_COMMON_SOURCES
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/alloc.h
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/messages.c
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/font_8x12.c
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/fonts.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/batch.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/drawing/rectangle.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/drawing/triangle.c
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/fonts.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/get_last_message.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/present_framebuffer.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/operation_deserializer.c

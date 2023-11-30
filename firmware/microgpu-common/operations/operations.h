@@ -74,6 +74,11 @@ typedef enum {
     Mgpu_Operation_DrawTexture = 11,
 
     /*
+     * Draws ascii text to a texture
+     */
+    Mgpu_Operation_DrawChars = 12,
+
+    /*
      * Requests the microgpu to initialize itself and fully reset itself.
      */
     Mgpu_Operation_Reset = 189, // Higher value that's hard to see accidentally
@@ -170,6 +175,15 @@ typedef struct {
     int16_t targetStartY;
 } Mgpu_DrawTextureOperation;
 
+typedef struct {
+    uint8_t fontId;
+    uint8_t textureId;
+    Mgpu_Color color;
+    uint16_t startX, startY;
+    uint8_t numCharacters;
+    const uint8_t *characters;
+} Mgpu_DrawCharsOperation;
+
 /*
  * Single type that can represent any type of operation that
  * the microgpu framework can support.
@@ -184,5 +198,6 @@ typedef struct {
         Mgpu_DefineTextureOperation defineTexture;
         Mgpu_AppendTexturePixelOperation appendTexturePixels;
         Mgpu_DrawTextureOperation drawTexture;
+        Mgpu_DrawCharsOperation drawChars;
     };
 } Mgpu_Operation;
