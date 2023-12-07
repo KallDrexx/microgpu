@@ -211,12 +211,38 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->drawChars.startX = 100;
             operation->drawChars.startY = 300;
             operation->drawChars.numCharacters = strlen(testString);
-            operation->drawChars.characters = testString;
+            operation->drawChars.characters = (const uint8_t*) testString;
 
             operationCount++;
             return true;
 
         case 15:
+            operation->type = Mgpu_Operation_DrawChars;
+            operation->drawChars.fontId = Mgpu_Font_Font8x12;
+            operation->drawChars.textureId = 0;
+            operation->drawChars.color = mgpu_color_from_rgb888(255, 0, 0);
+            operation->drawChars.startX = 1000;
+            operation->drawChars.startY = 300;
+            operation->drawChars.numCharacters = strlen(testString);
+            operation->drawChars.characters = (const uint8_t*) testString;
+
+            operationCount++;
+            return true;
+
+        case 16:
+            operation->type = Mgpu_Operation_DrawChars;
+            operation->drawChars.fontId = Mgpu_Font_Font8x12;
+            operation->drawChars.textureId = 0;
+            operation->drawChars.color = mgpu_color_from_rgb888(0, 0, 255);
+            operation->drawChars.startX = 100;
+            operation->drawChars.startY = 760;
+            operation->drawChars.numCharacters = strlen(testString);
+            operation->drawChars.characters = (const uint8_t*) testString;
+
+            operationCount++;
+            return true;
+
+        case 17:
             operation->type = Mgpu_Operation_PresentFramebuffer;
             operationCount++;
             return true;

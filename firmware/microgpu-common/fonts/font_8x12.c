@@ -2,6 +2,7 @@
 #include "microgpu-common/common.h"
 #include "font_8x12.h"
 
+// Byte data taken from https://github.com/WildernessLabs/Meadow.Foundation/blob/e7a26cd567/Source/Meadow.Foundation.Libraries_and_Frameworks/Graphics.MicroGraphics/Driver/Fonts/Font8x12.cs
 const uint8_t data[] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // U+0020 (space)
         0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, // U+0021 (!)
@@ -114,7 +115,7 @@ void write_char(Mgpu_Texture *texture, char character, Mgpu_Color color, uint16_
     for (int row = 0; row < 12; row++) {
         Mgpu_Color *pixel = rowStart;
         for (int shift = 0; shift < width; shift++) {
-            uint8_t mask = 0x80 >> (7 - shift); // TODO: This might break on different endians
+            uint8_t mask = 0x01 << shift;
             if ((*byte & mask) == mask) {
                 *pixel = color;
             }
