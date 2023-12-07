@@ -1,11 +1,13 @@
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 #include "esp_log.h"
 #include "microgpu-common/operations/execution//drawing/triangle.h"
 #include "microgpu-common/messages.h"
 #include "microgpu-common/alloc.h"
 #include "microgpu-common/databus.h"
 #include "microgpu-common/display.h"
+#include "microgpu-common/fonts/fonts.h"
 #include "microgpu-common/operations/operation_execution.h"
 #include "common.h"
 #include "displays/i80_display.h"
@@ -71,8 +73,56 @@ bool setup(void) {
     return true;
 }
 
-bool wait_for_initialization(void) {
+bool define_display_framebuffer(uint8_t scale) {
+    uint16_t width, height;
+    mgpu_display_get_dimensions(display, &width, &height);
+
+    // Create the active frame buffer
+    Mgpu_TextureDefinition frameBufferSpecs = {
+            .width = width,
+            .height = height,
+            .id = 0,
+            .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
+    };
+
+    if (!mgpu_texture_define(textureManager, &frameBufferSpecs, scale)) {
+        ESP_LOGE(LOG_TAG, "Framebuffer could not be created");
+        return false;
+    }
+
+    return true;
+}
+
+bool show_boot_screen(void) {
     ESP_LOGI(LOG_TAG, "Waiting for initialization operation");
+    if (!define_display_framebuffer(2)) {
+        return false;
+    }
+
+    char versionString[200] = {0};
+    snprintf(versionString, sizeof(versionString), "v: %s", MGPU_VERSION);
+
+    Mgpu_Color white = mgpu_color_from_rgb888(255, 255, 255);
+    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Microgpu", white, 10, 10);
+    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, versionString, white, 10, 25);
+
+    uint16_t width, height;
+    mgpu_display_get_dimensions(display, &width, &height);
+
+    uint16_t startY = height / 2 - 25 - 12;
+    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Waiting for", white, 10, startY);
+    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Initialization...", white, 10, startY + 15);
+
+    mgpu_display_render(display, textureManager);
+
+    return true;
+}
+
+bool wait_for_initialization(void) {
+    if (!show_boot_screen()) {
+        return false;
+    }
+
     Mgpu_Operation operation;
 
     while (true) {
@@ -94,19 +144,7 @@ bool wait_for_initialization(void) {
         }
     }
 
-    uint16_t width, height;
-    mgpu_display_get_dimensions(display, &width, &height);
-
-    // Create the active frame buffer
-    Mgpu_TextureDefinition frameBufferSpecs = {
-            .width = width,
-            .height = height,
-            .id = 0,
-            .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
-    };
-
-    if (!mgpu_texture_define(textureManager, &frameBufferSpecs, operation.initialize.frameBufferScale)) {
-        ESP_LOGE(LOG_TAG, "Framebuffer could not be created");
+    if (!define_display_framebuffer(operation.initialize.frameBufferScale)) {
         return false;
     }
 
