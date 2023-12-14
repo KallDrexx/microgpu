@@ -13,26 +13,21 @@ using Microgpu.Common.Comms;
 
 namespace Glade2d.Microgpu.Sample.ProjectLab;
 
-public class MeadowApp : App<F7FeatherV2>
+public class MeadowApp : App<F7CoreComputeV2>
 {
     private Game _engine = null!;
 
     public override async Task Initialize()
     {
-        var mcpIn = Device.CreateDigitalInterruptPort(
-            Device.Pins.D10,
-            InterruptMode.EdgeRising);
-        var mcp = new Mcp23008(Device.CreateI2cBus(), 0x21, mcpIn);
-
-        var reset = mcp.CreateDigitalOutputPort(mcp.Pins.GP4, true);
+        var reset = Device.CreateDigitalOutputPort(Device.Pins.D02, true);
         var handshake = Device.CreateDigitalInputPort(Device.Pins.D03, ResistorMode.Disabled);
-        var chipSelect = mcp.CreateDigitalOutputPort(mcp.Pins.GP5, true);
+        var chipSelect = Device.CreateDigitalOutputPort(Device.Pins.D14, true);
 
         var config = new SpiClockConfiguration(
             new Frequency(10, Frequency.UnitType.Megahertz),
             SpiClockConfiguration.Mode.Mode0);
 
-        var spiBus = Device.CreateSpiBus(Device.Pins.SCK, Device.Pins.COPI, Device.Pins.CIPO, config);
+        var spiBus = Device.CreateSpiBus(Device.Pins.SPI5_SCK, Device.Pins.SPI5_COPI, Device.Pins.SPI5_CIPO, config);
 
         Console.WriteLine("Initializing GPU");
         var gpuCommunication = new MeadowSpiGpuCommunication(spiBus, handshake, reset, chipSelect);
