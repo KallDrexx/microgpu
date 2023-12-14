@@ -72,6 +72,7 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
     assert(textureManager != NULL);
     assert(textureManager->textures != NULL);
     assert(info != NULL);
+    assert(scale > 0);
 
     if (info->id >= NUM_TEXTURES) {
         char *msg = mgpu_message_get_pointer();

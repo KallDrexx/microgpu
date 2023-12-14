@@ -41,6 +41,11 @@ public class MicrogpuRenderer : IRenderer
     {
         var gpu = await Gpu.CreateAsync(gpuCommunication);
         await gpu.InitializeAsync(frameBufferScale);
+        var status = await gpu.SendResponsiveOperationAsync(new GetStatusOperation());
+        if (!status.IsInitialized)
+        {
+            throw new InvalidOperationException("GPU not initialized");
+        }
        
         var textureManager = new TextureManager(contentRoot ?? Environment.CurrentDirectory, gpu);
         return new MicrogpuRenderer(gpu, textureManager, layerManager, profiler);

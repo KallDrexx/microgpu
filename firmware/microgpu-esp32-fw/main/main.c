@@ -95,12 +95,12 @@ bool define_display_framebuffer(uint8_t scale) {
 
 bool show_boot_screen(void) {
     ESP_LOGI(LOG_TAG, "Waiting for initialization operation");
-    if (!define_display_framebuffer(2)) {
+    if (!define_display_framebuffer(1)) {
         return false;
     }
 
     char versionString[200] = {0};
-    snprintf(versionString, sizeof(versionString), "v: %s", MGPU_VERSION);
+    snprintf(versionString, sizeof(versionString), "Firmware version: %s", MGPU_VERSION);
 
     Mgpu_Color white = mgpu_color_from_rgb888(255, 255, 255);
     mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Microgpu", white, 10, 10);
@@ -109,11 +109,20 @@ bool show_boot_screen(void) {
     uint16_t width, height;
     mgpu_display_get_dimensions(display, &width, &height);
 
-    uint16_t startY = height / 2 - 25 - 12;
-    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Waiting for", white, 10, startY);
-    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Initialization...", white, 10, startY + 15);
+    uint16_t startY = height - 25;
+    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Waiting for Initialization...", white, 10, startY);
 
     mgpu_display_render(display, textureManager);
+
+    // Now that the boot screen is rendered, we can free the frame buffer we were currently using, as we won't
+    // write to it or render it again. This is also a small hack to keep the get status operation as returning
+    // that it's not initialized yet, since "is the GPU initialized" is based on a framebuffer texture existing.
+    Mgpu_TextureDefinition clearTexture = {
+        .id = 0,
+        .height = 0,
+        .width = 0,
+    };
+    mgpu_texture_define(textureManager, &clearTexture, 1);
 
     return true;
 }
