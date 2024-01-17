@@ -1,3 +1,4 @@
+#include <esp_heap_caps.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,8 +28,12 @@ Mgpu_DatabusOptions databusOptions;
 Mgpu_TextureManager *textureManager;
 bool resetRequested;
 
+void *allocate_from_psram(size_t size) {
+    return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+}
+
 static const Mgpu_Allocator standardAllocator = {
-        .AllocateFn = malloc,
+        .AllocateFn = allocate_from_psram,
         .FreeFn = free,
 };
 
