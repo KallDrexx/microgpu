@@ -15,15 +15,19 @@ struct Mgpu_TextureManager {
 
 void free_texture(Mgpu_Texture *texture, const Mgpu_Allocator *allocator) {
     assert(texture != NULL);
-    assert(allocator != NULL);
+    mgpu_alloc_assert(allocator);
 
-    allocator->FreeFn(texture);
+    if (texture->allocatedInSlowRam) {
+        allocator->SlowMemFreeFn(texture);
+    } else {
+        allocator->FastMemFreeFn(texture);
+    }
 }
 
 Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator) {
-    assert(allocator != NULL);
+    mgpu_alloc_assert(allocator);
 
-    Mgpu_TextureManager *manager = allocator->AllocateFn(sizeof(Mgpu_TextureManager));
+    Mgpu_TextureManager *manager = allocator->FastMemAllocateFn(sizeof(Mgpu_TextureManager));
     if (manager == NULL) {
         char *message = mgpu_message_get_pointer();
         assert(message != NULL);
@@ -33,7 +37,7 @@ Mgpu_TextureManager *mgpu_texture_manager_new(const Mgpu_Allocator *allocator) {
         return NULL;
     }
 
-    manager->textures = allocator->AllocateFn(sizeof(Mgpu_Texture *) * NUM_TEXTURES);
+    manager->textures = allocator->FastMemAllocateFn(sizeof(Mgpu_Texture *) * NUM_TEXTURES);
     if (manager->textures == NULL) {
         char *message = mgpu_message_get_pointer();
         assert(message != NULL);
@@ -60,11 +64,11 @@ void mgpu_texture_manager_free(Mgpu_TextureManager *textureManager) {
                 }
             }
 
-            textureManager->allocator->FreeFn(textureManager->textures);
+            textureManager->allocator->FastMemFreeFn(textureManager->textures);
             textureManager->textures = NULL;
         }
 
-        textureManager->allocator->FreeFn(textureManager);
+        textureManager->allocator->FastMemFreeFn(textureManager);
     }
 }
 
@@ -91,6 +95,7 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
         // Texture is being redefined
         free_texture(texture, textureManager->allocator);
         textureManager->textures[info->id] = NULL;
+        texture = NULL;
     }
 
     uint16_t width = info->width / scale;
@@ -98,7 +103,19 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
 
     size_t pixelCount = width * height;
     if (pixelCount > 0) {
-        texture = textureManager->allocator->AllocateFn(sizeof(Mgpu_Texture) + pixelCount * sizeof(Mgpu_Color));
+        bool allocatedInSlowRam;
+        if ((info->flags & MGPU_TEXTURE_USE_SLOW_RAM) != MGPU_TEXTURE_USE_SLOW_RAM) {
+            texture = textureManager->allocator->FastMemAllocateFn(
+                    sizeof(Mgpu_Texture) + pixelCount * sizeof(Mgpu_Color));
+            allocatedInSlowRam = false;
+        }
+
+        if (texture == NULL) {
+            texture = textureManager->allocator->SlowMemAllocateFn(
+                    sizeof(Mgpu_Texture) + pixelCount * sizeof(Mgpu_Color));
+            allocatedInSlowRam = true;
+        }
+
         if (texture == NULL) {
             char *msg = mgpu_message_get_pointer();
             snprintf(msg,
@@ -114,6 +131,7 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
         texture->transparencyColor = info->transparentColor;
         texture->pixelsWritten = 0;
         texture->scale = scale;
+        texture->allocatedInSlowRam = allocatedInSlowRam;
 
         Mgpu_Color color = mgpu_color_from_rgb888(0, 0, 0);
         memset(texture->pixels, color, width * height * sizeof(Mgpu_Color));

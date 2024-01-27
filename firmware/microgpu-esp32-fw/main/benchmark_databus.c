@@ -174,19 +174,20 @@ bool get_operation(Mgpu_Operation *operation) {
 
 Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
     assert(options != NULL);
-    assert(allocator != NULL);
+    mgpu_alloc_assert(allocator);
 
     size_t freeHeap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     ESP_LOGI(LOG_TAG, "Free heap before databus creation: %u", freeHeap);
 
-    Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
+    Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
 
     if (databus == NULL) {
         return NULL;
     }
 
-    testTexturePixels = allocator->AllocateFn(TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * sizeof(Mgpu_Color));
+    testTexturePixels = allocator->FastMemAllocateFn(
+            TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * sizeof(Mgpu_Color));
 
     operationCount = 0;
     setup_operations();
@@ -234,7 +235,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus != NULL) {
-        databus->allocator->FreeFn(databus);
+        databus->allocator->FastMemFreeFn(databus);
     }
 }
 

@@ -52,9 +52,9 @@ void transfer_framebuffer(Mgpu_Display *display, Mgpu_TextureManager *textureMan
 }
 
 Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options) {
-    assert(allocator != NULL);
+    mgpu_alloc_assert(allocator);
 
-    Mgpu_Display *display = allocator->AllocateFn(sizeof(Mgpu_Display));
+    Mgpu_Display *display = allocator->FastMemAllocateFn(sizeof(Mgpu_Display));
     display->allocator = allocator;
     if (display == NULL) {
         fprintf(stderr, "NULL pointer returned from allocation function.\n");
@@ -123,9 +123,9 @@ void mgpu_display_free(Mgpu_Display *display) {
         // SDL_DestroyRenderer destroys associated textures, so we shouldn't do that ourselves
         SDL_DestroyRenderer(display->renderer);
         SDL_DestroyWindow(display->window);
-        display->allocator->FreeFn(display->pixelBuffer);
+        display->allocator->FastMemFreeFn(display->pixelBuffer);
         display->pixelBuffer = NULL;
-        display->allocator->FreeFn(display);
+        display->allocator->FastMemFreeFn(display);
     }
 }
 

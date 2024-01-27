@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "esp_log.h"
+#include "esp_heap_caps.h"
 #include "microgpu-common/operations/execution//drawing/triangle.h"
 #include "microgpu-common/messages.h"
 #include "microgpu-common/alloc.h"
@@ -27,9 +28,15 @@ Mgpu_DatabusOptions databusOptions;
 Mgpu_TextureManager *textureManager;
 bool resetRequested;
 
+void *alloc_internal_ram(size_t size);
+
+void *alloc_spi_ram(size_t size);
+
 static const Mgpu_Allocator standardAllocator = {
-        .AllocateFn = malloc,
-        .FreeFn = free,
+        .FastMemAllocateFn = alloc_internal_ram,
+        .FastMemFreeFn = free,
+        .SlowMemAllocateFn = alloc_spi_ram,
+        .SlowMemFreeFn = free,
 };
 
 bool setup(void) {
@@ -83,6 +90,7 @@ bool define_display_framebuffer(uint8_t scale) {
             .height = height,
             .id = 0,
             .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
+            .flags = 0, // allocate in fast ram
     };
 
     if (!mgpu_texture_define(textureManager, &frameBufferSpecs, scale)) {
@@ -121,6 +129,7 @@ bool show_boot_screen(void) {
         .id = 0,
         .height = 0,
         .width = 0,
+        .flags = 0, // fast ram
     };
     mgpu_texture_define(textureManager, &clearTexture, 1);
 
@@ -190,4 +199,16 @@ void app_main(void) {
             ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
         }
     }
+}
+
+void *alloc_internal_ram(size_t size) {
+    return heap_caps_malloc(size, MALLOC_CAP_32BIT);
+}
+
+void *alloc_spi_ram(size_t size) {
+    #ifdef CONFIG_SPIRAM
+        return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+    #else
+        return heap_caps_malloc(size, MALLOC_CAP_32BIT);
+    #endif
 }

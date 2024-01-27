@@ -25,6 +25,7 @@ void mgpu_exec_texture_define(Mgpu_TextureManager *textureManager, Mgpu_DefineTe
             .width = operation->width,
             .height = operation->height,
             .transparentColor = operation->transparentColor,
+            .flags = MGPU_TEXTURE_USE_SLOW_RAM,
     };
 
     mgpu_texture_define(textureManager, &info, 1);

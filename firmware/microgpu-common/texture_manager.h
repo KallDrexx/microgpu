@@ -5,10 +5,19 @@
 #include "alloc.h"
 #include "microgpu-common/colors/color.h"
 
+typedef enum {
+    /*
+     * If set, then the texture should be allocated via the slow ram allocator. Otherwise, the texture should be
+     * allocated in fast ram. If the fast ram allocation fails, it will attempt the slow ram.
+     */
+    MGPU_TEXTURE_USE_SLOW_RAM = 1 << 0,
+} Mgpu_TextureDefinitionFlags;
+
 typedef struct {
     uint8_t id;
     uint16_t width, height;
     Mgpu_Color transparentColor;
+    Mgpu_TextureDefinitionFlags flags;
 } Mgpu_TextureDefinition;
 
 typedef struct {
@@ -21,6 +30,7 @@ typedef struct {
      */
     uint8_t scale;
     size_t pixelsWritten;
+    bool allocatedInSlowRam;
     Mgpu_Color pixels[];
 } Mgpu_Texture;
 

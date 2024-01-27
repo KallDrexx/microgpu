@@ -17,9 +17,9 @@ uint8_t testTexturePixels[TEST_TEXTURE_PIXEL_COUNT * TEST_TEXTURE_PIXEL_COUNT * 
 
 Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
     assert(options != NULL);
-    assert(allocator != NULL);
+    mgpu_alloc_assert(allocator);
 
-    Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
+    Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
 
     if (databus == NULL) {
@@ -67,7 +67,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus != NULL) {
-        databus->allocator->FreeFn(databus);
+        databus->allocator->FastMemFreeFn(databus);
     }
 }
 

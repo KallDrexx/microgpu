@@ -152,7 +152,7 @@ bool readOperation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
 
 Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
     assert(options != NULL);
-    assert(allocator != NULL);
+    mgpu_alloc_assert(allocator);
 
     Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
     if (databus == NULL) {

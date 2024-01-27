@@ -133,8 +133,8 @@ void log_display_options(const Mgpu_DisplayOptions *options) {
 }
 
 Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options) {
-    assert(allocator != NULL);
     assert(options != NULL);
+    mgpu_alloc_assert(allocator);
 
     log_display_options(options);
 
@@ -146,7 +146,7 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_Displ
 
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
 
-    Mgpu_Display *display = allocator->AllocateFn(sizeof(Mgpu_Display));
+    Mgpu_Display *display = allocator->FastMemAllocateFn(sizeof(Mgpu_Display));
     display->allocator = allocator;
     display->panel = panel_handle;
     display->pixelWidth = options->pixelWidth;
@@ -162,7 +162,7 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_Displ
 
 void mgpu_display_free(Mgpu_Display *display) {
     if (display) {
-        display->allocator->FreeFn(display);
+        display->allocator->FastMemFreeFn(display);
     }
 }
 
