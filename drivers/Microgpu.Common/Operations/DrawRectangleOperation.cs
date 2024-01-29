@@ -26,4 +26,9 @@ public class DrawRectangleOperation<TColor> : IFireAndForgetOperation where TCol
 
         return 10 + Color.WriteBytes(bytes[10..]);
     }
+
+    public int GetSize()
+    {
+        return 10 + Color.GetSize();
+    }
 }

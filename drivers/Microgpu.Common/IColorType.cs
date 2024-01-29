@@ -12,4 +12,10 @@ public interface IColorType
     /// </summary>
     /// <returns>The number of bytes written to the span</returns>
     int WriteBytes(Span<byte> bytes);
+   
+    /// <summary>
+    ///     Returns the size of the color in bytes
+    /// </summary>
+    /// <returns></returns>
+    int GetSize();
 }

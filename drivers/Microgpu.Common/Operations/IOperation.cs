@@ -16,6 +16,12 @@ public interface IOperation
     /// <param name="bytes">Set of bytes we can serialize this data into</param>
     /// <returns>The number of bytes written into the byte array</returns>
     int Serialize(Span<byte> bytes);
+   
+    /// <summary>
+    ///    Returns the number of bytes required to serialize this operation.
+    /// </summary>
+    /// <returns></returns>
+    int GetSize();
 }
 
 /// <summary>

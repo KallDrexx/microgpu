@@ -40,4 +40,9 @@ public class DrawTextureOperation : IFireAndForgetOperation
 
         return 16;
     }
+
+    public int GetSize()
+    {
+        return 16;
+    }
 }

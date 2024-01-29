@@ -11,4 +11,9 @@ public class GetLastMessageOperation : IResponsiveOperation<LastMessageResponse>
 
         return 1;
     }
+
+    public int GetSize()
+    {
+        return 1;
+    }
 }

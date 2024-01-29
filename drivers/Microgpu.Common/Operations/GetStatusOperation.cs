@@ -11,4 +11,9 @@ public class GetStatusOperation : IResponsiveOperation<StatusResponse>
 
         return 1;
     }
+
+    public int GetSize()
+    {
+        return 1;
+    }
 }

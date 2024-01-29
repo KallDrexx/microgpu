@@ -165,7 +165,6 @@ internal class Layer : ILayer
         }
 
         var batch = new BatchOperation();
-        var countInBatch = 0;
         foreach (var drawCommand in _pendingDrawCommands)
         {
             var drawingTexture = _textureManager.GetTextureInfo(drawCommand.TextureName);
@@ -175,7 +174,7 @@ internal class Layer : ILayer
                 throw new InvalidOperationException(message);
             }
 
-            batch.AddOperation(new DrawTextureOperation
+            var operation = new DrawTextureOperation
             {
                 SourceTextureId = drawingTexture.TextureId,
                 TargetTextureId = _textureInfo.TextureId,
@@ -186,17 +185,16 @@ internal class Layer : ILayer
                 TargetStartX = (short)drawCommand.TopLeftOnLayer.X,
                 TargetStartY = (short)drawCommand.TopLeftOnLayer.Y,
                 IgnoreTransparency = false,
-            });
-
-            countInBatch++;
-            if (countInBatch > 20)
+            };
+            
+            if (!batch.AddOperation(operation))
             {
                 await gpu.SendFireAndForgetAsync(batch);
-                countInBatch = 0;
+                batch.AddOperation(operation);
             }
         }
 
-        if (countInBatch > 0)
+        if (batch.HasAnyOperations())
         {
             await gpu.SendFireAndForgetAsync(batch);
         }

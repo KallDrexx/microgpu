@@ -33,4 +33,9 @@ public readonly struct ColorRgb565 : IColorType
 
         return 2;
     }
+
+    public int GetSize()
+    {
+        return 16;
+    }
 }

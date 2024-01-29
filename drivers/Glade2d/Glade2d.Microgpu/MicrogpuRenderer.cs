@@ -91,7 +91,6 @@ public class MicrogpuRenderer : IRenderer
         _profiler.StopTiming("Microgpu.BackgroundLayers");
 
         _profiler.StartTiming("Microgpu.Sprites");
-        var countInBatch = 0;
         foreach (var sprite in sprites)
         {
             var textureInfo = _textureManager.GetTextureInfo(sprite.CurrentFrame);
@@ -100,8 +99,8 @@ public class MicrogpuRenderer : IRenderer
                 var message = $"Texture {sprite.CurrentFrame.TextureName} not loaded";
                 throw new InvalidOperationException(message);
             }
-            
-            _activeBatch.AddOperation(new DrawTextureOperation
+
+            var operation = new DrawTextureOperation
             {
                 SourceTextureId = textureInfo.TextureId,
                 TargetTextureId = 0,
@@ -109,22 +108,23 @@ public class MicrogpuRenderer : IRenderer
                 SourceStartY = 0,
                 SourceWidth = textureInfo.Width,
                 SourceHeight = textureInfo.Height,
-                TargetStartX = (short) sprite.X,
-                TargetStartY = (short) sprite.Y,
-            });
-
-            countInBatch++;
-            if (countInBatch > 20)
+                TargetStartX = (short)sprite.X,
+                TargetStartY = (short)sprite.Y,
+            };
+            
+            var wasAdded = _activeBatch.AddOperation(operation);
+            if (!wasAdded)
             {
                 await _gpu.SendFireAndForgetAsync(_activeBatch);
-                countInBatch = 0;
+                _activeBatch.AddOperation(operation);
             }
         }
 
-        if (countInBatch > 0)
+        if (_activeBatch.HasAnyOperations())
         {
             await _gpu.SendFireAndForgetAsync(_activeBatch);
         }
+
         _profiler.StopTiming("Microgpu.Sprites");
 
         _profiler.StopTiming("Microgpu.ForegroundLayers");

@@ -13,4 +13,9 @@ public class InitializeOperation : IFireAndForgetOperation
 
         return 2;
     }
+
+    public int GetSize()
+    {
+        return 2;
+    }
 }

@@ -24,4 +24,9 @@ public class AppendTexturePixelsOperation : IFireAndForgetOperation
 
         return 4 + PixelBytes.Length;
     }
+
+    public int GetSize()
+    {
+        return 4 + PixelBytes.Length;
+    }
 }

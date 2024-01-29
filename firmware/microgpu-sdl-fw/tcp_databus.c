@@ -154,7 +154,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
     assert(options != NULL);
     mgpu_alloc_assert(allocator);
 
-    Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
+    Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
     if (databus == NULL) {
         return NULL;
     }
@@ -165,7 +165,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     // Initialize the packet if it's not already allocated
     if (globalByteQueue == NULL) {
-        globalByteQueue = allocator->AllocateFn(sizeof(uint8_t) * BYTE_QUEUE_MAX_SIZE);
+        globalByteQueue = allocator->FastMemAllocateFn(sizeof(uint8_t) * BYTE_QUEUE_MAX_SIZE);
     }
 
     // create the socket
@@ -205,7 +205,7 @@ void mgpu_databus_free(Mgpu_Databus *databus) {
         closeSocket(databus->clientSocket);
         closeSocket(databus->serverSocket);
         quitSocketHandling();
-        databus->allocator->FreeFn(databus);
+        databus->allocator->FastMemFreeFn(databus);
     }
 }
 

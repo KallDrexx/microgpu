@@ -32,4 +32,9 @@ public class DrawTriangleOperation<TColor> : IFireAndForgetOperation where TColo
 
         return 14 + Color.WriteBytes(bytes[14..]);
     }
+
+    public int GetSize()
+    {
+        return 14 + Color.GetSize();
+    }
 }

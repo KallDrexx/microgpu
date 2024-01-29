@@ -21,4 +21,9 @@ public class DefineTextureOperation<TColor> : IFireAndForgetOperation
 
         return 6 + TransparentColor.WriteBytes(bytes[6..]);
     }
+
+    public int GetSize()
+    {
+        return 6 + TransparentColor.GetSize();
+    }
 }
