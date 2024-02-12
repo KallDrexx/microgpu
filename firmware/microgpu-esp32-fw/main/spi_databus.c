@@ -74,7 +74,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     ESP_ERROR_CHECK(spi_slave_initialize(options->spiHost, &busConfig, &slaveConfig, SPI_DMA_CH_AUTO));
 
-    Mgpu_Databus *databus = allocator->AllocateFn(sizeof(Mgpu_Databus));
+    Mgpu_Databus *databus = allocator->SlowMemAllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
     databus->spiHost = options->spiHost;
 
@@ -83,7 +83,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus) {
-        databus->allocator->FreeFn(databus);
+        databus->allocator->SlowMemFreeFn(databus);
     }
 }
 
