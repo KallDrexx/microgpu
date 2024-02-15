@@ -9,6 +9,8 @@ namespace Microgpu.Common;
 
 public class Gpu
 {
+    public const ushort ValidApiVersionId = 1;
+    
     private readonly IGpuCommunication _communication;
     private byte[] _readBuffer = new byte[1024];
     private byte[] _writeBuffer = new byte[1024];
@@ -38,7 +40,7 @@ public class Gpu
     ///     The resolution of the frame buffer in pixels. This will be null if the GPU is not initialized.
     /// </summary>
     public Vector2? FrameBufferResolution { get; private set; }
-
+    
     /// <summary>
     ///     Creates a new GPU instance and initializes it
     /// </summary>
@@ -120,6 +122,14 @@ public class Gpu
         {
             _writeBuffer = new byte[status.MaxBytes];
             _readBuffer = new byte[status.MaxBytes];
+        }
+        
+        if (status.ApiVersionId != ValidApiVersionId)
+        {
+            var message = $"The GPU reported an API version is {status.ApiVersionId} but this " +
+                          $"library only supports version {ValidApiVersionId}";
+            
+            throw new InvalidOperationException(message);
         }
     }
 }

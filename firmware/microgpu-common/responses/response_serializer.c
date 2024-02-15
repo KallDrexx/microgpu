@@ -3,7 +3,7 @@
 
 int serialize_status(Mgpu_StatusResponse *status, uint8_t buffer[], size_t bufferSize) {
     assert(status != NULL);
-    size_t requiredSize = 13;
+    size_t requiredSize = 15;
 
     if (bufferSize < requiredSize) {
         return MGPU_ERROR_BUFFER_TOO_SMALL;
@@ -22,6 +22,8 @@ int serialize_status(Mgpu_StatusResponse *status, uint8_t buffer[], size_t buffe
     buffer[10] = status->colorMode;
     buffer[11] = status->opByteLimit >> 8;
     buffer[12] = status->opByteLimit & 0xFF;
+    buffer[13] = status->apiVersionId >> 8;
+    buffer[14] = status->apiVersionId & 0xFF;
 
     return (int) requiredSize;
 }

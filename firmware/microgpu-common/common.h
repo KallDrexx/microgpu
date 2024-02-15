@@ -19,3 +19,5 @@
 #include <stdlib.h>
 
 #endif
+
+#define MGPU_API_VERSION 1

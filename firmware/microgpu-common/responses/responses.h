@@ -23,6 +23,9 @@ typedef struct {
 
     /* The maximum number of bytes that the gpu supports for each operation */
     uint16_t opByteLimit;
+
+    /* Identifies the version of the GPU's API */
+    uint16_t apiVersionId;
 } Mgpu_StatusResponse;
 
 /*

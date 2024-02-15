@@ -1,3 +1,4 @@
+#include <microgpu-common/common.h>
 #include "status.h"
 
 void mgpu_exec_status_op(Mgpu_Display *display, Mgpu_TextureManager *textureManager, Mgpu_Databus *databus) {
@@ -13,6 +14,7 @@ void mgpu_exec_status_op(Mgpu_Display *display, Mgpu_TextureManager *textureMana
             .displayHeight = height,
             .displayWidth = width,
             .opByteLimit = mgpu_databus_get_max_size(databus),
+            .apiVersionId = MGPU_API_VERSION,
     };
 
     // We know we aren't initialized if we don't have a frame buffer yet

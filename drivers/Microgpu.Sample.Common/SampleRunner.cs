@@ -33,6 +33,8 @@ public class SampleRunner
 
     public async Task Run()
     {
+        Console.WriteLine($"Expecting API version: {Gpu.ValidApiVersionId}");
+        Console.WriteLine();
         Console.WriteLine("GPU status:");
         Console.WriteLine($"Is initialized: {_gpu.IsInitialized}");
         Console.WriteLine($"Display resolution: {_gpu.DisplayResolution.X} x {_gpu.DisplayResolution.Y}");

@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <microgpu-common/common.h>
+
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "microgpu-common/operations/execution//drawing/triangle.h"
@@ -102,17 +104,19 @@ bool define_display_framebuffer(uint8_t scale) {
 }
 
 bool show_boot_screen(void) {
-    ESP_LOGI(LOG_TAG, "Waiting for initialization operation");
     if (!define_display_framebuffer(1)) {
         return false;
     }
 
     char versionString[200] = {0};
+    char apiString[200] = {0};
     snprintf(versionString, sizeof(versionString), "Firmware version: %s", MGPU_VERSION);
+    sniprintf(apiString, sizeof(apiString), "API version: %u", MGPU_API_VERSION);
 
     Mgpu_Color white = mgpu_color_from_rgb888(255, 255, 255);
     mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, "Microgpu", white, 10, 10);
     mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, versionString, white, 10, 25);
+    mgpu_font_draw(textureManager, Mgpu_Font_Font8x12, 0, apiString, white, 10, 40);
 
     uint16_t width, height;
     mgpu_display_get_dimensions(display, &width, &height);
@@ -137,6 +141,8 @@ bool show_boot_screen(void) {
 }
 
 bool wait_for_initialization(void) {
+    ESP_LOGI(LOG_TAG, "Waiting for initialization operation");
+    ESP_LOGI(LOG_TAG, "API version: %u", MGPU_API_VERSION);
     if (!show_boot_screen()) {
         return false;
     }
