@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microgpu.Common;
 using Microgpu.Common.Operations;
+using Microgpu.Sample.Common.Samples;
 
 namespace Microgpu.Sample.Common;
 
@@ -13,6 +14,7 @@ public class SampleRunner
     private readonly TimeSpan _minTimeBetweenFrames;
     private readonly BouncingTexture _bouncingTexture1;
     private readonly BouncingTexture _bouncingTexture2;
+    private readonly FramerateDisplay _framerateDisplay = new();
     private readonly TextureManager _textureManager;
     private int _frameTimeIndex;
     
@@ -78,6 +80,7 @@ public class SampleRunner
         _bouncingTexture1.RunNextFrame(frameTime, _gpuBatch);
         Octahedron.RunNextFrame(frameTime, _gpuBatch);
         _bouncingTexture2.RunNextFrame(frameTime, _gpuBatch);
+        _framerateDisplay.RunNextFrame(frameTime, _gpuBatch);
 
         _gpuBatch.AddOperation(new PresentFramebufferOperation());
         await _gpu.SendFireAndForgetAsync(_gpuBatch);

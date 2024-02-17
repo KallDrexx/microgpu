@@ -8,6 +8,7 @@ using Meadow.Units;
 using Microgpu.Common;
 using Microgpu.Common.Comms;
 using Microgpu.Sample.Common;
+using Microgpu.Sample.Common.Samples;
 
 namespace Microgpu.Meadow.Scratchpad
 {

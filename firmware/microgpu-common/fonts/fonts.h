@@ -5,8 +5,14 @@
 
 typedef enum {
     Mgpu_Font_Unspecified = 0,
+    // Mgpu_Font_Font4x6 = 1,
+    // Mgpu_Font_Font4x8 = 2,
+    // Mgpu_Font_Font6x8 = 3,
+    // Mgpu_Font_Font8x8 = 4,
     Mgpu_Font_Font8x12 = 5,
+    // Mgpu_Font_Font8x16 = 6,
     Mgpu_Font_Font12x16 = 7,
+    // Mgpu_Font_Font12x20 = 8,
 } Mgpu_FontId;
 
 /*

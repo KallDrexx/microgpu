@@ -1,7 +1,7 @@
 ﻿using Microgpu.Common;
 using Microgpu.Common.Operations;
 
-namespace Microgpu.Sample.Common;
+namespace Microgpu.Sample.Common.Samples;
 
 public class Octahedron
 {
