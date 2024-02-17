@@ -4,6 +4,7 @@
 #include "microgpu-common/messages.h"
 #include "fonts.h"
 #include "font_8x12.h"
+#include "font_12x16.h"
 
 void mgpu_font_draw(Mgpu_TextureManager *textureManager,
                     Mgpu_FontId fontId,
@@ -23,7 +24,8 @@ void mgpu_font_draw(Mgpu_TextureManager *textureManager,
         char *message = mgpu_message_get_pointer();
         assert(message != NULL);
 
-        snprintf(message, MESSAGE_MAX_LEN, "Font draw failed: destination texture id %u does not exist", destinationTextureId);
+        snprintf(message, MESSAGE_MAX_LEN, "Font draw failed: destination texture id %u does not exist",
+                 destinationTextureId);
         return;
     }
 
@@ -34,6 +36,10 @@ void mgpu_font_draw(Mgpu_TextureManager *textureManager,
     switch (fontId) {
         case Mgpu_Font_Font8x12:
             mgpu_font_8x12_write(texture, text, color, startX, startY);
+            break;
+
+        case Mgpu_Font_Font12x16:
+            mgpu_font_12x16_write(texture, text, color, startX, startY);
             break;
 
         default: {

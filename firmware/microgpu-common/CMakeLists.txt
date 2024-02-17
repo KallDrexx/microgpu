@@ -2,6 +2,7 @@ set(MICROGPU_COMMON_SOURCES
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/alloc.h
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/messages.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/font_8x12.c
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/font_12x16.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/fonts.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/batch.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/drawing/rectangle.c
