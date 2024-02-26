@@ -14,6 +14,9 @@ menu "Microgpu Config"
         config MICROGPU_BOARD_ESP32S3_10A
             bool "ESP32-S3 board 1.0a"
 
+        config MICROGPU_ALL_IN_ONE_BOARD
+            bool "ESP32-S3 all-in-one with rgb-lcd"
+
     endchoice
 
     choice MICROGPU_DATABUS_TYPE
@@ -35,6 +38,9 @@ menu "Microgpu Config"
 
         config MICROGPU_DISPLAY_I80_8BIT_ILI9341
             bool "8-Bit parallel 8088 Ili9341"
+
+        config MICROGPU_DISPLAY_16BIT_RGB_LCD
+            bool "16-Bit RGB LCD"
     endchoice
 
     menu "SPI Databus Pins"
@@ -43,6 +49,7 @@ menu "Microgpu Config"
         config MICROGPU_DATABUS_SPI_SCK
             int "SCK pin #"
             default 16 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 13 if MICROGPU_ALL_IN_ONE_BOARD
             default 16
             help
                 GPIO pin for the SPI SCK line
@@ -50,6 +57,7 @@ menu "Microgpu Config"
         config MICROGPU_DATABUS_SPI_COPI
             int "COPI pin #"
             default 14 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 12 if MICROGPU_ALL_IN_ONE_BOARD
             default 14
             help
                 GPIO pin number for the SPI COPI line
@@ -57,6 +65,7 @@ menu "Microgpu Config"
         config MICROGPU_DATABUS_SPI_CIPO
             int "CIPO pin #"
             default 15 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 11 if MICROGPU_ALL_IN_ONE_BOARD
             default 15
             help
                 GPIO pin number for the SPI CIPO line
@@ -64,6 +73,7 @@ menu "Microgpu Config"
         config MICROGPU_DATABUS_SPI_CS
             int "SPI chip select pin #"
             default 17 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 19 if MICROGPU_ALL_IN_ONE_BOARD
             default 17
             help
                 GPIO pin number for the SPI chip select line
@@ -71,6 +81,7 @@ menu "Microgpu Config"
         config MICROGPU_DATABUS_SPI_HANDSHAKE
             int "SPI ready / handshake pin #"
             default 18 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
+            default 18 if MICROGPU_ALL_IN_ONE_BOARD
             default 18
             help
                 GPIO pin number used to signal that the Microgpu device is
@@ -91,85 +102,177 @@ menu "Microgpu Config"
 
         config MICROGPU_DISPLAY_HAS_RD_PIN
             bool "Has RD pin"
+            depends on MICROGPU_DISPLAY_I80_8BIT_ILI9341
             default true if MICROGPU_BOARD_ESP32S3_10A && MICROGPU_DISPLAY_I80_8BIT_ILI9341
             default false
 
         config MICROGPU_DISPLAY_RESET_PIN
             int "Reset pin #"
+            depends on MICROGPU_DISPLAY_I80_8BIT_ILI9341
             default 2 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 10 if MICROGPU_BOARD_ESP32S3_10A
             default 2
 
         config MICROGPU_DISPLAY_CS_PIN
             int "Display chip select pin #"
+            depends on MICROGPU_DISPLAY_I80_8BIT_ILI9341
             default 3 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 9 if MICROGPU_BOARD_ESP32S3_10A
             default 3
 
         config MICROGPU_DISPLAY_DC_PIN
             int "Data/Command pin #"
+            depends on MICROGPU_DISPLAY_I80_8BIT_ILI9341
             default 4 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 3 if MICROGPU_BOARD_ESP32S3_10A
             default 4
 
         config MICROGPU_DISPLAY_WR_PIN
             int "Write clock pin #"
+            depends on MICROGPU_DISPLAY_I80_8BIT_ILI9341
             default 5 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 18 if MICROGPU_BOARD_ESP32S3_10A
             default 5
 
         config MICROGPU_DISPLAY_RD_PIN
             int "Read clock pin #"
+            depends on MICROGPU_DISPLAY_I80_8BIT_ILI9341
             depends on MICROGPU_DISPLAY_HAS_RD_PIN
             default 8 if MICROGPU_BOARD_ESP32S3_10A
             default 14
+
+        config MICROGPU_DISPLAY_DE
+            int "DE pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 41 if MICROGPU_ALL_IN_ONE_BOARD
+            default 41
+
+        config MICROGPU_DISPLAY_VSYNC
+            int "VSync pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 40 if MICROGPU_ALL_IN_ONE_BOARD
+            default 40
+
+        config MICROGPU_DISPLAY_HSYNC
+            int "HSync pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 39 if MICROGPU_ALL_IN_ONE_BOARD
+            default 39
+
+        config MICROGPU_DISPLAY_PIXEL_CLOCK
+            int "Pixel clock pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 42 if MICROGPU_ALL_IN_ONE_BOARD
+            default 42
+
+        config MICROGPU_DISPLAY_BACKLIGHT
+            int "Backlight pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 2 if MICROGPU_ALL_IN_ONE_BOARD
+            default 2
 
         config MICROGPU_DISPLAY_DATA_0
             int "Data 0 pin #"
             default 6 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 12 if MICROGPU_BOARD_ESP32S3_10A
+            default 15 if MICROGPU_ALL_IN_ONE_BOARD
             default 6
 
         config MICROGPU_DISPLAY_DATA_1
             int "Data 1 pin #"
             default 7 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 11 if MICROGPU_BOARD_ESP32S3_10A
+            default 7 if MICROGPU_ALL_IN_ONE_BOARD
             default 7
 
         config MICROGPU_DISPLAY_DATA_2
             int "Data 2 pin #"
             default 8 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 45 if MICROGPU_BOARD_ESP32S3_10A
+            default 6 if MICROGPU_ALL_IN_ONE_BOARD
             default 8
 
         config MICROGPU_DISPLAY_DATA_3
             int "Data 3 pin #"
             default 9 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 48 if MICROGPU_BOARD_ESP32S3_10A
+            default 5 if MICROGPU_ALL_IN_ONE_BOARD
             default 9
 
         config MICROGPU_DISPLAY_DATA_4
             int "Data 4 pin #"
             default 10 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 47 if MICROGPU_BOARD_ESP32S3_10A
+            default 4 if MICROGPU_ALL_IN_ONE_BOARD
             default 10
 
         config MICROGPU_DISPLAY_DATA_5
             int "Data 5 pin #"
             default 11 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 21 if MICROGPU_BOARD_ESP32S3_10A
+            default 9 if MICROGPU_ALL_IN_ONE_BOARD
             default 11
 
         config MICROGPU_DISPLAY_DATA_6
             int "Data 6 pin #"
             default 12 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 14 if MICROGPU_BOARD_ESP32S3_10A
+            default 46 if MICROGPU_ALL_IN_ONE_BOARD
             default 12
 
         config MICROGPU_DISPLAY_DATA_7
             int "Data 7 pin #"
             default 13 if MICROGPU_BOARD_ESP32S3_DEVKIT_MGPU_PROTO
             default 13 if MICROGPU_BOARD_ESP32S3_10A
+            default 3 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_8
+            int "Data 8 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 8 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_9
+            int "Data 9 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 16 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_10
+            int "Data 10 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 1 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_11
+            int "Data 11 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 14 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_12
+            int "Data 12 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 21 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_13
+            int "Data 13 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 47 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_14
+            int "Data 14 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 48 if MICROGPU_ALL_IN_ONE_BOARD
+            default 13
+
+        config MICROGPU_DISPLAY_DATA_15
+            int "Data 15 pin #"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 45 if MICROGPU_ALL_IN_ONE_BOARD
             default 13
 
     endmenu

@@ -13,14 +13,21 @@
 #include "microgpu-common/fonts/fonts.h"
 #include "microgpu-common/operations/operation_execution.h"
 #include "common.h"
-#include "displays/i80_display.h"
 
 #if defined(CONFIG_MICROGPU_DATABUS_SPI)
 #include "spi_databus.h"
 #elif defined(CONFIG_MICROGPU_DATABUS_BENCHMARK)
 #include "benchmark_databus.h"
-#elif
+#else
 #error "No databus defined"
+#endif
+
+#if defined(CONFIG_MICROGPU_DISPLAY_16BIT_RGB_LCD)
+#include "displays/rgb_lcd_display.h"
+#elif defined(CONFIG_MICROGPU_DISPLAY_I80_8BIT_ILI9341)
+#include "displays/i80_display.h"
+#else
+#error "No display defined"
 #endif
 
 Mgpu_Display *display;
@@ -43,22 +50,7 @@ static const Mgpu_Allocator standardAllocator = {
 
 bool setup(void) {
     ESP_LOGI(LOG_TAG, "Initializing display");
-
-    // TODO: Make most of this settable in config options
-    displayOptions.pixelWidth = CONFIG_MICROGPU_DISPLAY_WIDTH;
-    displayOptions.pixelHeight = CONFIG_MICROGPU_DISPLAY_HEIGHT;
-    displayOptions.controlPins.reset = CONFIG_MICROGPU_DISPLAY_RESET_PIN;
-    displayOptions.controlPins.chipSelect = CONFIG_MICROGPU_DISPLAY_CS_PIN;
-    displayOptions.controlPins.dataCommand = CONFIG_MICROGPU_DISPLAY_DC_PIN;
-    displayOptions.controlPins.writeClock = CONFIG_MICROGPU_DISPLAY_WR_PIN;
-    displayOptions.dataPins.data0 = CONFIG_MICROGPU_DISPLAY_DATA_0;
-    displayOptions.dataPins.data1 = CONFIG_MICROGPU_DISPLAY_DATA_1;
-    displayOptions.dataPins.data2 = CONFIG_MICROGPU_DISPLAY_DATA_2;
-    displayOptions.dataPins.data3 = CONFIG_MICROGPU_DISPLAY_DATA_3;
-    displayOptions.dataPins.data4 = CONFIG_MICROGPU_DISPLAY_DATA_4;
-    displayOptions.dataPins.data5 = CONFIG_MICROGPU_DISPLAY_DATA_5;
-    displayOptions.dataPins.data6 = CONFIG_MICROGPU_DISPLAY_DATA_6;
-    displayOptions.dataPins.data7 = CONFIG_MICROGPU_DISPLAY_DATA_7;
+    init_display_options(&displayOptions);
 
     display = mgpu_display_new(&standardAllocator, &displayOptions);
     if (display == NULL) {

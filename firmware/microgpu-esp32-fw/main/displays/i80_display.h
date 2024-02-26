@@ -37,3 +37,5 @@ struct Mgpu_Display {
     uint16_t *buffer2;
     int linesPerBuffer;
 };
+
+void init_display_options(Mgpu_DisplayOptions *displayOptions);

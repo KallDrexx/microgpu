@@ -217,3 +217,21 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureMana
     }
 }
 
+void init_display_options(Mgpu_DisplayOptions *displayOptions) {
+    assert(displayOptions != NULL);
+
+    displayOptions->pixelWidth = CONFIG_MICROGPU_DISPLAY_WIDTH;
+    displayOptions->pixelHeight = CONFIG_MICROGPU_DISPLAY_HEIGHT;
+    displayOptions->controlPins.reset = CONFIG_MICROGPU_DISPLAY_RESET_PIN;
+    displayOptions->controlPins.chipSelect = CONFIG_MICROGPU_DISPLAY_CS_PIN;
+    displayOptions->controlPins.dataCommand = CONFIG_MICROGPU_DISPLAY_DC_PIN;
+    displayOptions->controlPins.writeClock = CONFIG_MICROGPU_DISPLAY_WR_PIN;
+    displayOptions->dataPins.data0 = CONFIG_MICROGPU_DISPLAY_DATA_0;
+    displayOptions->dataPins.data1 = CONFIG_MICROGPU_DISPLAY_DATA_1;
+    displayOptions->dataPins.data2 = CONFIG_MICROGPU_DISPLAY_DATA_2;
+    displayOptions->dataPins.data3 = CONFIG_MICROGPU_DISPLAY_DATA_3;
+    displayOptions->dataPins.data4 = CONFIG_MICROGPU_DISPLAY_DATA_4;
+    displayOptions->dataPins.data5 = CONFIG_MICROGPU_DISPLAY_DATA_5;
+    displayOptions->dataPins.data6 = CONFIG_MICROGPU_DISPLAY_DATA_6;
+    displayOptions->dataPins.data7 = CONFIG_MICROGPU_DISPLAY_DATA_7;
+}
