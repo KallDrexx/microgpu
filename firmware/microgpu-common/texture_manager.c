@@ -159,8 +159,6 @@ Mgpu_Texture *mgpu_texture_get(Mgpu_TextureManager *textureManager, uint8_t id) 
 
 void mgpu_texture_swap(Mgpu_TextureManager *textureManager, uint8_t firstId, uint8_t secondId) {
     assert(textureManager != NULL);
-    assert(firstId <= NUM_TEXTURES);
-    assert(secondId <= NUM_TEXTURES);
 
     Mgpu_Texture *temp = textureManager->textures[firstId];
     textureManager->textures[firstId] = textureManager->textures[secondId];
