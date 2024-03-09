@@ -1,3 +1,4 @@
+#include <string.h>
 #include <esp_lcd_panel_rgb.h>
 #include <esp_log.h>
 #include <esp_lcd_panel_ops.h>
@@ -5,6 +6,27 @@
 #include "microgpu-common/display.h"
 #include "rgb_lcd_display.h"
 #include "common.h"
+
+static Mgpu_Texture *activeTexture = NULL;
+static uint8_t swapTextureId = 0;
+
+static bool on_bounce_buffer_empty(esp_lcd_panel_handle_t handle,
+                            void *bounceBuffer,
+                            int nextPixelIndex,
+                            int bufferByteLength,
+                            void *context) {
+    if (activeTexture == NULL) {
+        // We don't have a texture to draw yet, so zero out the buffer
+        memset(bounceBuffer, 0, bufferByteLength);
+        return false;
+    }
+
+    return false;
+}
+
+static const esp_lcd_rgb_panel_event_callbacks_t callbacks = {
+        .on_bounce_empty = on_bounce_buffer_empty,
+};
 
 void log_display_options(const Mgpu_DisplayOptions *options) {
     ESP_LOGI(LOG_TAG, "Microgpu RGB LCD display options:");
@@ -38,7 +60,7 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
     esp_lcd_rgb_panel_config_t panel_config = {
             .data_width = 16,
             .psram_trans_align = 64,
-            .num_fbs = 1,
+            .num_fbs = 0,
             .bounce_buffer_size_px = 8 * options->pixelWidth,
             .clk_src = LCD_CLK_SRC_DEFAULT,
             .disp_gpio_num = -1,
@@ -86,13 +108,15 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
             .mode = GPIO_MODE_OUTPUT,
             .pin_bit_mask = 1ULL << options->controlPins.backlight,
     };
+
     ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
 
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(&panel_config, handle));
     ESP_ERROR_CHECK(esp_lcd_panel_reset(*handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(*handle));
     ESP_ERROR_CHECK(gpio_set_level(options->controlPins.backlight, 1));
-//    esp_lcd_panel_invert_color(*handle, true);
+
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(*handle, &callbacks, NULL));
 }
 
 Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options) {
@@ -137,6 +161,45 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureMana
 
     Mgpu_Texture *frameBuffer = mgpu_texture_get(textureManager, 0);
     assert(frameBuffer != NULL);
+
+    // We need to hold onto the frame buffer to draw every LCD refresh. Therefore, we need to
+    // swap the texture with the previously used frame buffer. That allows new draw calls to
+    // be performed on a buffer that isn't actively being read by the display.
+    if (activeTexture == NULL) {
+        // TODO: Handle framebuffer size change
+        // Find the next undefined texture starting from texture 255. Textures 231-255 are not allowed
+        // to be defined by gpu drivers, but we don't know which ids are used by other firmware operations.
+        swapTextureId = NUM_TEXTURES;
+        while(swapTextureId > 230) {
+            activeTexture = mgpu_texture_get(textureManager, swapTextureId);
+            if (activeTexture != NULL) {
+                break;
+            }
+
+            swapTextureId--;
+        }
+
+        assert(swapTextureId > 230 && "No available texture buffer was available");
+
+        Mgpu_TextureDefinition info = {
+            .id = swapTextureId,
+            .width = frameBuffer->width,
+            .height = frameBuffer->height,
+            .flags = 0,
+            .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
+        };
+
+        if (!mgpu_texture_define(textureManager, &info, frameBuffer->scale)) {
+            assert(false && "LCD's double buffer could not be created");
+        }
+
+        activeTexture = mgpu_texture_get(textureManager, swapTextureId);
+    }
+
+    mgpu_texture_swap(textureManager, 0, swapTextureId);
+
+    Mgpu_Texture *temp = activeTexture;
+
 
     assert(frameBuffer->scale == 1); // TODO: Add support for scaling
     esp_lcd_panel_draw_bitmap(display->panel, 0, 0, display->pixelWidth, display->pixelHeight, frameBuffer->pixels);

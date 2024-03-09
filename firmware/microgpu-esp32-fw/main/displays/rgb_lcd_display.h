@@ -1,6 +1,7 @@
 #pragma once
 #include <esp_lcd_types.h>
 #include "microgpu-common/alloc.h"
+#include "microgpu-common/texture_manager.h"
 
 typedef struct {
     int data0, data1, data2, data3, data4, data5, data6, data7,
@@ -21,6 +22,8 @@ struct Mgpu_Display {
     const Mgpu_Allocator *allocator;
     esp_lcd_panel_handle_t panel;
     uint16_t pixelWidth, pixelHeight;
+    uint8_t swapTextureId;
+    Mgpu_Texture *activeRenderingFrameBuffer;
 };
 
 void init_display_options(Mgpu_DisplayOptions *options);
