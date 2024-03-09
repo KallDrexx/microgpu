@@ -1,10 +1,60 @@
+#include <string.h>
 #include <esp_lcd_panel_rgb.h>
 #include <esp_log.h>
 #include <esp_lcd_panel_ops.h>
 #include <driver/gpio.h>
+#include "microgpu-common/common.h"
 #include "microgpu-common/display.h"
+#include "microgpu-common/messages.h"
 #include "rgb_lcd_display.h"
 #include "common.h"
+
+static Mgpu_Texture *renderingFramebuffer = NULL;
+static uint8_t swapTextureId = 0;
+
+static bool on_bounce_buffer_empty(esp_lcd_panel_handle_t handle,
+                            void *bounceBuffer,
+                            int nextPixelIndex,
+                            int bufferByteLength,
+                            void *context) {
+    if (renderingFramebuffer == NULL) {
+        // We don't have a texture to draw yet, so zero out the buffer
+        memset(bounceBuffer, 0, bufferByteLength);
+        return false;
+    }
+
+    // TODO: Maybe this should have a semaphore around it? I guess it's theoretically
+    // possible that this runs on cpu2 at the same time a swap occurs, meaning the
+    // frame buffer we think we are reading from is now the frame buffer that the next
+    // frame will be written to.
+    uint16_t width = renderingFramebuffer->width;
+    uint16_t height = renderingFramebuffer->height;
+    uint8_t scale = renderingFramebuffer->scale;
+    size_t pixelIndex = nextPixelIndex / scale;
+    Mgpu_Color *pixel = &renderingFramebuffer->pixels[pixelIndex];
+    size_t numPixelsToCopy = bufferByteLength / sizeof(Mgpu_Color) / scale;
+    size_t pixelsLeft = width * height - 90;
+    numPixelsToCopy = min(numPixelsToCopy, pixelsLeft);
+
+    if (scale == 1) {
+        memcpy(bounceBuffer, pixel, numPixelsToCopy * sizeof(Mgpu_Color));
+    } else {
+        Mgpu_Color *buffer = (Mgpu_Color *) bounceBuffer;
+        for (int x = 0; x < numPixelsToCopy; x++) {
+            *buffer = *pixel;
+            buffer++;
+            if (x % scale == 0) {
+                pixel++;
+            }
+        }
+    }
+
+    return true;
+}
+
+static const esp_lcd_rgb_panel_event_callbacks_t callbacks = {
+        .on_bounce_empty = on_bounce_buffer_empty,
+};
 
 void log_display_options(const Mgpu_DisplayOptions *options) {
     ESP_LOGI(LOG_TAG, "Microgpu RGB LCD display options:");
@@ -38,7 +88,7 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
     esp_lcd_rgb_panel_config_t panel_config = {
             .data_width = 16,
             .psram_trans_align = 64,
-            .num_fbs = 1,
+            .num_fbs = 0,
             .bounce_buffer_size_px = 8 * options->pixelWidth,
             .clk_src = LCD_CLK_SRC_DEFAULT,
             .disp_gpio_num = -1,
@@ -77,20 +127,23 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
                     .vsync_pulse_width = 1,
                     .flags.pclk_active_neg = true,
             },
-            .flags.fb_in_psram = true,
+            .flags.fb_in_psram = false,
+            .flags.no_fb = true,
     };
 
     gpio_config_t bk_gpio_config = {
             .mode = GPIO_MODE_OUTPUT,
             .pin_bit_mask = 1ULL << options->controlPins.backlight,
     };
+
     ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
 
     ESP_ERROR_CHECK(esp_lcd_new_rgb_panel(&panel_config, handle));
     ESP_ERROR_CHECK(esp_lcd_panel_reset(*handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(*handle));
     ESP_ERROR_CHECK(gpio_set_level(options->controlPins.backlight, 1));
-//    esp_lcd_panel_invert_color(*handle, true);
+
+    ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(*handle, &callbacks, NULL));
 }
 
 Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_DisplayOptions *options) {
@@ -115,6 +168,9 @@ Mgpu_Display *mgpu_display_new(const Mgpu_Allocator *allocator, const Mgpu_Displ
 }
 
 void mgpu_display_free(Mgpu_Display *display) {
+    // Todo: We need to free the rendering frame buffer, but we don't have a pointer
+    // to the text manager here. This isn't a big deal because displays are rarely freed
+    // since they usually last the lifetime of the program, but it would still be good.
     if (display) {
         display->allocator->FastMemFreeFn(display);
     }
@@ -133,11 +189,51 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureMana
     assert(display != NULL);
     assert(textureManager != NULL);
 
-    Mgpu_Texture *frameBuffer = mgpu_texture_get(textureManager, 0);
-    assert(frameBuffer != NULL);
+    Mgpu_Texture *framebufferToPresent = mgpu_texture_get(textureManager, 0);
+    assert(framebufferToPresent != NULL);
 
-    assert(frameBuffer->scale == 1); // TODO: Add support for scaling
-    esp_lcd_panel_draw_bitmap(display->panel, 0, 0, display->pixelWidth, display->pixelHeight, frameBuffer->pixels);
+    // We need to hold onto the frame buffer to draw every LCD refresh. Therefore, we need to
+    // swap the texture with the previously used frame buffer. That allows new draw calls to
+    // be performed on a buffer that isn't actively being read by the display.
+    bool createRenderingBuffer = renderingFramebuffer == NULL ||
+                                 renderingFramebuffer->width != framebufferToPresent->width ||
+                                 renderingFramebuffer->height != framebufferToPresent->height ||
+                                 renderingFramebuffer->scale != framebufferToPresent->scale;
+
+    if (createRenderingBuffer) {
+        if (swapTextureId == 0) {
+            // Find the next undefined texture starting from texture 255. Textures 231-255 are not allowed
+            // to be defined by gpu drivers, but we don't know which ids are used by other firmware operations.
+            swapTextureId = NUM_TEXTURES - 1;
+            while (swapTextureId > 230) {
+                renderingFramebuffer = mgpu_texture_get(textureManager, swapTextureId);
+                if (renderingFramebuffer == NULL) {
+                    break;
+                }
+
+                swapTextureId--;
+            }
+
+            assert(swapTextureId > 230 && "No available texture buffer was available");
+        }
+
+        Mgpu_TextureDefinition info = {
+            .id = swapTextureId,
+                .width = framebufferToPresent->width,
+                .height = framebufferToPresent->height,
+            .flags = 0,
+            .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
+        };
+
+        if (!mgpu_texture_define(textureManager, &info, framebufferToPresent->scale)) {
+            char *message = mgpu_message_get_pointer();
+            ESP_LOGE(LOG_TAG, "Failed to create rendering buffer: %s", message);
+            assert(false && "LCD's double buffer could not be created");
+        }
+    }
+
+    mgpu_texture_swap(textureManager, 0, swapTextureId);
+    renderingFramebuffer = mgpu_texture_get(textureManager, swapTextureId);
 }
 
 void init_display_options(Mgpu_DisplayOptions *displayOptions) {

@@ -6,8 +6,6 @@
 #include "messages.h"
 #include "texture_manager.h"
 
-#define NUM_TEXTURES 255
-
 struct Mgpu_TextureManager {
     const Mgpu_Allocator *allocator;
     Mgpu_Texture **textures;
@@ -157,4 +155,13 @@ Mgpu_Texture *mgpu_texture_get(Mgpu_TextureManager *textureManager, uint8_t id) 
     }
 
     return textureManager->textures[id];
+}
+
+void mgpu_texture_swap(Mgpu_TextureManager *textureManager, uint8_t firstId, uint8_t secondId) {
+    assert(textureManager != NULL);
+
+    Mgpu_Texture *temp = textureManager->textures[firstId];
+    textureManager->textures[firstId] = textureManager->textures[secondId];
+    textureManager->textures[secondId] = temp;
+
 }

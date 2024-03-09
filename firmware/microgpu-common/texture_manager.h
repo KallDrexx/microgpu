@@ -5,6 +5,8 @@
 #include "alloc.h"
 #include "microgpu-common/colors/color.h"
 
+#define NUM_TEXTURES 255
+
 typedef enum {
     /*
      * If set, then the texture should be allocated via the slow ram allocator. Otherwise, the texture should be
@@ -63,3 +65,8 @@ bool mgpu_texture_define(Mgpu_TextureManager *textureManager, Mgpu_TextureDefini
  * Retrieves the texture with the specified id.
  */
 Mgpu_Texture *mgpu_texture_get(Mgpu_TextureManager *textureManager, uint8_t id);
+
+/*
+ * Swaps two textures so their ids are reversed.
+ */
+void mgpu_texture_swap(Mgpu_TextureManager *textureManager, uint8_t firstId, uint8_t secondId);
