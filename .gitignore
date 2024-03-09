@@ -24,3 +24,4 @@ build/
 wifi.config.yaml
 sdkconfig*
 !sdkconfig.rgb_lcd_7_in_all_in_one
+!sdkconfig.rgb_lcd_43_in_all_in_one
