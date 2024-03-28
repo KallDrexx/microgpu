@@ -17,7 +17,6 @@ static bool on_bounce_buffer_empty(esp_lcd_panel_handle_t handle,
                             int nextPixelIndex,
                             int bufferByteLength,
                             void *context) {
-    ESP_LOGI(LOG_TAG, "BB empty");
     if (renderingFramebuffer == NULL) {
         // We don't have a texture to draw yet, so zero out the buffer
         memset(bounceBuffer, 0, bufferByteLength);
