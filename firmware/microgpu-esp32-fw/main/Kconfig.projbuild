@@ -141,6 +141,11 @@ menu "Microgpu Config"
             default 8 if MICROGPU_BOARD_ESP32S3_10A
             default 14
 
+        config MICROGPU_DISPLAY_PCLK_MHZ
+            int "Pixel Clock Mhz"
+            depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
+            default 12
+
         config MICROGPU_DISPLAY_DE
             int "DE pin #"
             depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
@@ -159,7 +164,7 @@ menu "Microgpu Config"
             default 39 if MICROGPU_ALL_IN_ONE_BOARD
             default 39
 
-        config MICROGPU_DISPLAY_PIXEL_CLOCK
+        config MICROGPU_DISPLAY_PIXEL_CLOCK_PIN
             int "Pixel clock pin #"
             depends on MICROGPU_DISPLAY_16BIT_RGB_LCD
             default 42 if MICROGPU_ALL_IN_ONE_BOARD

@@ -65,17 +65,19 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
                     options->dataPins.data15,
             },
             .timings = {
-                    .pclk_hz = (18 * 1000 * 1000),
+                    .pclk_hz = (CONFIG_MICROGPU_DISPLAY_PCLK_MHZ * 1000 * 1000),
                     .h_res = options->pixelWidth,
                     .v_res = options->pixelHeight,
                     // The following parameters should refer to LCD spec
-                    .hsync_back_porch = 40,
-                    .hsync_front_porch = 20,
-                    .hsync_pulse_width = 1,
+                    .hsync_back_porch = 8,
+                    .hsync_front_porch = 8,
+                    .hsync_pulse_width = 4,
                     .vsync_back_porch = 8,
-                    .vsync_front_porch = 4,
-                    .vsync_pulse_width = 1,
+                    .vsync_front_porch = 8,
+                    .vsync_pulse_width = 4,
                     .flags.pclk_active_neg = true,
+                    .flags.hsync_idle_low = 1,
+                    .flags.vsync_idle_low = 1,
             },
             .flags.fb_in_psram = true,
     };
@@ -148,7 +150,7 @@ void init_display_options(Mgpu_DisplayOptions *displayOptions) {
     displayOptions->controlPins.de = CONFIG_MICROGPU_DISPLAY_DE;
     displayOptions->controlPins.vsync = CONFIG_MICROGPU_DISPLAY_VSYNC;
     displayOptions->controlPins.hsync = CONFIG_MICROGPU_DISPLAY_HSYNC;
-    displayOptions->controlPins.pixelClock = CONFIG_MICROGPU_DISPLAY_PIXEL_CLOCK;
+    displayOptions->controlPins.pixelClock = CONFIG_MICROGPU_DISPLAY_PIXEL_CLOCK_PIN;
     displayOptions->controlPins.backlight = CONFIG_MICROGPU_DISPLAY_BACKLIGHT;
     displayOptions->dataPins.data0 = CONFIG_MICROGPU_DISPLAY_DATA_0;
     displayOptions->dataPins.data1 = CONFIG_MICROGPU_DISPLAY_DATA_1;
