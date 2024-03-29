@@ -21,7 +21,7 @@ namespace Microgpu.Meadow.Scratchpad
         public override async Task Initialize()
         {
             var reset = Device.CreateDigitalOutputPort(Device.Pins.D02, true);
-            var handshake = Device.CreateDigitalInputPort(Device.Pins.D03, ResistorMode.Disabled);
+            var handshake = Device.CreateDigitalInputPort(Device.Pins.D03, ResistorMode.InternalPullDown);
             var chipSelect = Device.CreateDigitalOutputPort(Device.Pins.D14, true);
 
             var config = new SpiClockConfiguration(
