@@ -51,8 +51,7 @@ public class Gpu
 
         await communication.ResetAsync();
         var gpu = new Gpu(communication);
-        var status = await gpu.SendResponsiveOperationAsync(new GetStatusOperation());
-        gpu.ApplyStatusResponse(status);
+        await GetAndApplyStatus(gpu);
 
         return gpu;
     }
@@ -65,8 +64,7 @@ public class Gpu
         if (IsInitialized) return;
 
         await SendFireAndForgetAsync(new InitializeOperation { FrameBufferScale = framebufferScale });
-        var status = await SendResponsiveOperationAsync(new GetStatusOperation());
-        ApplyStatusResponse(status);
+        await GetAndApplyStatus(this);
 
         if (!IsInitialized)
         {
@@ -92,8 +90,8 @@ public class Gpu
     /// <summary>
     ///     Sends an operation to the GPU and deserializes the response.
     /// </summary>
-    public async Task<TResponse> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
-        where TResponse : IResponse, new()
+    public async Task<TResponse?> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
+        where TResponse : class, IResponse, new()
     {
         operation = operation ?? throw new ArgumentNullException(nameof(operation));
 
@@ -101,10 +99,28 @@ public class Gpu
         await _communication.SendDataAsync(_writeBuffer.AsMemory(0, byteCount));
 
         byteCount = await _communication.ReadDataAsync(_readBuffer);
+        if (byteCount == 0)
+        {
+            return null;
+        }
+        
         var response = new TResponse();
         response.Deserialize(_readBuffer.AsSpan(0, byteCount));
 
         return response;
+    }
+
+    private static async Task GetAndApplyStatus(Gpu gpu)
+    {
+        var status = await gpu.SendResponsiveOperationAsync(new GetStatusOperation());
+        if (status != null)
+        {
+            gpu.ApplyStatusResponse(status);
+        }
+        else
+        {
+            Console.WriteLine("Warning: Status requested but no status was returned by the GPU");
+        }
     }
 
     private void ApplyStatusResponse(StatusResponse status)
