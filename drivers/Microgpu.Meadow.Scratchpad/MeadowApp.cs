@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Meadow;
 using Meadow.Devices;
-using Meadow.Foundation.Sensors.Accelerometers;
+using Meadow.Foundation.Sensors.Motion;
 using Meadow.Hardware;
 using Meadow.Units;
 using Microgpu.Common;

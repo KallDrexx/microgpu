@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Meadow.Foundation.Graphics.MicroGraphics" Version="1.10.0" />
+        <PackageReference Include="Meadow.Foundation.Graphics.MicroGraphics" Version="1.11.0" />
     </ItemGroup>
 
 </Project>
