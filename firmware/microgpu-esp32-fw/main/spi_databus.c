@@ -63,6 +63,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
             .intr_type = GPIO_INTR_DISABLE,
             .mode = GPIO_MODE_OUTPUT,
             .pin_bit_mask = (1 << options->handshakePin),
+            .pull_down_en = GPIO_PULLDOWN_ENABLE,
     };
 
     gpio_config(&handshakeConfig);
