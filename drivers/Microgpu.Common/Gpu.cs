@@ -9,7 +9,7 @@ namespace Microgpu.Common;
 
 public class Gpu
 {
-    public const ushort ValidApiVersionId = 1;
+    public const ushort ValidApiVersionId = 2;
     
     private readonly IGpuCommunication _communication;
     private byte[] _readBuffer = new byte[1024];

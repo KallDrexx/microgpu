@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef __GNUC__
+// GCC don't have a builtin min/max macro, so we need to define one for use
 #define max(a, b)             \
 ({                           \
     __typeof__ (a) _a = (a); \
@@ -16,8 +17,9 @@
 })
 #elif defined(_MSC_VER)
 
+// Mscvs has min/max macros built into stdlib
 #include <stdlib.h>
 
 #endif
 
-#define MGPU_API_VERSION 1
+#define MGPU_API_VERSION 2

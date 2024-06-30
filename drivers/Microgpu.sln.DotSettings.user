@@ -1,4 +1,11 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/BuildTool/CustomBuildToolPath/@EntryValue">C:\Users\me\AppData\Local\Programs\Rider\tools\MSBuild\Current\Bin\MSBuild.exe</s:String>
 	<s:Int64 x:Key="/Default/Environment/Hierarchy/Build/BuildTool/MsbuildVersion/@EntryValue">1114112</s:Int64>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c40820ec_002D71aa_002D4c22_002Daab0_002Daa6c62b69232/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Can_Decode_Valid_Packet" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;xUnit::02CB8968-393E-421A-A43E-E308C9EEA6C0::net8.0::Microgpu.Common.Tests.PacketFramerTests.Can_Decode_Valid_Packet&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::02CB8968-393E-421A-A43E-E308C9EEA6C0::net8.0::Microgpu.Common.Tests.PacketFramerTests.Correctly_Fails_To_Decode_Bad_Cases&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;xUnit::02CB8968-393E-421A-A43E-E308C9EEA6C0::net8.0::Microgpu.Common.Tests.PacketFramerTests.Can_Encode_Operations&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=microgpu/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>

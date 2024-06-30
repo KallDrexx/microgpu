@@ -14,6 +14,7 @@ public class TcpGpuCommunication : IGpuCommunication, IDisposable
     private readonly int _port;
     private readonly TcpClient _tcpClient = new();
     private readonly Queue<IFireAndForgetOperation> _operations = new();
+    private readonly PacketFramer _packetFramer = new();
     private NetworkStream? _networkStream;
 
     public TcpGpuCommunication(string host, int port)
@@ -46,45 +47,56 @@ public class TcpGpuCommunication : IGpuCommunication, IDisposable
 
     public async ValueTask SendQueuedOutboundOperationsAsync()
     {
-        while (CollectQueuedOperations() is {} operationToSend)
+        while (_operations.TryDequeue(out var operationToSend))
         {
-            var bytesWritten = operationToSend.Serialize(_buffer[2..]);
-            await SendDataAsync(bytesWritten);
+            await SendDataAsync(operationToSend);
         }
     }
 
     public async ValueTask SendImmediateOperationAsync(IOperation operation)
     {
-        var bytesWritten = operation.Serialize(_buffer[2..]);
-        await SendDataAsync(bytesWritten);
+        await SendDataAsync(operation);
     }
 
     public async ValueTask<TResponse?> ReadNextResponseAsync<TResponse>() where TResponse : class, IResponse, new()
     {
-        var bytesRead = await _networkStream!.ReadAsync(_buffer, 0, 2);
-        if (bytesRead != 2) throw new InvalidOperationException("Expected 2 bytes for length");
-
-        var length = (ushort)((_buffer[0] << 8) | _buffer[1]);
-        var totalBytesRead = 0;
-        while (totalBytesRead < length)
+        // We should only have one response at a time, since each response is a 
+        // direct reaction to a non-fire and forget question. So just keep reading
+        // until we get a full packet or read more than 255 bytes.
+        var totalRead = 0;
+        while (true)
         {
-            var bytesRemaining = length - totalBytesRead;
-            bytesRead = await _networkStream.ReadAsync(_buffer, totalBytesRead, bytesRemaining);
-            totalBytesRead += bytesRead;
+            var bytesRead = await _networkStream!.ReadAsync(_buffer.AsMemory(totalRead));
+            totalRead += bytesRead;
+            
+            // Did we get a complete packet?
+            var result = _packetFramer.Decode(_buffer[..totalRead]);
+            if (result.InputBytesProcessed == 0)
+            {
+                // We didn't have a complete packet so keep reading
+                continue;
+            }
+            
+            // We found a packet boundary
+            if (result.DecodedBytes.Length == 0)
+            {
+                // Corrupted packet
+                return null;
+            }
+
+            var response = new TResponse();
+            response.Deserialize(result.DecodedBytes.Span);
+            return response;
         }
-
-        var response = new TResponse();
-        response.Deserialize(_buffer[..totalBytesRead]);
-
-        return response;
     }
 
-    private async Task SendDataAsync(int length)
+    private async Task SendDataAsync(IOperation operation)
     {
-        _buffer[0] = (byte)(length >> 8);
-        _buffer[1] = (byte)(length & 0xFF);
-
-        await _networkStream!.WriteAsync(_buffer.AsMemory(0, length + 2));
+        var bytesWritten = _packetFramer.Encode(operation, _buffer.AsSpan());
+        if (bytesWritten > 0)
+        {
+            await _networkStream!.WriteAsync(_buffer.AsMemory(0, bytesWritten));
+        }
     }
 
     private async ValueTask ConnectAsync()
@@ -93,33 +105,5 @@ public class TcpGpuCommunication : IGpuCommunication, IDisposable
 
         await _tcpClient.ConnectAsync(_host, _port);
         _networkStream = _tcpClient.GetStream();
-    }
-
-    private IOperation? CollectQueuedOperations()
-    {
-        if (_operations.Count == 0)
-        {
-            return null;
-        }
-
-        if (_operations.Count == 1)
-        {
-            return _operations.Dequeue();
-        }
-
-        var batch = new BatchOperation();
-        while (_operations.Count > 0)
-        {
-            var operation = _operations.Peek();
-            if (!batch.AddOperation(operation))
-            {
-                // Not enough space in the batch
-                break;
-            }
-
-            _operations.Dequeue();
-        }
-
-        return batch;
     }
 }

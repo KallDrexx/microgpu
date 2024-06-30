@@ -5,6 +5,7 @@
 #include "microgpu-common/databus.h"
 #include "microgpu-common/operations/operation_deserializer.h"
 #include "microgpu-common/responses/response_serializer.h"
+#include "microgpu-common/packet_framing.h"
 #include "tcp_databus.h"
 
 #ifndef INVALID_SOCKET
@@ -42,7 +43,7 @@ bool isInvalidSocket(SOCKET socket) {
 }
 
 int closeSocket(SOCKET sock) {
-    int status = 0;
+    int status;
 
 #ifdef _WIN32
     status = shutdown(sock, SD_BOTH);
@@ -75,49 +76,42 @@ bool readBytes(Mgpu_Databus *databus, char *buffer, size_t bufferSize, int *byte
     return true;
 }
 
-void readPacketFromQueue(Mgpu_Databus *databus,
-                         Mgpu_Operation *operation,
-                         bool *hadFullPacket,
-                         bool *operationDeserializeResult) {
+void readPacketFromQueue(Mgpu_Operation *operation, bool *hadFullPacket, bool *operationDeserializeResult) {
     *hadFullPacket = false;
+    *operationDeserializeResult = false;
 
-    // Do we have a complete packet in the queue?
-    if (globalByteQueueSize > 2) {
-        uint16_t packetSize = ((uint16_t) globalByteQueue[0] << 8) | globalByteQueue[1];
-        if (packetSize > BYTE_QUEUE_MAX_SIZE) {
-            fprintf(stderr, "Client reported a packet size of %u, which is over max\n", packetSize);
+    size_t decodedByteCount, inputBytesProcessed;
+    mgpu_packet_framing_decode(globalByteQueue,
+                               globalByteQueueSize,
+                               (uint8_t *)&operationBytes,
+                               sizeof(operationBytes),
+                               &decodedByteCount,
+                               &inputBytesProcessed);
 
-            // TODO: Figure out a better way to solve this? For now just clear the queue.
-            // This tcp implementation is test code anyway. It most likely means we've skipped bytes.
+    if (inputBytesProcessed == 0) {
+        // Could not find a complete packet
+        if (globalByteQueueSize >= BYTE_QUEUE_MAX_SIZE) {
+            // We have a full queue but no valid packet.
+            fprintf(stderr, "TCP queue was full but not one valid packet could be found. Most likely corrupted data");
             globalByteQueueSize = 0;
-            return;
         }
 
-        // Do we have at enough bytes in the queue for how big of a packet we were told to expect
-        if (globalByteQueueSize >= packetSize + 2) {
-            uint8_t *startPoint = globalByteQueue + 2;
-
-            // Copy the payload into it's own buffer so moving the queue down doesn't clobber it
-            memset(operationBytes, 0, sizeof(operationBytes));
-            memcpy_s(operationBytes, sizeof(operationBytes), startPoint, packetSize);
-
-            bool deserializeSuccess = mgpu_operation_deserialize(operationBytes, packetSize, operation);
-
-            // Shift the remaining contents over
-            size_t remainingSize = globalByteQueueSize - packetSize - 2;
-            if (remainingSize == 0) {
-                // nothing to shift
-                globalByteQueueSize = 0;
-            } else {
-                uint8_t *endPoint = startPoint + packetSize;
-                memmove(globalByteQueue, endPoint, remainingSize);
-                globalByteQueueSize = remainingSize;
-            }
-
-            *hadFullPacket = true;
-            *operationDeserializeResult = deserializeSuccess;
-        }
+        return;
     }
+
+    size_t bytesToShift = globalByteQueueSize - inputBytesProcessed;
+    if (bytesToShift > 0) {
+        memmove(globalByteQueue, globalByteQueue + inputBytesProcessed, bytesToShift);
+    }
+
+    *hadFullPacket = true;
+    globalByteQueueSize = bytesToShift;
+    if (decodedByteCount == 0) {
+        // decoding failed
+        return;
+    }
+
+    *operationDeserializeResult = mgpu_operation_deserialize(operationBytes, decodedByteCount, operation);
 }
 
 bool readOperation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
@@ -125,7 +119,7 @@ bool readOperation(Mgpu_Databus *databus, Mgpu_Operation *operation) {
 
     while (true) {
         bool hasFullPacket, operationDeserializationResult;
-        readPacketFromQueue(databus, operation, &hasFullPacket, &operationDeserializationResult);
+        readPacketFromQueue(operation, &hasFullPacket, &operationDeserializationResult);
 
         if (hasFullPacket) {
             return operationDeserializationResult;
@@ -214,6 +208,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
     assert(operation != NULL);
     assert(globalByteQueue != NULL);
 
+    memset(operation, 0, sizeof(Mgpu_Operation));
     if (isInvalidSocket(databus->clientSocket)) {
         struct sockaddr_in clientAddr;
         int addrSize = sizeof(clientAddr);
@@ -236,17 +231,24 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
     assert(databus != NULL);
     assert(response != NULL);
 
-    uint8_t buffer[1024];
-    int bufferBytesWritten = mgpu_serialize_response(response, buffer + 2, sizeof(buffer) - 2);
-    if (bufferBytesWritten < 0) {
-        fprintf(stderr, "Failed to serialize response: %u\n", bufferBytesWritten);
+    uint8_t messageBuffer[1024] = {0};
+    int messageBytesWritten = mgpu_serialize_response(response, messageBuffer, sizeof(messageBuffer));
+    if (messageBytesWritten < 0) {
+        fprintf(stderr, "Failed to serialize response: %u\n", messageBytesWritten);
         return;
     }
 
-    buffer[0] = bufferBytesWritten >> 8;
-    buffer[1] = bufferBytesWritten & 0xFF;
+    uint8_t outputBuffer[255] = {0};
+    int outputBytesWritten = mgpu_packet_framing_encode(messageBuffer,
+                                                        messageBytesWritten,
+                                                        outputBuffer,
+                                                        sizeof(outputBuffer));
 
-    send(databus->clientSocket, (char *) buffer, bufferBytesWritten + 2, 0);
+    if (outputBytesWritten >= 0) {
+        send(databus->clientSocket, (char *) outputBuffer, outputBytesWritten, 0);
+    } else {
+        SDL_Log("Failed to send response of type %u with error code %u", response->type, outputBytesWritten);
+    }
 }
 
 uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {

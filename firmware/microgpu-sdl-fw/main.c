@@ -8,6 +8,7 @@
 #include "microgpu-common/operations/operations.h"
 #include "microgpu-common/operations/operation_execution.h"
 #include "sdl_display.h"
+#include "microgpu-common/packet_framing.h"
 
 #if defined(DATABUS_BASIC)
 

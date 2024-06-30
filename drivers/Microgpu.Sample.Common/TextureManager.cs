@@ -37,7 +37,7 @@ public class TextureManager
             var bytesLeft = texture.Buffer.Buffer.Length;
             while (bytesLeft > 0)
             {
-                var bytesToSend = Math.Min(bytesLeft, 512);
+                var bytesToSend = Math.Min(bytesLeft, 200);
                 var startIndex = texture.Buffer.Buffer.Length - bytesLeft;
 
                 _gpu.EnqueueFireAndForgetAsync(new AppendTexturePixelsOperation
