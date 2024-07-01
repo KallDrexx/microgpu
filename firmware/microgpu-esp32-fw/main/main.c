@@ -142,6 +142,7 @@ bool wait_for_initialization(void) {
     Mgpu_Operation operation;
 
     while (true) {
+        memset(&operation, 0, sizeof(Mgpu_Operation));
         bool hasOperation = mgpu_databus_get_next_operation(databus, &operation);
         if (hasOperation) {
             if (operation.type == Mgpu_Operation_Initialize) {
@@ -188,6 +189,7 @@ void app_main(void) {
             return;
         }
 
+        memset(&operation, 0, sizeof(Mgpu_Operation));
         if (mgpu_databus_get_next_operation(databus, &operation)) {
             mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
         }

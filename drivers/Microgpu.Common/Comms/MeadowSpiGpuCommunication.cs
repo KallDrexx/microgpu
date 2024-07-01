@@ -55,12 +55,21 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
         _spiBus.Read(null, _readLengthBuffer);
        
         var responseLength = (ushort)((_readLengthBuffer[0] << 8) | _readLengthBuffer[1]);
-        
         // If we receive all 1s, that mostly likely CIPO isn't connected, and thus we have no data
         responseLength = responseLength == 0xFFFF ? (ushort)0 : responseLength;
+
         if (responseLength is not 0)
         {
-            _spiBus.Read(null, data.Span[..responseLength]);
+            try
+            {
+                _spiBus.Read(null, data.Span[..responseLength]);
+            }
+            catch
+            {
+                Console.WriteLine($"Exception occurred.  RepsonseLength == {responseLength}");
+                Console.WriteLine($"{_readLengthBuffer[0]:x2} {_readLengthBuffer[1]:x2}");
+                throw;
+            }
         }
         
         _chipSelectPin.State = true;
