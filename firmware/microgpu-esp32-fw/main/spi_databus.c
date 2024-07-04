@@ -10,10 +10,6 @@
 #include "common.h"
 
 #define BUFFER_SIZE 1024
-WORD_ALIGNED_ATTR uint8_t
-receiveBuffer[BUFFER_SIZE];
-WORD_ALIGNED_ATTR uint8_t
-sendBuffer[BUFFER_SIZE];
 
 int handshakePin;
 
@@ -75,16 +71,18 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     ESP_ERROR_CHECK(spi_slave_initialize(options->spiHost, &busConfig, &slaveConfig, SPI_DMA_CH_AUTO));
 
-    Mgpu_Databus *databus = allocator->SlowMemAllocateFn(sizeof(Mgpu_Databus));
+    Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
     databus->spiHost = options->spiHost;
+    databus->receiveBuffer = heap_caps_malloc(BUFFER_SIZE, MALLOC_CAP_DMA);
+    databus->sendBuffer = heap_caps_malloc(BUFFER_SIZE, MALLOC_CAP_DMA);
 
     return databus;
 }
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus) {
-        databus->allocator->SlowMemFreeFn(databus);
+        databus->allocator->FastMemFreeFn(databus);
     }
 }
 
@@ -94,13 +92,13 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));
-    memset(receiveBuffer, 0, BUFFER_SIZE);
-    memset(sendBuffer, 0, BUFFER_SIZE);
+    memset(databus->receiveBuffer, 0, BUFFER_SIZE);
+    memset(databus->sendBuffer, 0, BUFFER_SIZE);
 
     // Set up the SPI transaction
     transaction.length = BUFFER_SIZE * 8;
-    transaction.rx_buffer = receiveBuffer;
-    transaction.tx_buffer = sendBuffer;
+    transaction.rx_buffer = databus->receiveBuffer;
+    transaction.tx_buffer = databus->sendBuffer;
 
     esp_err_t result = spi_slave_transmit(databus->spiHost, &transaction, portMAX_DELAY);
     if (result != ESP_OK) {
@@ -109,12 +107,12 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
     }
 
     size_t length = min(transaction.length, transaction.trans_len);
-    if (!mgpu_operation_deserialize(receiveBuffer, length, operation)) {
+    if (!mgpu_operation_deserialize(databus->receiveBuffer, length, operation)) {
         ESP_LOGW(LOG_TAG, "Failed to deserialize SPI transaction");
 
         printf("data: ");
         for (int x = 0; x < length; x++) {
-            printf("%02X ", receiveBuffer[x]);
+            printf("%02X ", databus->receiveBuffer[x]);
         }
 
         printf("\n");
@@ -128,8 +126,8 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
     assert(databus != NULL);
     assert(response != NULL);
 
-    memset(sendBuffer, 0, BUFFER_SIZE);
-    int byteCount = mgpu_serialize_response(response, sendBuffer + 2, BUFFER_SIZE - 2);
+    memset(databus->sendBuffer, 0, BUFFER_SIZE);
+    int byteCount = mgpu_serialize_response(response, databus->sendBuffer + 2, BUFFER_SIZE - 2);
     if (byteCount <= 0) {
         switch (byteCount) {
             case MGPU_ERROR_BUFFER_TOO_SMALL:
@@ -148,17 +146,17 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
         return;
     }
 
-    sendBuffer[0] = (uint8_t) (byteCount >> 8);
-    sendBuffer[1] = (uint8_t) (byteCount & 0xFF);
+    databus->sendBuffer[0] = (uint8_t) (byteCount >> 8);
+    databus->sendBuffer[1] = (uint8_t) (byteCount & 0xFF);
 
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));
-    memset(receiveBuffer, 0, BUFFER_SIZE);
+    memset(databus->receiveBuffer, 0, BUFFER_SIZE);
 
     // Set up the SPI transaction
     transaction.length = BUFFER_SIZE * 8;
-    transaction.rx_buffer = receiveBuffer;
-    transaction.tx_buffer = sendBuffer;
+    transaction.rx_buffer = databus->receiveBuffer;
+    transaction.tx_buffer = databus->sendBuffer;
 
     esp_err_t spiResult = spi_slave_transmit(databus->spiHost, &transaction, portMAX_DELAY);
     if (spiResult != ESP_OK) {
