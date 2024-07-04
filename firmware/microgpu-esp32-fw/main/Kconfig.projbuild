@@ -30,6 +30,9 @@ menu "Microgpu Config"
 
         config MICROGPU_DATABUS_SPI
             bool "SPI"
+
+        config MICROGPU_DATABUS_UART
+            bool "UART"
     endchoice
 
     choice MICROGPU_DISPLAY_TYPE

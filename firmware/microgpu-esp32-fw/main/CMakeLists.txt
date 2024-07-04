@@ -11,6 +11,8 @@ if (CONFIG_MICROGPU_DATABUS_SPI)
     list(APPEND SOURCES "spi_databus.c")
 elseif (CONFIG_MICROGPU_DATABUS_BENCHMARK)
     list(APPEND SOURCES "benchmark_databus.c")
+elseif (CONFIG_MICROGPU_DATABUS_UART)
+    list(APPEND SOURCES "uart_databus.c")
 endif ()
 
 if (CONFIG_MICROGPU_DISPLAY_I80_8BIT_ILI9341)
