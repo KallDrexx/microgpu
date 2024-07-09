@@ -46,6 +46,43 @@ menu "Microgpu Config"
             bool "16-Bit RGB LCD"
     endchoice
 
+    menu "UART Databus Options"
+        depends on MICROGPU_DATABUS_UART
+
+        choice
+            prompt "Baud Rate"
+            config MICROGPU_DATABUS_UART_BAUD_115200
+                bool "115200"
+            config MICROGPU_DATABUS_UART_BAUD_230400
+                bool "230400"
+            config MICROGPU_DATABUS_UART_BAUD_460800
+                bool "460800"
+            config MICROGPU_DATABUS_UART_BAUD_921600
+                bool "921600"
+        endchoice
+
+        config MICROGPU_DATABUS_UART_BAUD_RATE
+            int
+            default 115200
+            default 115200 if MICROGPU_DATABUS_UART_BAUD_115200
+            default 230400 if MICROGPU_DATABUS_UART_BAUD_230400
+            default 460800 if MICROGPU_DATABUS_UART_BAUD_460800
+            default 921600 if MICROGPU_DATABUS_UART_BAUD_921600
+
+        config MICROGPU_DATABUS_UART_TX_PIN
+            int "TX pin #"
+            default 43
+
+        config MICROGPU_DATABUS_UART_RX_PIN
+            int "RX pin #"
+            default 44
+
+        config MICROGPU_DATABUS_UART_PORT_NUM
+            int "UART port number"
+            default 0
+
+    endmenu
+
     menu "SPI Databus Pins"
         depends on MICROGPU_DATABUS_SPI
 

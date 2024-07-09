@@ -18,6 +18,8 @@
 #include "spi_databus.h"
 #elif defined(CONFIG_MICROGPU_DATABUS_BENCHMARK)
 #include "benchmark_databus.h"
+#elif defined(CONFIG_MICROGPU_DATABUS_UART)
+#include "uart_databus.h"
 #else
 #error "No databus defined"
 #endif

@@ -9,4 +9,9 @@ struct Mgpu_DatabusOptions {
 
 struct Mgpu_Databus {
     const Mgpu_Allocator *allocator;
+    int uartNum;
+    uint8_t *sendPrepareBuffer, *receiveBuffer;
+    size_t bytesInReceiveBuffer;
 };
+
+void init_databus_options(Mgpu_DatabusOptions *options);
