@@ -58,13 +58,12 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
             .data_bits = UART_DATA_8_BITS,
             .parity = UART_PARITY_DISABLE,
             .stop_bits = UART_STOP_BITS_1,
-            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .flow_ctrl = UART_HW_FLOWCTRL_CTS,
             .source_clk = UART_SCLK_DEFAULT,
     };
 
     ESP_ERROR_CHECK(uart_param_config(options->uartNum, &uartConfig));
-    ESP_ERROR_CHECK(uart_set_pin(options->uartNum, options->txPin, options->rxPin, -1, -1));
-
+    ESP_ERROR_CHECK(uart_set_pin(options->uartNum, options->txPin, options->rxPin, -1, options->ctsPin));
     ESP_ERROR_CHECK(uart_driver_install(options->uartNum, BUFFER_SIZE, BUFFER_SIZE, 10, &uartQueue, 0));
 
     Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
@@ -90,7 +89,11 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
     memset(operation, 0, sizeof(Mgpu_Operation));
 
-    if (parse_receive_buffer(databus, operation)) {
+    if (databus->bytesInReceiveBuffer == BUFFER_SIZE) {
+        // We have a full buffer and no complete message. That can only happen if we have no zero byte
+        // values, which seems unlikely. Assume the buffer values are corrupted and start fresh.
+        databus->bytesInReceiveBuffer = 0;
+    } else if (parse_receive_buffer(databus, operation)) {
         return true;
     }
 
@@ -102,6 +105,7 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
                 // data received
                 size_t capacityRemaining = BUFFER_SIZE - databus->bytesInReceiveBuffer;
                 size_t bytesToRead = min(capacityRemaining, event.size);
+                // TODO: Probably need to loop if we are at the end of the buffer
                 int bytesRead = uart_read_bytes(databus->uartNum,
                                 databus->receiveBuffer + databus->bytesInReceiveBuffer,
                                 bytesToRead,
@@ -183,4 +187,5 @@ void init_databus_options(Mgpu_DatabusOptions *options) {
     options->txPin = CONFIG_MICROGPU_DATABUS_UART_TX_PIN;
     options->rxPin = CONFIG_MICROGPU_DATABUS_UART_RX_PIN;
     options->uartNum = CONFIG_MICROGPU_DATABUS_UART_PORT_NUM;
+    options->ctsPin = CONFIG_MICROGPU_DATABUS_UART_CTS_PIN;
 }

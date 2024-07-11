@@ -4,7 +4,7 @@
 #include "microgpu-common/alloc.h"
 
 struct Mgpu_DatabusOptions {
-    int baudRate, rxPin, txPin, uartNum;
+    int baudRate, rxPin, txPin, uartNum, ctsPin;
 };
 
 struct Mgpu_Databus {

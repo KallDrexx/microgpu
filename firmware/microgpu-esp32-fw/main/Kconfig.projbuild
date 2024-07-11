@@ -77,10 +77,13 @@ menu "Microgpu Config"
             int "RX pin #"
             default 44
 
+        config MICROGPU_DATABUS_UART_CTS_PIN
+            int "Cleared to send pin #"
+            default 18
+
         config MICROGPU_DATABUS_UART_PORT_NUM
             int "UART port number"
             default 0
-
     endmenu
 
     menu "SPI Databus Pins"
