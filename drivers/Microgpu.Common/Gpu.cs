@@ -62,8 +62,8 @@ public class Gpu
     public async Task InitializeAsync(byte framebufferScale)
     {
         if (IsInitialized) return;
-
-        await SendFireAndForgetAsync(new InitializeOperation { FrameBufferScale = framebufferScale });
+        
+        await _communication.SendImmediateOperationAsync(new InitializeOperation { FrameBufferScale = framebufferScale });
         await GetAndApplyStatus(this);
 
         if (!IsInitialized)
@@ -74,40 +74,34 @@ public class Gpu
     }
 
     /// <summary>
-    ///     Sends a fire and forget operation to the GPU.
-    ///     Initialization should not be performed manually by this method, and instead
-    ///     should be done by calling <see cref="InitializeAsync" />. Not using that method
-    ///     will cause this GPU instance to be in an invalid state.
+    /// Enqueues an operation to be executed at another time
     /// </summary>
-    public async Task SendFireAndForgetAsync(IFireAndForgetOperation operation)
+    /// <param name="operation"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public void EnqueueFireAndForgetAsync(IFireAndForgetOperation operation)
     {
         operation = operation ?? throw new ArgumentNullException(nameof(operation));
-
-        var byteCount = operation.Serialize(_writeBuffer);
-        await _communication.SendDataAsync(_writeBuffer.AsMemory(0, byteCount));
+        _communication.EnqueueOutboundOperation(operation);
     }
 
     /// <summary>
-    ///     Sends an operation to the GPU and deserializes the response.
+    /// Sends all operations that have been queued on the gpu communication line
     /// </summary>
-    public async Task<TResponse?> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
+    public async ValueTask SendQueuedOperationsAsync()
+    {
+        await _communication.SendQueuedOutboundOperationsAsync();
+    }
+
+    /// <summary>
+    /// Sends an operation to the GPU and deserializes the response.
+    /// </summary>
+    public async ValueTask<TResponse?> SendResponsiveOperationAsync<TResponse>(IResponsiveOperation<TResponse> operation)
         where TResponse : class, IResponse, new()
     {
         operation = operation ?? throw new ArgumentNullException(nameof(operation));
 
-        var byteCount = operation.Serialize(_writeBuffer);
-        await _communication.SendDataAsync(_writeBuffer.AsMemory(0, byteCount));
-
-        byteCount = await _communication.ReadDataAsync(_readBuffer);
-        if (byteCount == 0)
-        {
-            return null;
-        }
-        
-        var response = new TResponse();
-        response.Deserialize(_readBuffer.AsSpan(0, byteCount));
-
-        return response;
+        await _communication.SendImmediateOperationAsync(operation);
+        return await _communication.ReadNextResponseAsync<TResponse>();
     }
 
     private static async Task GetAndApplyStatus(Gpu gpu)

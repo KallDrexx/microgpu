@@ -16,7 +16,6 @@ public class MicrogpuRenderer : IRenderer
     private readonly Gpu _gpu;
     private readonly TextureManager _textureManager;
     private readonly LayerManager _layerManager;
-    private readonly BatchOperation _activeBatch = new();
     private readonly Profiler _profiler;
 
     public bool ShowPerf { get; set; }
@@ -43,7 +42,7 @@ public class MicrogpuRenderer : IRenderer
         var gpu = await Gpu.CreateAsync(gpuCommunication);
         await gpu.InitializeAsync(frameBufferScale);
         var status = await gpu.SendResponsiveOperationAsync(new GetStatusOperation());
-        if (!status.IsInitialized)
+        if (status?.IsInitialized != true)
         {
             throw new InvalidOperationException("GPU not initialized");
         }
@@ -69,7 +68,7 @@ public class MicrogpuRenderer : IRenderer
         _profiler.StopTiming("Microgpu.ApplyTextureChanges");
         
         // Clear the screen
-        await _gpu.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
+        _gpu.EnqueueFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
         {
             TextureId = 0,
             StartX = 0,
@@ -112,20 +111,9 @@ public class MicrogpuRenderer : IRenderer
                 TargetStartX = (short)sprite.X,
                 TargetStartY = (short)sprite.Y,
             };
-            
-            var wasAdded = _activeBatch.AddOperation(operation);
-            if (!wasAdded)
-            {
-                await _gpu.SendFireAndForgetAsync(_activeBatch);
-                _activeBatch.AddOperation(operation);
-            }
         }
 
-        if (_activeBatch.HasAnyOperations())
-        {
-            await _gpu.SendFireAndForgetAsync(_activeBatch);
-        }
-
+        await _gpu.SendQueuedOperationsAsync();
         _profiler.StopTiming("Microgpu.Sprites");
 
         _profiler.StopTiming("Microgpu.ForegroundLayers");
@@ -140,7 +128,8 @@ public class MicrogpuRenderer : IRenderer
         }
         _profiler.StopTiming("Microgpu.ForegroundLayers");
         
-        await _gpu.SendFireAndForgetAsync(new PresentFramebufferOperation());
+        _gpu.EnqueueFireAndForgetAsync(new PresentFramebufferOperation());
+        await _gpu.SendQueuedOperationsAsync();
     }
 
     public ILayer CreateLayer(Dimensions dimensions)

@@ -28,7 +28,7 @@ public class BouncingTexture
         _verticalDirection = random.Next(0, 2) == 0 ? VerticalDirection.Up : VerticalDirection.Down;
     }
 
-    public void RunNextFrame(TimeSpan frameTime, BatchOperation batch)
+    public void RunNextFrame(TimeSpan frameTime)
     {
         var horizontalMovement = (float)(Speed * frameTime.TotalSeconds);
         var verticalMovement = (float)(Speed * frameTime.TotalSeconds);
@@ -62,7 +62,7 @@ public class BouncingTexture
             _verticalDirection = VerticalDirection.Up;
         }
         
-        batch.AddOperation(new DrawTextureOperation
+        _gpu.EnqueueFireAndForgetAsync(new DrawTextureOperation
         {
             SourceTextureId = _texture.Id,
             TargetTextureId = 0,

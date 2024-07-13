@@ -91,7 +91,7 @@ internal class TextureManager
         while (_removedTextures.TryDequeue(out var textureId))
         {
             Console.WriteLine($"Removing texture {textureId} from the GPU");
-            await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>()
+            _gpu.EnqueueFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>()
             {
                 TextureId = textureId,
                 Width = 0,
@@ -105,7 +105,7 @@ internal class TextureManager
             Console.WriteLine($"Adding texture {textureId} to the GPU");
             var texture = _textures[textureId];
             
-            await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
+            _gpu.EnqueueFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
             {
                 TextureId = textureId,
                 Width = (ushort)texture.Buffer.Width,
@@ -119,7 +119,7 @@ internal class TextureManager
                 var bytesToSend = Math.Min(bytesLeft, 512);
                 var startIndex = texture.Buffer.Buffer.Length - bytesLeft;
 
-                await _gpu.SendFireAndForgetAsync(new AppendTexturePixelsOperation
+                _gpu.EnqueueFireAndForgetAsync(new AppendTexturePixelsOperation
                 {
                     TextureId = textureId,
                     PixelBytes = texture.Buffer.Buffer.AsMemory(startIndex, bytesToSend)
@@ -127,6 +127,8 @@ internal class TextureManager
 
                 bytesLeft -= bytesToSend;
             }
+
+            await _gpu.SendQueuedOperationsAsync();
         }
     }
     
@@ -186,7 +188,7 @@ internal class TextureManager
         try
         {
             var img = Image.LoadFromFile(filePath);
-            Console.WriteLine($"Color mode: {img.DisplayBuffer.ColorMode}");
+            Console.WriteLine($"Color mode: {img.DisplayBuffer!.ColorMode}");
 
             // Always make sure that the texture is formatted in the same color mode as the display
             var imgBuffer = new BufferRgb565(img.Width, img.Height);

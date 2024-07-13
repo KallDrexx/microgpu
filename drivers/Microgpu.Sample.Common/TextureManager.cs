@@ -26,21 +26,21 @@ public class TextureManager
         foreach (var texture in Textures)
         {
             Console.WriteLine($"Sending texture {texture.Id} to the GPU");
-            await _gpu.SendFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
+            _gpu.EnqueueFireAndForgetAsync(new DefineTextureOperation<ColorRgb565>
             {
                 TextureId = texture.Id,
                 Width = texture.Width,
                 Height = texture.Height,
                 TransparentColor = ColorRgb565.FromRgb888(255, 0, 255)
             });
-
+            
             var bytesLeft = texture.Buffer.Buffer.Length;
             while (bytesLeft > 0)
             {
                 var bytesToSend = Math.Min(bytesLeft, 512);
                 var startIndex = texture.Buffer.Buffer.Length - bytesLeft;
 
-                await _gpu.SendFireAndForgetAsync(new AppendTexturePixelsOperation
+                _gpu.EnqueueFireAndForgetAsync(new AppendTexturePixelsOperation
                 {
                     TextureId = texture.Id,
                     PixelBytes = texture.Buffer.Buffer.AsMemory(startIndex, bytesToSend)
@@ -48,6 +48,8 @@ public class TextureManager
 
                 bytesLeft -= bytesToSend;
             }
+
+            await _gpu.SendQueuedOperationsAsync();
         }
 
         Console.WriteLine("All textures sent to GPU");
@@ -74,7 +76,7 @@ public class TextureManager
     {
         var image = Image.LoadFromFile(Path.Combine(AppContext.BaseDirectory, "spritesheet.bmp"));
         var imageBuffer = new BufferRgb565(image.Width, image.Height);
-        imageBuffer.WriteBuffer(0, 0, image.DisplayBuffer);
+        imageBuffer.WriteBuffer(0, 0, image.DisplayBuffer!);
 
         return imageBuffer;
     }

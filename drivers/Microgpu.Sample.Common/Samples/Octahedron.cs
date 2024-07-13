@@ -32,7 +32,7 @@ public class Octahedron
         _gpu = gpu;
     }
 
-    public void RunNextFrame(TimeSpan timeSinceLastFrame, BatchOperation gpuBatch)
+    public void RunNextFrame(TimeSpan timeSinceLastFrame)
     {
         _rotation = new Vector3(
             _rotation.X + RotationDegreesPerSecond.X * (float)timeSinceLastFrame.TotalSeconds,
@@ -71,7 +71,7 @@ public class Octahedron
                 var (x1, y1) = ToScreen(projectedTriangle.V2);
                 var (x2, y2) = ToScreen(projectedTriangle.V3);
 
-                gpuBatch.AddOperation(new DrawTriangleOperation<ColorRgb565>
+                _gpu.EnqueueFireAndForgetAsync(new DrawTriangleOperation<ColorRgb565>
                 {
                     TextureId = 0,
                     X0 = x0,

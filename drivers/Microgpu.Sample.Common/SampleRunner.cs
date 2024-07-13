@@ -10,11 +10,10 @@ public class SampleRunner
     private readonly CancellationToken _cancellationToken;
     private readonly long[] _frameTimes = new long[1000];
     private readonly Gpu _gpu;
-    private readonly BatchOperation _gpuBatch = new();
     private readonly TimeSpan _minTimeBetweenFrames;
     private readonly BouncingTexture _bouncingTexture1;
     private readonly BouncingTexture _bouncingTexture2;
-    private readonly FramerateDisplay _framerateDisplay = new();
+    private readonly FramerateDisplay _framerateDisplay;
     private readonly TextureManager _textureManager;
     private int _frameTimeIndex;
     
@@ -25,6 +24,7 @@ public class SampleRunner
         CancellationToken? cancellationToken = null)
     {
         _gpu = gpu ?? throw new ArgumentNullException(nameof(gpu));
+        _framerateDisplay = new FramerateDisplay(_gpu);
         _textureManager = new TextureManager(_gpu);
         _minTimeBetweenFrames = minTimeBetweenFrames;
         _cancellationToken = cancellationToken ?? CancellationToken.None;
@@ -77,12 +77,12 @@ public class SampleRunner
 
     private async Task ExecuteFrameLogic(TimeSpan frameTime)
     {
-        _bouncingTexture1.RunNextFrame(frameTime, _gpuBatch);
-        Octahedron.RunNextFrame(frameTime, _gpuBatch);
-        _bouncingTexture2.RunNextFrame(frameTime, _gpuBatch);
-        _framerateDisplay.RunNextFrame(frameTime, _gpuBatch);
+        _bouncingTexture1.RunNextFrame(frameTime);
+        Octahedron.RunNextFrame(frameTime);
+        _bouncingTexture2.RunNextFrame(frameTime);
+        _framerateDisplay.RunNextFrame(frameTime);
 
-        _gpuBatch.AddOperation(new PresentFramebufferOperation());
-        await _gpu.SendFireAndForgetAsync(_gpuBatch);
+        _gpu.EnqueueFireAndForgetAsync(new PresentFramebufferOperation());
+        await _gpu.SendQueuedOperationsAsync();
     }
 }

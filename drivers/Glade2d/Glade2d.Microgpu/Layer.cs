@@ -85,10 +85,8 @@ internal class Layer : ILayer
     {
         // Draw the layer to the frame buffer in 4 parts to handle the horizontal origin
         // being shifted around.
-        var batch = new BatchOperation();
-        
         // Bottom Right
-        batch.AddOperation(new DrawTextureOperation
+        gpu.EnqueueFireAndForgetAsync(new DrawTextureOperation
         {
             SourceTextureId = _textureInfo.TextureId,
             TargetTextureId = 0,
@@ -102,7 +100,7 @@ internal class Layer : ILayer
         });
         
         // Bottom Left
-        batch.AddOperation(new DrawTextureOperation
+        gpu.EnqueueFireAndForgetAsync(new DrawTextureOperation
         {
             SourceTextureId = _textureInfo.TextureId,
             TargetTextureId = 0,
@@ -116,7 +114,7 @@ internal class Layer : ILayer
         });
         
         // Top Right
-        batch.AddOperation(new DrawTextureOperation
+        gpu.EnqueueFireAndForgetAsync(new DrawTextureOperation
         {
             SourceTextureId = _textureInfo.TextureId,
             TargetTextureId = 0,
@@ -130,7 +128,7 @@ internal class Layer : ILayer
         });
         
         // Top Left
-        batch.AddOperation(new DrawTextureOperation
+        gpu.EnqueueFireAndForgetAsync(new DrawTextureOperation
         {
             SourceTextureId = _textureInfo.TextureId,
             TargetTextureId = 0,
@@ -142,15 +140,15 @@ internal class Layer : ILayer
             TargetStartY = (short)(CameraOffset.Y + (Height - _internalOrigin.Y)),
             IgnoreTransparency = !DrawLayerWithTransparency,
         });
-        
-        await gpu.SendFireAndForgetAsync(batch);
+
+        await gpu.SendQueuedOperationsAsync();
     }
     
     private async Task HandlePendingDrawCommands(Gpu gpu)
     {
         if (_clearPending)
         {
-            await gpu.SendFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
+            gpu.EnqueueFireAndForgetAsync(new DrawRectangleOperation<ColorRgb565>
             {
                 TextureId = _textureInfo.TextureId,
                 StartX = 0,
@@ -163,7 +161,6 @@ internal class Layer : ILayer
             _clearPending = false;
         }
 
-        var batch = new BatchOperation();
         foreach (var drawCommand in _pendingDrawCommands)
         {
             var drawingTexture = _textureManager.GetTextureInfo(drawCommand.TextureName);
@@ -186,18 +183,10 @@ internal class Layer : ILayer
                 IgnoreTransparency = false,
             };
             
-            if (!batch.AddOperation(operation))
-            {
-                await gpu.SendFireAndForgetAsync(batch);
-                batch.AddOperation(operation);
-            }
+            gpu.EnqueueFireAndForgetAsync(operation);
         }
 
-        if (batch.HasAnyOperations())
-        {
-            await gpu.SendFireAndForgetAsync(batch);
-        }
-
+        await gpu.SendQueuedOperationsAsync();
         _pendingDrawCommands.Clear();
     }
 }

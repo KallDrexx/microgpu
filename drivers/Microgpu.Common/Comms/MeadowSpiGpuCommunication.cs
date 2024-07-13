@@ -1,7 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Meadow.Hardware;
+using Microgpu.Common.Operations;
+using Microgpu.Common.Responses;
 
 namespace Microgpu.Common.Comms;
 
@@ -12,6 +14,8 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
     private readonly byte[] _readLengthBuffer = new byte[2];
     private readonly IDigitalOutputPort _resetPin;
     private readonly ISpiBus _spiBus;
+    private readonly Queue<IFireAndForgetOperation> _operations = new();
+    private readonly byte[] _buffer = new byte[1024];
 
     public MeadowSpiGpuCommunication(
         ISpiBus spiBus,
@@ -25,7 +29,7 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
         _chipSelectPin = chipSelectPin;
     }
 
-    public async Task ResetAsync()
+    public async ValueTask ResetAsync()
     {
         // Ensure the chip select starts high/inactive
         _chipSelectPin.State = true;
@@ -39,13 +43,43 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
         await WaitForHandshakeAsync();
     }
 
-    public async Task SendDataAsync(Memory<byte> data)
+    public void EnqueueOutboundOperation(IFireAndForgetOperation operation)
     {
-        await WaitForHandshakeAsync();
-        _spiBus.Write(_chipSelectPin, data.Span);
+        _operations.Enqueue(operation);
     }
 
-    public async Task<int> ReadDataAsync(Memory<byte> data)
+    public async ValueTask SendQueuedOutboundOperationsAsync()
+    {
+        while (CollectQueuedOperations() is { } operationToSend)
+        {
+            var bytesWritten = operationToSend.Serialize(_buffer.AsSpan());
+            await WaitForHandshakeAsync();
+            _spiBus.Write(_chipSelectPin, _buffer[..bytesWritten]);
+        }
+    }
+
+    public async ValueTask SendImmediateOperationAsync(IOperation operation)
+    {
+        var bytesWritten = operation.Serialize(_buffer.AsSpan());
+        await WaitForHandshakeAsync();
+        _spiBus.Write(_chipSelectPin, _buffer[..bytesWritten]);
+    }
+
+    public async ValueTask<TResponse?> ReadNextResponseAsync<TResponse>() where TResponse : class, IResponse, new()
+    {
+        var bytesRead = await ReadResponseFromBusAsync(_buffer.AsMemory());
+        if (bytesRead == 0)
+        {
+            return null;
+        }
+        
+        var response = new TResponse();
+        response.Deserialize(_buffer.AsSpan(0, bytesRead));
+
+        return response;
+    }
+
+    private async Task<int> ReadResponseFromBusAsync(Memory<byte> data)
     {
         await WaitForHandshakeAsync();
 
@@ -87,5 +121,33 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
 
             await Task.Yield();
         }
+    }
+
+    private IOperation? CollectQueuedOperations()
+    {
+        if (_operations.Count == 0)
+        {
+            return null;
+        }
+
+        if (_operations.Count == 1)
+        {
+            return _operations.Dequeue();
+        }
+
+        var batch = new BatchOperation();
+        while (_operations.Count > 0)
+        {
+            var operation = _operations.Peek();
+            if (!batch.AddOperation(operation))
+            {
+                // Not enough space in the batch
+                break;
+            }
+
+            _operations.Dequeue();
+        }
+
+        return batch;
     }
 }

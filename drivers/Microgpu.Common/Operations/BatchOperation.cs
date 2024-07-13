@@ -2,7 +2,7 @@
 
 namespace Microgpu.Common.Operations;
 
-public class BatchOperation : IFireAndForgetOperation
+internal class BatchOperation : IFireAndForgetOperation
 {
     private readonly byte[] _buffer = new byte[1020];
     private int _offset;

@@ -9,9 +9,15 @@ public class FramerateDisplay
     private const Font DisplayFont = Font.Font12X16;
     private readonly StringBuilder _displayString = new();
     private readonly int[] _fpsValues = new int[10];
+    private readonly Gpu _gpu;
     private int _nextFpsIndex = 0;
 
-    public void RunNextFrame(TimeSpan timeSinceLastFrame, BatchOperation batchOperation)
+    public FramerateDisplay(Gpu gpu)
+    {
+        _gpu = gpu;
+    }
+
+    public void RunNextFrame(TimeSpan timeSinceLastFrame)
     {
         if (timeSinceLastFrame == TimeSpan.Zero)
         {
@@ -30,7 +36,7 @@ public class FramerateDisplay
         _displayString.Clear();
         _displayString.AppendFormat("{0:F0} fps", average);
 
-        batchOperation.AddOperation(new DrawCharsOperation<ColorRgb565>
+        _gpu.EnqueueFireAndForgetAsync(new DrawCharsOperation<ColorRgb565>
         {
             Color = ColorRgb565.FromRgb888(255, 255, 255),
             Font = DisplayFont,
