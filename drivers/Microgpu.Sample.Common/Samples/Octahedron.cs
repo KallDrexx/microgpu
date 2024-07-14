@@ -36,7 +36,7 @@ public class Octahedron
     {
         _rotation = new Vector3(
             _rotation.X + RotationDegreesPerSecond.X * (float)timeSinceLastFrame.TotalSeconds,
-            _rotation.Y + RotationDegreesPerSecond.Y * (float)timeSinceLastFrame.TotalSeconds,
+            _rotation.Y + -RotationDegreesPerSecond.Y * (float)timeSinceLastFrame.TotalSeconds,
             _rotation.Z + RotationDegreesPerSecond.Z * (float)timeSinceLastFrame.TotalSeconds);
 
         var lightUnitVector = _light.Unit;
