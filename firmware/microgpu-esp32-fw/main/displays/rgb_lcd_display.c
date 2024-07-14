@@ -191,6 +191,7 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureMana
 
     Mgpu_Texture *framebufferToPresent = mgpu_texture_get(textureManager, 0);
     assert(framebufferToPresent != NULL);
+    assert(framebufferToPresent->scale == 1 && "Only a scale factor of 1 is supported");
 
     // We need to hold onto the frame buffer to draw every LCD refresh. Therefore, we need to
     // swap the texture with the previously used frame buffer. That allows new draw calls to
@@ -219,8 +220,8 @@ void mgpu_display_render(Mgpu_Display *display, Mgpu_TextureManager *textureMana
 
         Mgpu_TextureDefinition info = {
             .id = swapTextureId,
-                .width = framebufferToPresent->width,
-                .height = framebufferToPresent->height,
+            .width = framebufferToPresent->width * framebufferToPresent->scale,
+            .height = framebufferToPresent->height * framebufferToPresent->scale,
             .flags = 0,
             .transparentColor = mgpu_color_from_rgb888(0, 0, 0),
         };

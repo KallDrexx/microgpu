@@ -33,7 +33,7 @@ public class MeadowApp : App<F7CoreComputeV2>
         var gpuCommunication = new MeadowSpiGpuCommunication(spiBus, handshake, reset, chipSelect);
         var layerManager = new LayerManager();
         var profiler = new Profiler();
-        var renderer = await MicrogpuRenderer.CreateAsync(gpuCommunication, layerManager, profiler, MeadowOS.FileSystem.UserFileSystemRoot, 2);
+        var renderer = await MicrogpuRenderer.CreateAsync(gpuCommunication, layerManager, profiler, MeadowOS.FileSystem.UserFileSystemRoot, 1);
         _engine = new Game();
         _engine.Initialize(renderer, null, layerManager, profiler); 
         _engine.Profiler.IsActive = true;
