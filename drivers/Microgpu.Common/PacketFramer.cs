@@ -13,6 +13,14 @@ public class PacketFramer
 {
     private readonly byte[] _decodeBuffer = new byte[255];
     private const int MaxMessageSize = 250;
+
+    /// <summary>
+    /// Gets the number of bytes required to encode this operation into the buffer
+    /// </summary>
+    public int BufferSizeRequired(IOperation operation)
+    {
+        return operation.GetSize() + 4;
+    }
     
     /// <summary>
     /// Serialize and encodes the operation into the provided buffer

@@ -11,11 +11,11 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
 {
     private readonly IDigitalOutputPort _chipSelectPin;
     private readonly IDigitalInputPort _handshakePin;
-    private readonly byte[] _readLengthBuffer = new byte[2];
     private readonly IDigitalOutputPort _resetPin;
     private readonly ISpiBus _spiBus;
     private readonly Queue<IFireAndForgetOperation> _operations = new();
     private readonly byte[] _buffer = new byte[1024];
+    private readonly PacketFramer _packetFramer = new();
 
     public MeadowSpiGpuCommunication(
         ISpiBus spiBus,
@@ -50,65 +50,59 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
 
     public async ValueTask SendQueuedOutboundOperationsAsync()
     {
-        while (CollectQueuedOperations() is { } operationToSend)
+        var bufferBytesWritten = 0;
+        while(_operations.TryDequeue(out var operationToSend))
         {
-            var bytesWritten = operationToSend.Serialize(_buffer.AsSpan());
+            var sizeRequired = _packetFramer.BufferSizeRequired(operationToSend);
+            if (bufferBytesWritten + sizeRequired >= _buffer.Length)
+            {
+                // We have too much space, send what we have so far
+                await WaitForHandshakeAsync();
+                _spiBus.Write(_chipSelectPin, _buffer[..bufferBytesWritten]);
+                bufferBytesWritten = 0;
+            }
+
+            bufferBytesWritten += _packetFramer.Encode(operationToSend, _buffer.AsSpan(bufferBytesWritten));
+        }
+
+        if (bufferBytesWritten > 0)
+        {
             await WaitForHandshakeAsync();
-            _spiBus.Write(_chipSelectPin, _buffer[..bytesWritten]);
+            _spiBus.Write(_chipSelectPin, _buffer[..bufferBytesWritten]);
         }
     }
 
     public async ValueTask SendImmediateOperationAsync(IOperation operation)
     {
-        var bytesWritten = operation.Serialize(_buffer.AsSpan());
+        var bytesWritten = _packetFramer.Encode(operation, _buffer.AsSpan());
         await WaitForHandshakeAsync();
         _spiBus.Write(_chipSelectPin, _buffer[..bytesWritten]);
     }
 
     public async ValueTask<TResponse?> ReadNextResponseAsync<TResponse>() where TResponse : class, IResponse, new()
     {
-        var bytesRead = await ReadResponseFromBusAsync(_buffer.AsMemory());
-        if (bytesRead == 0)
+        await WaitForHandshakeAsync();
+        
+        // We only expect one single COBS packet, so we are guaranteed to be at most 255 bytes
+        _spiBus.Read(_chipSelectPin, _buffer.AsSpan(0, 255));
+        var result = _packetFramer.Decode(_buffer);
+
+        if (result.InputBytesProcessed == 0)
         {
+            // Incomplete packet received
+            return null;
+        }
+
+        if (result.DecodedBytes.Length == 0)
+        {
+            // Undecodable packet
             return null;
         }
         
         var response = new TResponse();
-        response.Deserialize(_buffer.AsSpan(0, bytesRead));
+        response.Deserialize(result.DecodedBytes.Span);
 
         return response;
-    }
-
-    private async Task<int> ReadResponseFromBusAsync(Memory<byte> data)
-    {
-        await WaitForHandshakeAsync();
-
-        // The first two bytes tells us how many bytes we need to read. We need to keep chip select
-        // low in order to read the length without resetting the transaction
-        _chipSelectPin.State = false;
-        _spiBus.Read(null, _readLengthBuffer);
-       
-        var responseLength = (ushort)((_readLengthBuffer[0] << 8) | _readLengthBuffer[1]);
-        // If we receive all 1s, that mostly likely CIPO isn't connected, and thus we have no data
-        responseLength = responseLength == 0xFFFF ? (ushort)0 : responseLength;
-
-        if (responseLength is not 0)
-        {
-            try
-            {
-                _spiBus.Read(null, data.Span[..responseLength]);
-            }
-            catch
-            {
-                Console.WriteLine($"Exception occurred.  RepsonseLength == {responseLength}");
-                Console.WriteLine($"{_readLengthBuffer[0]:x2} {_readLengthBuffer[1]:x2}");
-                throw;
-            }
-        }
-        
-        _chipSelectPin.State = true;
-
-        return responseLength;
     }
 
     private async Task WaitForHandshakeAsync()
@@ -121,33 +115,5 @@ public class MeadowSpiGpuCommunication : IGpuCommunication
 
             await Task.Yield();
         }
-    }
-
-    private IOperation? CollectQueuedOperations()
-    {
-        if (_operations.Count == 0)
-        {
-            return null;
-        }
-
-        if (_operations.Count == 1)
-        {
-            return _operations.Dequeue();
-        }
-
-        var batch = new BatchOperation();
-        while (_operations.Count > 0)
-        {
-            var operation = _operations.Peek();
-            if (!batch.AddOperation(operation))
-            {
-                // Not enough space in the batch
-                break;
-            }
-
-            _operations.Dequeue();
-        }
-
-        return batch;
     }
 }

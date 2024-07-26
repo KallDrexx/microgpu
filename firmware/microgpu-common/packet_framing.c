@@ -21,7 +21,7 @@ int mgpu_packet_framing_encode(const uint8_t *msg_buffer,
 
     // We are taking the message in the bytes, a two byte checksum value, and then
     // encoding the message with Consistent Overhead Stuffing. This means each
-    // packet has 5 extra bytes added to it. So lets make the target buffer can hold that
+    // packet has 4 extra bytes added to it. So lets make sure the target buffer can hold that
     size_t final_size = msg_size + 4;
     if (final_size > buffer_size) {
         return MGPU_FRAMING_ERROR_BUFFER_TOO_SMALL;
@@ -38,7 +38,8 @@ int mgpu_packet_framing_encode(const uint8_t *msg_buffer,
 
     uint8_t index_of_last_zero_byte = 0;
     uint8_t offset;
-    for (size_t index = 1; index <= msg_size; index++) {
+    for (size_t x = 0; x < msg_size; x++) {
+        size_t index = x + 1; // Message starts at index 1 for initial zero offset byte
         checksum += target_buffer[index];
 
         if (target_buffer[index] != 0) {

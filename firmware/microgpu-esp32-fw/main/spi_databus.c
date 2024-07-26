@@ -5,11 +5,13 @@
 #include "microgpu-common/common.h"
 #include "microgpu-common/databus.h"
 #include "microgpu-common/operations/operation_deserializer.h"
+#include "microgpu-common/packet_framing.h"
 #include "microgpu-common/responses/response_serializer.h"
 #include "spi_databus.h"
 #include "common.h"
 
-#define BUFFER_SIZE 1024
+#define SPI_BUFFER_SIZE (1024)
+#define PACKET_BUFFER_SIZE (255)
 
 int handshakePin;
 
@@ -74,14 +76,19 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
     Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
     databus->spiHost = options->spiHost;
-    databus->receiveBuffer = heap_caps_malloc(BUFFER_SIZE, MALLOC_CAP_DMA);
-    databus->sendBuffer = heap_caps_malloc(BUFFER_SIZE, MALLOC_CAP_DMA);
+    databus->receiveBuffer = heap_caps_malloc(SPI_BUFFER_SIZE, MALLOC_CAP_DMA);
+    databus->sendBuffer = heap_caps_malloc(SPI_BUFFER_SIZE, MALLOC_CAP_DMA);
+    databus->encodeDecodeBuffer = allocator->FastMemAllocateFn(PACKET_BUFFER_SIZE);
+    databus->receiveBufferBytesRemaining = 0;
 
     return databus;
 }
 
 void mgpu_databus_free(Mgpu_Databus *databus) {
     if (databus) {
+        databus->allocator->FastMemFreeFn(databus->encodeDecodeBuffer);
+        free(databus->receiveBuffer);
+        free(databus->sendBuffer);
         databus->allocator->FastMemFreeFn(databus);
     }
 }
@@ -92,69 +99,107 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));
-    memset(databus->receiveBuffer, 0, BUFFER_SIZE);
-    memset(databus->sendBuffer, 0, BUFFER_SIZE);
+    if (databus->receiveBufferBytesRemaining == 0) {
+        memset(databus->receiveBuffer, 0, SPI_BUFFER_SIZE);
+        memset(databus->sendBuffer, 0, SPI_BUFFER_SIZE);
 
-    // Set up the SPI transaction
-    transaction.length = BUFFER_SIZE * 8;
-    transaction.rx_buffer = databus->receiveBuffer;
-    transaction.tx_buffer = databus->sendBuffer;
+        // Set up the SPI transaction
+        transaction.length = SPI_BUFFER_SIZE * 8;
+        transaction.rx_buffer = databus->receiveBuffer;
+        transaction.tx_buffer = databus->sendBuffer;
 
-    esp_err_t result = spi_slave_transmit(databus->spiHost, &transaction, portMAX_DELAY);
-    if (result != ESP_OK) {
-        ESP_LOGE(LOG_TAG, "SPI receive failed: %s", esp_err_to_name(result));
-        return false;
-    }
-
-    size_t length = min(transaction.length, transaction.trans_len);
-    if (!mgpu_operation_deserialize(databus->receiveBuffer, length, operation)) {
-        ESP_LOGW(LOG_TAG, "Failed to deserialize SPI transaction");
-
-        printf("data: ");
-        for (int x = 0; x < length; x++) {
-            printf("%02X ", databus->receiveBuffer[x]);
+        esp_err_t result = spi_slave_transmit(databus->spiHost, &transaction, portMAX_DELAY);
+        if (result != ESP_OK) {
+            ESP_LOGE(LOG_TAG, "SPI receive failed: %s", esp_err_to_name(result));
+            return false;
         }
 
-        printf("\n");
+        size_t length = min(transaction.length / 8, transaction.trans_len / 8);
+        assert(length <= SPI_BUFFER_SIZE);
+        databus->receiveBufferBytesRemaining = length;
+    }
+
+    size_t inputBytesProcessed = 0, decodedBytes = 0;
+    mgpu_packet_framing_decode(databus->receiveBuffer,
+                               databus->receiveBufferBytesRemaining,
+                               databus->encodeDecodeBuffer,
+                               PACKET_BUFFER_SIZE,
+                               &decodedBytes,
+                               &inputBytesProcessed);
+
+    if (inputBytesProcessed == 0) {
+        // We didn't get a complete packet, so discard the rest of the buffer
+        databus->receiveBufferBytesRemaining = 0;
         return false;
     }
 
-    return true;
+    if (decodedBytes == 0) {
+        // We had bytes but did not have a valid packet
+        if (inputBytesProcessed > 1) { // ignore empty packets (usually trailing zeros)
+            ESP_LOGW(LOG_TAG, "Failed to deserialize packet from SPI transaction");
+            printf("data: ");
+            for (int x = 0; x < inputBytesProcessed; x++) {
+                printf("%02X ", databus->receiveBuffer[x]);
+            }
+
+            printf("\n");
+        }
+    }
+
+    size_t bytesToShift = databus->receiveBufferBytesRemaining - inputBytesProcessed;
+    databus->receiveBufferBytesRemaining = bytesToShift;
+    if (bytesToShift > 0) {
+        memmove(databus->receiveBuffer, databus->receiveBuffer + inputBytesProcessed, bytesToShift);
+    }
+
+    return mgpu_operation_deserialize(databus->encodeDecodeBuffer, decodedBytes, operation);
 }
 
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
     assert(databus != NULL);
     assert(response != NULL);
 
-    memset(databus->sendBuffer, 0, BUFFER_SIZE);
-    int byteCount = mgpu_serialize_response(response, databus->sendBuffer + 2, BUFFER_SIZE - 2);
+    memset(databus->sendBuffer, 0, SPI_BUFFER_SIZE);
+    int byteCount = mgpu_serialize_response(response, databus->encodeDecodeBuffer, PACKET_BUFFER_SIZE);
     if (byteCount <= 0) {
         switch (byteCount) {
             case MGPU_ERROR_BUFFER_TOO_SMALL:
                 ESP_LOGE(LOG_TAG, "Attempted to serialize response, but it required a larger buffer");
-                break;
+                return;
 
             case MGPU_ERROR_UNKNOWN_RESPONSE_TYPE:
                 ESP_LOGE(LOG_TAG, "Attempted to serialize a response, but no serializer exists for that response type");
-                break;
+                return;
 
             default:
                 ESP_LOGE(LOG_TAG, "Response serializing failed with unknown error: %d", byteCount);
-                break;
+                return;
         }
-
-        return;
     }
 
-    databus->sendBuffer[0] = (uint8_t) (byteCount >> 8);
-    databus->sendBuffer[1] = (uint8_t) (byteCount & 0xFF);
+    int bytesEncoded = mgpu_packet_framing_encode(databus->encodeDecodeBuffer, byteCount, databus->sendBuffer, SPI_BUFFER_SIZE);
+    if (bytesEncoded <= 0) {
+        switch (bytesEncoded) {
+            case MGPU_FRAMING_ERROR_BUFFER_TOO_SMALL:
+                ESP_LOGE(LOG_TAG, "The SPI buffer was too small to hold the response");
+                return;
+
+            case MGPU_FRAMING_ERROR_MSG_TOO_LARGE:
+                ESP_LOGE(LOG_TAG, "The response of type %u was too large to be encoded (%u bytes)", response->type, byteCount);
+                return;
+
+            default:
+                ESP_LOGE(LOG_TAG, "Encoding response of type %u failed with error: %d", response->type, bytesEncoded);
+                return;
+        }
+    }
 
     spi_slave_transaction_t transaction;
     memset(&transaction, 0, sizeof(transaction));
-    memset(databus->receiveBuffer, 0, BUFFER_SIZE);
+    memset(databus->receiveBuffer, 0, SPI_BUFFER_SIZE);
 
     // Set up the SPI transaction
-    transaction.length = BUFFER_SIZE * 8;
+    transaction.length = SPI_BUFFER_SIZE * 8;
     transaction.rx_buffer = databus->receiveBuffer;
     transaction.tx_buffer = databus->sendBuffer;
 
@@ -167,7 +212,7 @@ void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) 
 uint16_t mgpu_databus_get_max_size(Mgpu_Databus *databus) {
     assert(databus != NULL);
 
-    return BUFFER_SIZE;
+    return SPI_BUFFER_SIZE;
 }
 
 void init_databus_options(Mgpu_DatabusOptions *options) {
