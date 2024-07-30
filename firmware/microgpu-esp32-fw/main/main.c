@@ -150,15 +150,15 @@ bool wait_for_initialization(void) {
             if (operation.type == Mgpu_Operation_Initialize) {
                 break;
             }
-        }
 
-        // Before initialization, we can only respond to get status and get last message
-        if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
-            mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
+            // Before initialization, we can only respond to get status and get last message
+            if (operation.type == Mgpu_Operation_GetStatus || operation.type == Mgpu_Operation_GetLastMessage) {
+                mgpu_execute_operation(&operation, display, databus, &resetRequested, textureManager);
 
-            char *currentMessage = mgpu_message_get_pointer();
-            if (currentMessage != NULL && strlen(currentMessage) > 0) {
-                ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
+                char *currentMessage = mgpu_message_get_pointer();
+                if (currentMessage != NULL && strlen(currentMessage) > 0) {
+                    ESP_LOGI(LOG_TAG, "Message from operation: %s", currentMessage);
+                }
             }
         }
     }
