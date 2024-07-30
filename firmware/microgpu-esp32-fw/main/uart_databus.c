@@ -14,7 +14,6 @@
 #define BUFFER_SIZE (1024 * 2)
 #define DECODE_BUFFER_SIZE (256)
 uint8_t decodeBuffer[DECODE_BUFFER_SIZE] = {0};
-QueueHandle_t uartQueue;
 
 void log_options(Mgpu_DatabusOptions *options) {
     ESP_LOGI(LOG_TAG, "UART databus options:");
@@ -24,9 +23,12 @@ void log_options(Mgpu_DatabusOptions *options) {
     ESP_LOGI(LOG_TAG, "UART port: %u", options->uartNum);
 }
 
-bool parse_receive_buffer(Mgpu_Databus *databus, Mgpu_Operation *operation) {
+void parse_receive_buffer(Mgpu_Databus *databus, Mgpu_Operation *operation, bool *hadFullPacket, bool *hadValidOperation) {
+    *hadFullPacket = false;
+    *hadValidOperation = false;
+
     if (databus->bytesInReceiveBuffer == 0) {
-        return false;
+        return; // empty buffer
     }
 
     size_t decodedBytes, inputBytesProcessed;
@@ -37,15 +39,19 @@ bool parse_receive_buffer(Mgpu_Databus *databus, Mgpu_Operation *operation) {
                                &decodedBytes,
                                &inputBytesProcessed);
 
+    if (inputBytesProcessed > 0) {
+        *hadFullPacket = true;
+    }
+
     // shift everything down
     size_t bytesToMove = BUFFER_SIZE - inputBytesProcessed;
     memmove(databus->receiveBuffer, databus->receiveBuffer + inputBytesProcessed, bytesToMove);
     databus->bytesInReceiveBuffer -= inputBytesProcessed;
     if (decodedBytes == 0) {
-        return false;
+        return; // invalid or empty packet
     }
 
-    return mgpu_operation_deserialize(decodeBuffer, decodedBytes, operation);
+    *hadValidOperation = mgpu_operation_deserialize(decodeBuffer, decodedBytes, operation);
 }
 
 Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocator *allocator) {
@@ -64,7 +70,7 @@ Mgpu_Databus *mgpu_databus_new(Mgpu_DatabusOptions *options, const Mgpu_Allocato
 
     ESP_ERROR_CHECK(uart_param_config(options->uartNum, &uartConfig));
     ESP_ERROR_CHECK(uart_set_pin(options->uartNum, options->txPin, options->rxPin, -1, options->ctsPin));
-    ESP_ERROR_CHECK(uart_driver_install(options->uartNum, BUFFER_SIZE, BUFFER_SIZE, 10, &uartQueue, 0));
+    ESP_ERROR_CHECK(uart_driver_install(options->uartNum, BUFFER_SIZE, BUFFER_SIZE, 10, NULL, 0));
 
     Mgpu_Databus *databus = allocator->FastMemAllocateFn(sizeof(Mgpu_Databus));
     databus->allocator = allocator;
@@ -89,65 +95,41 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
 
     memset(operation, 0, sizeof(Mgpu_Operation));
 
+    bool hadCompletePacket = false, hadValidOperation = false;
     if (databus->bytesInReceiveBuffer == BUFFER_SIZE) {
         // We have a full buffer and no complete message. That can only happen if we have no zero byte
         // values, which seems unlikely. Assume the buffer values are corrupted and start fresh.
         databus->bytesInReceiveBuffer = 0;
-    } else if (parse_receive_buffer(databus, operation)) {
-        return true;
     }
 
-    uart_event_t event;
-    ESP_LOGI(LOG_TAG, "Waiting for uart event");
-    if (xQueueReceive(uartQueue, &event, portMAX_DELAY)) {
-        switch (event.type) {
-            case UART_DATA:
-                // data received
-                size_t capacityRemaining = BUFFER_SIZE - databus->bytesInReceiveBuffer;
-                size_t bytesToRead = min(capacityRemaining, event.size);
-                // TODO: Probably need to loop if we are at the end of the buffer
-                int bytesRead = uart_read_bytes(databus->uartNum,
-                                databus->receiveBuffer + databus->bytesInReceiveBuffer,
-                                bytesToRead,
-                                0);
-
-                databus->bytesInReceiveBuffer += bytesToRead;
-                return parse_receive_buffer(databus, operation);
-
-            case UART_FIFO_OVF:
-                ESP_LOGW(LOG_TAG, "UART FIFO queue overflowed");
-                // FIFO queue was cleared, so we can't trust anything in the receive buffer either
-                databus->bytesInReceiveBuffer = 0;
-                xQueueReset(uartQueue);
-                uart_flush_input(databus->uartNum);
-                break;
-
-            case UART_BUFFER_FULL:
-                ESP_LOGW(LOG_TAG, "UART buffer full");
-                databus->bytesInReceiveBuffer = 0;
-                xQueueReset(uartQueue);
-                uart_flush_input(databus->uartNum);
-                break;
-
-            case UART_FRAME_ERR:
-                ESP_LOGW(LOG_TAG, "UART frame error occurred");
-                break;
-
-            case UART_BREAK:
-                ESP_LOGI(LOG_TAG, "uart rx break");
-                break;
-
-            case UART_PARITY_ERR:
-                ESP_LOGI(LOG_TAG, "uart parity error");
-                break;
-
-            default:
-                ESP_LOGI(LOG_TAG, "Unknown uart event type: %d", event.type);
-                break;
-        }
+    parse_receive_buffer(databus, operation, &hadCompletePacket, &hadValidOperation);
+    if (hadCompletePacket) {
+        return hadValidOperation;
     }
 
-    return false;
+    size_t uartBytesInBuffer = 0;
+    ESP_ERROR_CHECK(uart_get_buffered_data_len(databus->uartNum, &uartBytesInBuffer));
+
+    if (uartBytesInBuffer == 0) {
+        // No data in the uart queue, so sleep a small bit before trying again
+        vTaskDelay(portTICK_PERIOD_MS / 2);
+        return false;
+    }
+
+    size_t bytesToRead = min(uartBytesInBuffer, BUFFER_SIZE - databus->bytesInReceiveBuffer);
+    int bytesRead = uart_read_bytes(databus->uartNum,
+                                    databus->receiveBuffer + databus->bytesInReceiveBuffer,
+                                    bytesToRead,
+                                    0);
+
+    assert(databus->bytesInReceiveBuffer + bytesToRead <= BUFFER_SIZE);
+    databus->bytesInReceiveBuffer += bytesRead;
+
+    hadCompletePacket = false;
+    hadValidOperation = false;
+    parse_receive_buffer(databus, operation, &hadCompletePacket, &hadValidOperation);
+
+    return hadValidOperation;
 }
 
 void mgpu_databus_send_response(Mgpu_Databus *databus, Mgpu_Response *response) {
