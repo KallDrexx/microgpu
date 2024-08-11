@@ -5,6 +5,7 @@
 
 #include "esp_log.h"
 #include "esp_heap_caps.h"
+#include "esp_timer.h"
 #include "microgpu-common/operations/execution//drawing/triangle.h"
 #include "microgpu-common/messages.h"
 #include "microgpu-common/alloc.h"
@@ -169,6 +170,39 @@ bool wait_for_initialization(void) {
     return true;
 }
 
+void memset_16(uint8_t *destination, uint16_t value, size_t count) {
+    uint32_t value32 = (uint32_t) value | ((uint32_t) value << 16);
+    uint32_t *dest32 = (uint32_t*) destination;
+
+    // Set 4 bytes at a time
+    for (; count >= 2; count -= 2) {
+        *dest32++ = value32;
+    }
+
+    if (count) {
+        *(uint16_t*)dest32 = value;
+    }
+}
+
+void transparent_test(uint16_t *destination, uint16_t *source, size_t count) {
+    size_t counter = 0;
+    bool isTransparent = false;
+    for (; count > 0; count--) {
+        if (counter >= 5) {
+            counter = 0;
+            isTransparent = !isTransparent;
+        }
+
+        if (!isTransparent) {
+            *destination = *source;
+        }
+
+        destination++;
+        source++;
+        counter++;
+    }
+}
+
 void app_main(void) {
     ESP_LOGI(LOG_TAG, "Starting Microgpu");
     ESP_LOGI(LOG_TAG, "Version: %s", MGPU_VERSION);
@@ -182,8 +216,38 @@ void app_main(void) {
         return;
     }
 
+    #define TEST_SIZE (800 * 8)
+    uint8_t *testBuffer = heap_caps_malloc(TEST_SIZE * sizeof(Mgpu_Color), MALLOC_CAP_DMA);
+    uint8_t *testBuffer2 = heap_caps_malloc(TEST_SIZE * sizeof(Mgpu_Color), MALLOC_CAP_32BIT);
+    assert(testBuffer != NULL);
+    assert(testBuffer2 != NULL);
+    memset_16(testBuffer2, 0xabba, TEST_SIZE);
+
     Mgpu_Operation operation;
     while (1) {
+        int64_t start = esp_timer_get_time();
+//        memset(testBuffer, 0xA55A, 800 * sizeof(Mgpu_Color));
+        memset_16(testBuffer + 800, 0xA55A, 800);
+        int64_t end = esp_timer_get_time();
+        ESP_LOGI(LOG_TAG, "Memset time: %lld", end - start);
+
+        start = esp_timer_get_time();
+        memcpy(testBuffer + 800, testBuffer2, 800 * sizeof(Mgpu_Color));
+        end = esp_timer_get_time();
+        ESP_LOGI(LOG_TAG, "Memcpy time: %lld", end - start);
+
+        start = esp_timer_get_time();
+        transparent_test(((uint16_t*)testBuffer) + 800, (uint16_t*)testBuffer2, 800);
+        end = esp_timer_get_time();
+        ESP_LOGI(LOG_TAG, "Transparency time: %lld", end - start);
+
+//
+//        printf("Value: ");
+//        for (int x = 0; x < TEST_SIZE; x++) {
+//            printf("%02X ", testBuffer[x]);
+//        }
+//        printf("\n");
+
         if (resetRequested) {
             ESP_LOGW(LOG_TAG, "Reset requested, exiting");
             return;

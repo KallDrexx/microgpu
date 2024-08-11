@@ -2,6 +2,7 @@
 #include <esp_lcd_panel_rgb.h>
 #include <esp_log.h>
 #include <esp_lcd_panel_ops.h>
+#include <esp_timer.h>
 #include <driver/gpio.h>
 #include "microgpu-common/common.h"
 #include "microgpu-common/display.h"
@@ -9,14 +10,30 @@
 #include "rgb_lcd_display.h"
 #include "common.h"
 
+#define COUNT_ITERATION (30000)
+
 static Mgpu_Texture *renderingFramebuffer = NULL;
 static uint8_t swapTextureId = 0;
+static int64_t lastTime = 0;
+static uint16_t counter = 0;
 
 static bool on_bounce_buffer_empty(esp_lcd_panel_handle_t handle,
                             void *bounceBuffer,
                             int nextPixelIndex,
                             int bufferByteLength,
                             void *context) {
+    if (++counter % COUNT_ITERATION == 0) {
+        int64_t newTime = esp_timer_get_time();
+        int64_t diff = newTime - lastTime;
+        ESP_EARLY_LOGI(LOG_TAG, "Bounce Buffer callback time: %lld", diff / COUNT_ITERATION);
+        lastTime = newTime;
+    }
+
+    if (counter >= 65000) {
+        lastTime = esp_timer_get_time();
+        counter = 0;
+    }
+
     if (renderingFramebuffer == NULL) {
         // We don't have a texture to draw yet, so zero out the buffer
         memset(bounceBuffer, 0, bufferByteLength);
@@ -89,7 +106,7 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
             .data_width = 16,
             .psram_trans_align = 64,
             .num_fbs = 0,
-            .bounce_buffer_size_px = 8 * options->pixelWidth,
+            .bounce_buffer_size_px = 1 * options->pixelWidth,
             .clk_src = LCD_CLK_SRC_DEFAULT,
             .disp_gpio_num = -1,
             .pclk_gpio_num = options->controlPins.pixelClock,
@@ -115,7 +132,7 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
                     options->dataPins.data15,
             },
             .timings = {
-                    .pclk_hz = (CONFIG_MICROGPU_DISPLAY_PCLK_MHZ * 1000 * 1000),
+                    .pclk_hz = (15 * 1000 * 1000),
                     .h_res = options->pixelWidth,
                     .v_res = options->pixelHeight,
                     // The following parameters should refer to LCD spec
