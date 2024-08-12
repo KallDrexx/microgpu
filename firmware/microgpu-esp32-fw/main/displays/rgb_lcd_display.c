@@ -106,7 +106,7 @@ void init_lcd(const Mgpu_DisplayOptions *options, esp_lcd_panel_handle_t *handle
             .data_width = 16,
             .psram_trans_align = 64,
             .num_fbs = 0,
-            .bounce_buffer_size_px = 1 * options->pixelWidth,
+            .bounce_buffer_size_px = 10 * options->pixelWidth,
             .clk_src = LCD_CLK_SRC_DEFAULT,
             .disp_gpio_num = -1,
             .pclk_gpio_num = options->controlPins.pixelClock,

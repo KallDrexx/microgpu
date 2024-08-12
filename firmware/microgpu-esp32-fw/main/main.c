@@ -203,6 +203,43 @@ void transparent_test(uint16_t *destination, uint16_t *source, size_t count) {
     }
 }
 
+size_t rle_encode(uint8_t *buffer, size_t length) {
+    uint8_t transparentCount = 5;
+    uint8_t pixelCount = 50;
+    size_t index = 0;
+    while (true) {
+        size_t bytesNeeded = (pixelCount * 2) + 2;
+        if (index + bytesNeeded >= length) {
+            return index + 1;
+        }
+
+        buffer[index] = transparentCount;
+        buffer[index + 1] = pixelCount;
+        for (size_t x = 0; x < pixelCount; x++) {
+            buffer[index + 2 + (x * 2)] = 0xa5;
+            buffer[index + 2 + (x * 2) + 1] = 0x5a;
+        }
+
+        index += bytesNeeded;
+    }
+}
+
+void rle_draw(uint16_t *destination, uint8_t *source, size_t sourceCount) {
+    uint8_t *sourceEnd = source + sourceCount;
+
+    while (source < sourceEnd) {
+        size_t transparentCount = *source;
+        destination += transparentCount;
+
+        size_t pixelCount = *(source + 1);
+        source += 2;
+
+        memcpy(destination, source, pixelCount * 2);
+        source += pixelCount * 2;
+        destination += pixelCount;
+    }
+}
+
 void app_main(void) {
     ESP_LOGI(LOG_TAG, "Starting Microgpu");
     ESP_LOGI(LOG_TAG, "Version: %s", MGPU_VERSION);
@@ -223,6 +260,11 @@ void app_main(void) {
     assert(testBuffer2 != NULL);
     memset_16(testBuffer2, 0xabba, TEST_SIZE);
 
+    uint8_t *rleBuffer = heap_caps_malloc(TEST_SIZE * sizeof(Mgpu_Color), MALLOC_CAP_32BIT);
+    assert(rleBuffer != NULL);
+    memset(rleBuffer, 0, TEST_SIZE * sizeof(Mgpu_Color));
+    size_t rleBytes = rle_encode(rleBuffer, 256 * sizeof(Mgpu_Color));
+
     Mgpu_Operation operation;
     while (1) {
         int64_t start = esp_timer_get_time();
@@ -241,9 +283,16 @@ void app_main(void) {
         end = esp_timer_get_time();
         ESP_LOGI(LOG_TAG, "Transparency time: %lld", end - start);
 
-//
+        for (int x = 0; x < 10; x++) {
+            memset(testBuffer, 0, TEST_SIZE * sizeof(Mgpu_Color));
+            start = esp_timer_get_time();
+            rle_draw((uint16_t *) testBuffer, rleBuffer, rleBytes);
+            end = esp_timer_get_time();
+            ESP_LOGI(LOG_TAG, "RLE time: %lld", end - start);
+        }
+
 //        printf("Value: ");
-//        for (int x = 0; x < TEST_SIZE; x++) {
+//        for (int x = 0; x < 800 * 2; x++) {
 //            printf("%02X ", testBuffer[x]);
 //        }
 //        printf("\n");
