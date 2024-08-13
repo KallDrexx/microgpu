@@ -184,44 +184,70 @@ void memset_16(uint8_t *destination, uint16_t value, size_t count) {
     }
 }
 
-void transparent_test(uint16_t *destination, uint16_t *source, size_t count) {
-    size_t counter = 0;
-    bool isTransparent = false;
-    for (; count > 0; count--) {
-        if (counter >= 5) {
-            counter = 0;
-            isTransparent = !isTransparent;
-        }
+void generate_texture(uint16_t *destination,
+                      size_t length,
+                      uint16_t transparentColor,
+                      uint16_t nonTransparentColor,
+                      uint8_t transparentCount,
+                      uint8_t nonTransparentCount) {
+    uint8_t count = 0;
+    bool isTransparent = true;
+    for (int x = 0; x < length; x++) {
+        *destination = isTransparent ? transparentColor : nonTransparentColor;
+        count++;
 
-        if (!isTransparent) {
+        if ((isTransparent && count >= transparentCount) || (!isTransparent && count >= nonTransparentCount)) {
+            isTransparent = !isTransparent;
+            count = 0;
+        }
+    }
+}
+
+void transparent_copy(uint16_t *destination, uint16_t *source, size_t count, uint16_t transparentColor) {
+    for (size_t x = 0; x < count; x++) {
+        if (*source != transparentColor) {
             *destination = *source;
         }
 
         destination++;
         source++;
-        counter++;
     }
 }
 
-size_t rle_encode(uint8_t *buffer, size_t length) {
-    uint8_t transparentCount = 5;
-    uint8_t pixelCount = 50;
-    size_t index = 0;
-    while (true) {
-        size_t bytesNeeded = (pixelCount * 2) + 2;
-        if (index + bytesNeeded >= length) {
-            return index + 1;
+size_t rle_encode(uint16_t *destination, const uint16_t *source, size_t sourceCount, uint16_t transparentColor) {
+    size_t sourceIndex = 0;
+    size_t destinationIndex = 0;
+    while (sourceIndex < sourceCount) {
+        size_t startIndex = sourceIndex;
+
+        // transparent pixels first
+        uint8_t transparentCount = 0;
+        while(sourceIndex < sourceCount) {
+            if (*source != transparentColor) {
+                break;
+            }
+
+            transparentCount++;
+            sourceIndex++;
         }
 
-        buffer[index] = transparentCount;
-        buffer[index + 1] = pixelCount;
-        for (size_t x = 0; x < pixelCount; x++) {
-            buffer[index + 2 + (x * 2)] = 0xa5;
-            buffer[index + 2 + (x * 2) + 1] = 0x5a;
+        uint8_t pixelCount = 0;
+        while(sourceIndex < sourceCount) {
+            if (*source == transparentColor) {
+                break;
+            }
+
+            destination[pixelCount + 1] = source[sourceIndex];
+            pixelCount++;
+            sourceIndex++;
         }
 
-        index += bytesNeeded;
+        // Reverse for little endianess
+        destination[destinationIndex] = ((uint16_t)pixelCount << 8) | transparentColor;
+        destinationIndex += pixelCount + 1;
     }
+
+    return destinationIndex;
 }
 
 void rle_draw(uint16_t *destination, uint8_t *source, size_t sourceCount) {
