@@ -184,16 +184,21 @@ void memset_16(uint8_t *destination, uint16_t value, size_t count) {
     }
 }
 
-void generate_texture(uint16_t *destination,
+uint16_t generate_texture(uint16_t *destination,
                       size_t length,
                       uint16_t transparentColor,
                       uint16_t nonTransparentColor,
-                      uint8_t transparentCount,
-                      uint8_t nonTransparentCount) {
+                      uint16_t transparentCount,
+                      uint16_t nonTransparentCount) {
     uint8_t count = 0;
+    uint16_t x = 0;
     bool isTransparent = true;
-    for (int x = 0; x < length; x++) {
+
+    transparentColor = (transparentColor >> 8) | ((transparentColor & 0x00FF) << 8);
+    nonTransparentColor = (nonTransparentColor >> 8) | ((nonTransparentColor & 0x00FF) << 8);
+    for (; x < length; x++) {
         *destination = isTransparent ? transparentColor : nonTransparentColor;
+        destination++;
         count++;
 
         if ((isTransparent && count >= transparentCount) || (!isTransparent && count >= nonTransparentCount)) {
@@ -201,9 +206,12 @@ void generate_texture(uint16_t *destination,
             count = 0;
         }
     }
+
+    return x;
 }
 
 void transparent_copy(uint16_t *destination, uint16_t *source, size_t count, uint16_t transparentColor) {
+    transparentColor = (transparentColor >> 8) | ((transparentColor & 0x00FF) << 8);
     for (size_t x = 0; x < count; x++) {
         if (*source != transparentColor) {
             *destination = *source;
@@ -215,15 +223,16 @@ void transparent_copy(uint16_t *destination, uint16_t *source, size_t count, uin
 }
 
 size_t rle_encode(uint16_t *destination, const uint16_t *source, size_t sourceCount, uint16_t transparentColor) {
+    transparentColor = (transparentColor >> 8) | ((transparentColor & 0x00FF) << 8);
+    // TODO: when productionalizing, need to ensure destination buffer is large enough
     size_t sourceIndex = 0;
     size_t destinationIndex = 0;
-    while (sourceIndex < sourceCount) {
-        size_t startIndex = sourceIndex;
 
+    while (sourceIndex < sourceCount) {
         // transparent pixels first
         uint8_t transparentCount = 0;
         while(sourceIndex < sourceCount) {
-            if (*source != transparentColor) {
+            if (source[sourceIndex] != transparentColor) {
                 break;
             }
 
@@ -233,37 +242,72 @@ size_t rle_encode(uint16_t *destination, const uint16_t *source, size_t sourceCo
 
         uint8_t pixelCount = 0;
         while(sourceIndex < sourceCount) {
-            if (*source == transparentColor) {
+            if (source[sourceIndex] == transparentColor) {
                 break;
             }
 
-            destination[pixelCount + 1] = source[sourceIndex];
+            destination[destinationIndex + pixelCount + 1] = source[sourceIndex];
             pixelCount++;
             sourceIndex++;
         }
 
         // Reverse for little endianess
-        destination[destinationIndex] = ((uint16_t)pixelCount << 8) | transparentColor;
+        destination[destinationIndex] = ((uint16_t)pixelCount << 8) | transparentCount;
         destinationIndex += pixelCount + 1;
     }
 
-    return destinationIndex;
+    return destinationIndex * 2;
 }
 
-void rle_draw(uint16_t *destination, uint8_t *source, size_t sourceCount) {
-    uint8_t *sourceEnd = source + sourceCount;
+void rle_draw(uint16_t *destination, uint8_t *source, size_t sourceByteCount) {
+    size_t sourceIndex = 0;
+    while (sourceIndex < sourceByteCount) {
 
-    while (source < sourceEnd) {
-        size_t transparentCount = *source;
+        size_t transparentCount = source[sourceIndex];
         destination += transparentCount;
 
         size_t pixelCount = *(source + 1);
-        source += 2;
+        sourceIndex += 2;
 
-        memcpy(destination, source, pixelCount * 2);
-        source += pixelCount * 2;
+        memcpy(destination, source + sourceIndex, pixelCount * 2);
+        sourceIndex += pixelCount * 2;
         destination += pixelCount;
     }
+}
+
+void print_buffer(char* name, uint8_t* buffer, size_t length) {
+    printf("\n%s: ", name);
+    for (int x = 0; x < length; x++) {
+        printf("%02X ", buffer[x]);
+    }
+
+    printf("\n\n");
+}
+
+void perform_benchmark(uint8_t *textureBuffer,
+                       uint8_t *destinationBuffer,
+                       uint8_t *rleBuffer,
+                       uint16_t transparentCount,
+                       uint16_t nonTransparentCount,
+                       uint16_t textureByteLen) {
+    uint64_t start = 0, end = 0, transparentTime, rleTime;
+    uint16_t transparentColor = 0x1234;
+
+    textureByteLen = generate_texture((uint16_t*)textureBuffer, textureByteLen, transparentColor, 0x5678, transparentCount, nonTransparentCount);
+    size_t rleBytes = rle_encode((uint16_t *)rleBuffer, (const uint16_t *)textureBuffer, textureByteLen, transparentColor);
+
+    start = esp_timer_get_time();
+    transparent_copy((uint16_t *)destinationBuffer, (uint16_t*) textureBuffer, textureByteLen, transparentColor);
+    end = esp_timer_get_time();
+    transparentTime = end - start;
+
+    memset(destinationBuffer, 0, 800 * 2);
+    start = esp_timer_get_time();
+    rle_draw((uint16_t *)destinationBuffer, rleBuffer, rleBytes);
+    end = esp_timer_get_time();
+    rleTime = end - start;
+
+    ESP_LOGI(LOG_TAG, "Draw times for %u pixels (%u/%u): %lld vs %lld", textureByteLen, transparentCount, nonTransparentCount, transparentTime, rleTime);
 }
 
 void app_main(void) {
@@ -279,50 +323,30 @@ void app_main(void) {
         return;
     }
 
-    #define TEST_SIZE (800 * 8)
-    uint8_t *testBuffer = heap_caps_malloc(TEST_SIZE * sizeof(Mgpu_Color), MALLOC_CAP_DMA);
-    uint8_t *testBuffer2 = heap_caps_malloc(TEST_SIZE * sizeof(Mgpu_Color), MALLOC_CAP_32BIT);
-    assert(testBuffer != NULL);
-    assert(testBuffer2 != NULL);
-    memset_16(testBuffer2, 0xabba, TEST_SIZE);
+    uint8_t *textureBuffer = heap_caps_malloc(800 * 2, MALLOC_CAP_32BIT);
+    uint8_t *destinationBuffer = heap_caps_malloc(800 * 2, MALLOC_CAP_DMA);
+    uint8_t *rleBuffer = heap_caps_malloc(800 * 2, MALLOC_CAP_32BIT);
 
-    uint8_t *rleBuffer = heap_caps_malloc(TEST_SIZE * sizeof(Mgpu_Color), MALLOC_CAP_32BIT);
-    assert(rleBuffer != NULL);
-    memset(rleBuffer, 0, TEST_SIZE * sizeof(Mgpu_Color));
-    size_t rleBytes = rle_encode(rleBuffer, 256 * sizeof(Mgpu_Color));
+    memset(textureBuffer, 0, 800*2);
+    memset(destinationBuffer, 0, 800*2);
+    memset(rleBuffer, 0, 800*2);
+
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 1, 1, 800);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 1, 1, 256);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 1, 1, 64);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 5, 25, 800);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 5, 25, 256);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 5, 25, 64);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 5, 100, 800);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 5, 100, 256);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 5, 50, 64);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 100, 500, 800);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 100, 500, 600);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 0, 800, 800);
+    perform_benchmark(textureBuffer, destinationBuffer, rleBuffer, 0, 256, 256);
 
     Mgpu_Operation operation;
     while (1) {
-        int64_t start = esp_timer_get_time();
-//        memset(testBuffer, 0xA55A, 800 * sizeof(Mgpu_Color));
-        memset_16(testBuffer + 800, 0xA55A, 800);
-        int64_t end = esp_timer_get_time();
-        ESP_LOGI(LOG_TAG, "Memset time: %lld", end - start);
-
-        start = esp_timer_get_time();
-        memcpy(testBuffer + 800, testBuffer2, 800 * sizeof(Mgpu_Color));
-        end = esp_timer_get_time();
-        ESP_LOGI(LOG_TAG, "Memcpy time: %lld", end - start);
-
-        start = esp_timer_get_time();
-        transparent_test(((uint16_t*)testBuffer) + 800, (uint16_t*)testBuffer2, 800);
-        end = esp_timer_get_time();
-        ESP_LOGI(LOG_TAG, "Transparency time: %lld", end - start);
-
-        for (int x = 0; x < 10; x++) {
-            memset(testBuffer, 0, TEST_SIZE * sizeof(Mgpu_Color));
-            start = esp_timer_get_time();
-            rle_draw((uint16_t *) testBuffer, rleBuffer, rleBytes);
-            end = esp_timer_get_time();
-            ESP_LOGI(LOG_TAG, "RLE time: %lld", end - start);
-        }
-
-//        printf("Value: ");
-//        for (int x = 0; x < 800 * 2; x++) {
-//            printf("%02X ", testBuffer[x]);
-//        }
-//        printf("\n");
-
         if (resetRequested) {
             ESP_LOGW(LOG_TAG, "Reset requested, exiting");
             return;
