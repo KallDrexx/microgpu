@@ -13,12 +13,17 @@ typedef enum {
      * allocated in fast ram. If the fast ram allocation fails, it will attempt the slow ram.
      */
     MGPU_TEXTURE_USE_SLOW_RAM = 1 << 0,
+
+    /*
+     * If set, the texture is encoded via the RLE texture scheme instead of raw bytes.
+     */
+    MGPU_TEXTURE_RLE_ENCODED = 1 << 1,
 } Mgpu_TextureDefinitionFlags;
 
 typedef struct {
     uint8_t id;
     uint16_t width, height;
-    Mgpu_Color transparentColor;
+    uint32_t byteCount;
     Mgpu_TextureDefinitionFlags flags;
 } Mgpu_TextureDefinition;
 

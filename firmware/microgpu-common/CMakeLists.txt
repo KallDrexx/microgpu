@@ -1,5 +1,6 @@
 set(MICROGPU_COMMON_SOURCES
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/alloc.h
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/byte_buffer.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/messages.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/font_8x12.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/fonts/font_12x16.c
@@ -17,5 +18,6 @@ set(MICROGPU_COMMON_SOURCES
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/operations/execution/textures.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/packet_framing.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/responses/response_serializer.c
+        ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/texture_encoding.c
         ${MGPU_COMMON_DIR_PREFIX}../microgpu-common/texture_manager.c
 )
