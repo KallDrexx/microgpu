@@ -20,12 +20,17 @@ void mgpu_exec_texture_define(Mgpu_TextureManager *textureManager, Mgpu_DefineTe
         return;
     }
 
+    uint8_t flags = MGPU_TEXTURE_USE_SLOW_RAM;
+    if (operation->textureEncodingType == Mgpu_TextureEncoding_Rgb565RleTransparency) {
+        flags |= MGPU_TEXTURE_RLE_ENCODED;
+    }
+
     Mgpu_TextureDefinition info = {
             .id = operation->textureId,
             .width = operation->width,
             .height = operation->height,
-            .transparentColor = operation->transparentColor,
-            .flags = MGPU_TEXTURE_USE_SLOW_RAM,
+            .byteCount = operation->byteCount,
+            .flags = flags,
     };
 
     mgpu_texture_define(textureManager, &info, 1);

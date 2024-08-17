@@ -22,4 +22,4 @@
 
 #endif
 
-#define MGPU_API_VERSION 2
+#define MGPU_API_VERSION 3

@@ -108,7 +108,7 @@ bool deserialize_batch(const uint8_t bytes[], size_t size, Mgpu_Operation *opera
 }
 
 bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operation *operation) {
-    if (size < 6 + mgpu_color_bytes_per_pixel()) {
+    if (size < 10) {
         return false;
     }
 
@@ -116,9 +116,13 @@ bool deserialize_define_texture(const uint8_t bytes[], size_t size, Mgpu_Operati
     operation->defineTexture.textureId = bytes[1];
     operation->defineTexture.width = ((uint16_t) bytes[2] << 8) | bytes[3];
     operation->defineTexture.height = ((uint16_t) bytes[4] << 8) | bytes[5];
+    operation->defineTexture.byteCount =
+            ((uint32_t) bytes[6] << 24) |
+            ((uint32_t) bytes[7] << 16) |
+            ((uint32_t) bytes[8] << 8) |
+            bytes[9];
 
-    size_t nextByteIndex;
-    operation->defineTexture.transparentColor = mgpu_color_deserialize(bytes, 6, &nextByteIndex);
+    operation->defineTexture.textureEncodingType = (Mgpu_TextureEncodingType)bytes[10];
 
     return true;
 }

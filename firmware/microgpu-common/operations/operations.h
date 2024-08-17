@@ -84,6 +84,27 @@ typedef enum {
     Mgpu_Operation_Reset = 189, // Higher value that's hard to see accidentally
 } Mgpu_OperationType;
 
+typedef enum {
+    /*
+     * A texture is encoded with standard 565 RGB values, with each two byte
+     * pair being that pixel's RGB value, with each pixel's bytes laid out in a linear
+     * buffer organized row by row. Transparency is not supported for this type of texture.
+     */
+    Mgpu_TextureEncoding_Rgb565Standard = 1,
+
+    /*
+     * A texture that is encoded using a runtime length encoding type of scheme. Each batch of
+     * RGB565 pixels are preceded by a 2 byte prefix. The first byte has the number of
+     * consecutive pixels come first in the batch. The second byte is the number of consecutive
+     * non-transparent pixels come after the transparent pixels. After this byte, the following
+     * bytes are the RGB565 pixel values in the batch.
+     *
+     * No more than 255 transparent or non-transparent pixels can be in a single batch, and a
+     * batch always contains a transparent or non-transparent count, even if either is zero.
+     */
+    Mgpu_TextureEncoding_Rgb565RleTransparency = 2,
+} Mgpu_TextureEncodingType;
+
 typedef struct {
     /*
      * How much to scale the frame buffer down from the display resolution.
@@ -116,7 +137,8 @@ typedef struct {
 typedef struct {
     uint8_t textureId;
     uint16_t width, height;
-    Mgpu_Color transparentColor;
+    uint32_t byteCount;
+    Mgpu_TextureEncodingType textureEncodingType;
 } Mgpu_DefineTextureOperation;
 
 typedef struct {

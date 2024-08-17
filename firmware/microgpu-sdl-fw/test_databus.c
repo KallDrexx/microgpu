@@ -177,7 +177,6 @@ bool mgpu_databus_get_next_operation(Mgpu_Databus *databus, Mgpu_Operation *oper
             operation->defineTexture.textureId = 5;
             operation->defineTexture.width = TEST_TEXTURE_PIXEL_COUNT;
             operation->defineTexture.height = TEST_TEXTURE_PIXEL_COUNT;
-            operation->defineTexture.transparentColor = mgpu_color_from_rgb888(255, 255, 255);
             operationCount++;
             return true;
 
